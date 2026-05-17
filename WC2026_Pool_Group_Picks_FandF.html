@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Cup 2026 pool – entry form</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Swiftly brand colors */
+    --swiftly-blue:       #009edf;
+    --swiftly-orange:     #ff9e16;
+    --neutral-lightest:   #f7f7f7;
+    --neutral-light:      #ebebeb;
+    --neutral-medium:     #c4c4c4;
+    --neutral-dark:       #525f66;
+    --neutral-darkest:    #131e27;
+    --blue-lightest:      #ebf9ff;
+    --blue-light:         #ccecf9;
+    --blue-medium-light:  #99d9f2;
+    --blue-medium:        #66c7ec;
+    --blue-medium-dark:   #33b4e5;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--neutral-lightest);
+    color: var(--neutral-darkest);
+    min-height: 100vh;
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  header {
+    background: var(--swiftly-blue);
+    padding: 28px 0 24px;
+  }
+
+  .header-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .header-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+
+  .header-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    color: var(--blue-light);
+    margin-top: -8px;
+  }
+
+  /* ── Sticky progress bar ─────────────────────────────────── */
+  .sticky-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffffff;
+    border-bottom: none;
+    padding: 10px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+
+  .sticky-bar-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* ── Shortcuts bar ───────────────────────────────────────── */
+  .shortcuts-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .shortcuts-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--neutral-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    margin-right: 4px;
+  }
+
+  .shortcut-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    background: #ffffff;
+    border: 1.5px solid var(--neutral-light);
+    border-radius: 5px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: all 0.14s;
+    white-space: nowrap;
+  }
+
+  .shortcut-btn:hover {
+    border-color: var(--swiftly-blue);
+    color: var(--swiftly-blue);
+    background: var(--blue-lightest);
+  }
+
+  .name-required-msg {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    color: var(--swiftly-orange);
+    font-weight: 700;
+    display: none;
+    margin-left: 4px;
+  }
+
+  .progress-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+  }
+
+  .progress-bar-wrap {
+    flex: 1;
+    min-width: 80px;
+    height: 6px;
+    background: var(--neutral-light);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--swiftly-blue);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+
+  .progress-count {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--swiftly-blue);
+    white-space: nowrap;
+  }
+
+  /* ── Container ───────────────────────────────────────────── */
+  .container {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 16px 16px 64px;
+  }
+
+  /* ── Name card ───────────────────────────────────────────── */
+  .name-card {
+    background: #ffffff;
+    border-radius: var(--radius);
+    border: 2px solid var(--neutral-light);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .name-card label {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--swiftly-blue);
+    white-space: nowrap;
+  }
+
+  .name-card input {
+    flex: 1;
+    padding: 7px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    border: 1.5px solid var(--neutral-light);
+    border-radius: 7px;
+    outline: none;
+    color: var(--neutral-darkest);
+    transition: border-color 0.2s;
+    background: var(--neutral-lightest);
+  }
+
+  .name-card input:focus {
+    border-color: var(--swiftly-blue);
+    background: #ffffff;
+  }
+
+  .name-card input::placeholder { color: var(--neutral-medium); }
+
+  /* ── Match table ─────────────────────────────────────────── */
+  .matches-table {
+    background: #ffffff;
+    border: 1px solid var(--neutral-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.04);
+    margin-bottom: 8px;
+  }
+
+  /* Column layout: # | date | grp | time | picks */
+  .col-layout {
+    display: grid;
+    grid-template-columns: 30px 88px 28px 72px auto;
+    align-items: center;
+    column-gap: 12px;
+  }
+
+  /* Column header row */
+  .col-header {
+    background: var(--neutral-lightest);
+    border-bottom: 2px solid var(--neutral-light);
+    padding: 6px 12px;
+  }
+
+  .col-header > span {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0;
+  }
+
+  .col-header > span:first-child { text-align: center; }
+
+  /* Match row */
+  .match-row {
+    border-bottom: 1px solid var(--neutral-light);
+    padding: 5px 12px;
+    transition: background 0.12s;
+  }
+
+  .match-row:last-child { border-bottom: none; }
+  .match-row:nth-child(even) { background: var(--neutral-lightest); }
+  .match-row:nth-child(odd)  { background: #ffffff; }
+  .match-row:hover { background: var(--blue-lightest); }
+  .match-row.picked { background: var(--blue-lightest); }
+
+  .match-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--neutral-medium);
+    text-align: center;
+    padding: 0;
+  }
+
+  .match-teams {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--neutral-darkest);
+    padding: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .match-teams .vs {
+    font-weight: 400;
+    color: var(--neutral-medium);
+  }
+
+  .match-grp, .match-date, .match-time {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    color: var(--neutral-dark);
+    padding: 0;
+    white-space: nowrap;
+  }
+
+  .match-grp { color: var(--swiftly-blue); font-weight: 700; }
+
+  /* ── Pick buttons ────────────────────────────────────────── */
+  .pick-group {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2fr;
+    gap: 4px;
+    padding: 0 8px 0 0;
+    width: 100%;
+  }
+
+  .pick-group input[type="radio"] { display: none; }
+
+  .pick-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    border-radius: 5px;
+    border: 1.5px solid var(--neutral-light);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.14s;
+    white-space: nowrap;
+    color: var(--neutral-dark);
+    background: #ffffff;
+    user-select: none;
+    line-height: 1;
+  }
+
+  .pick-btn:hover {
+    border-color: var(--swiftly-blue);
+    color: var(--swiftly-blue);
+    background: var(--blue-lightest);
+  }
+
+  /* All picks — blue when selected */
+  input[type="radio"].win1-radio:checked + .pick-btn,
+  input[type="radio"].draw-radio:checked + .pick-btn,
+  input[type="radio"].win2-radio:checked + .pick-btn {
+    border-color: var(--swiftly-blue);
+    background: var(--swiftly-blue);
+    color: #ffffff;
+  }
+
+  /* ── Submit section ──────────────────────────────────────── */
+  .submit-section {
+    margin-top: 36px;
+    text-align: center;
+  }
+
+  .submit-btn {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    border: none;
+    padding: 15px 48px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.18s;
+    box-shadow: 0 4px 14px rgba(0,158,223,0.3);
+    letter-spacing: 0.2px;
+  }
+
+  .submit-btn:hover {
+    background: #0089c3;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0,158,223,0.38);
+  }
+
+  .submit-note {
+    margin-top: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    color: var(--neutral-dark);
+  }
+
+  .confirm-row {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .confirm-row.visible { display: flex; }
+
+  .confirm-note {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    color: var(--neutral-dark);
+  }
+
+  .confirm-btn {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+
+  .confirm-btn:hover { background: #0089c3; }
+
+  .validation-msg {
+    background: #fff8e6;
+    border: 1px solid var(--swiftly-orange);
+    border-radius: 7px;
+    padding: 11px 16px;
+    margin-top: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    color: #7a4a00;
+    display: none;
+    text-align: left;
+  }
+
+  /* ── Summary modal ───────────────────────────────────────── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(19,30,39,0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: #ffffff;
+    border-radius: 14px;
+    max-width: 700px;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+
+  .modal-header {
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    padding: 20px 24px;
+    border-radius: 14px 14px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-header h2 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+  }
+
+  .modal-close {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: #ffffff;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    font-size: 0.875rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .modal-close:hover { background: rgba(255,255,255,0.25); }
+
+  .modal-body { padding: 24px 28px; }
+
+  .summary-name {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: var(--swiftly-blue);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .summary-stats {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+
+  .stat-pill {
+    padding: 7px 18px;
+    border-radius: 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  .stat-w1   { background: var(--blue-lightest); color: var(--swiftly-blue); }
+  .stat-draw { background: #fff4e0; color: #8a5500; }
+  .stat-w2   { background: var(--neutral-lightest); color: var(--neutral-darkest); border: 1px solid var(--neutral-light); }
+
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+  }
+
+  .summary-table th {
+    background: var(--neutral-lightest);
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    border-bottom: 2px solid var(--neutral-light);
+  }
+
+  .summary-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--neutral-light);
+    vertical-align: middle;
+    color: var(--neutral-darkest);
+  }
+
+  .summary-table tr:last-child td { border-bottom: none; }
+
+  .pick-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .badge-w1   { background: var(--swiftly-blue); color: #ffffff; }
+  .badge-draw { background: var(--swiftly-orange); color: var(--neutral-darkest); }
+  .badge-w2   { background: var(--neutral-darkest); color: #ffffff; }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 22px;
+  }
+
+  .copy-btn, .csv-btn {
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    border: none;
+    padding: 11px 28px;
+    border-radius: 7px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+
+  .copy-btn:hover, .csv-btn:hover { background: #0089c3; }
+
+  .csv-btn {
+    background: var(--neutral-darkest);
+  }
+
+  .csv-btn:hover { background: #2a3f52; }
+
+  /* ── Responsive ──────────────────────────────────────────── */
+  @media (max-width: 480px) {
+    header { padding: 20px 18px 18px; }
+    .header-title { font-size: 1.35rem; }
+    .pick-btn { padding: 4px 5px; font-size: 0.72rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────── -->
+<header>
+  <div class="header-inner">
+    <div class="header-title">World Cup 2026 pool</div>
+    <div class="header-subtitle" id="headerSubtitle">Pick a result for all 72 group stage matches</div>
+  </div>
+</header>
+
+<!-- ── Sticky progress bar ────────────────────────────── -->
+<div class="sticky-bar">
+  <div class="sticky-bar-inner">
+    <span class="progress-label">Progress</span>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <span class="progress-count" id="progressCount">0 / 72 matches picked</span>
+  </div>
+</div>
+
+<!-- ── Main content ───────────────────────────────────── -->
+<div class="container">
+
+  <div class="name-card">
+    <input type="text" id="entrantName" placeholder="Enter your full name…" autocomplete="name">
+  </div>
+
+  <div class="shortcuts-bar">
+    <span class="shortcuts-label">Shortcuts</span>
+    <button class="shortcut-btn" onclick="runShortcut('random')">🎲&nbsp;&nbsp;Pick randomly</button>
+    <button class="shortcut-btn" onclick="runShortcut('ranked')">💪&nbsp;&nbsp;Pick higher-ranked team to win</button>
+    <button class="shortcut-btn" onclick="runShortcut('draw')">🤝&nbsp;&nbsp;Pick all draws</button>
+    <span class="name-required-msg" id="nameRequiredMsg">← Enter your name first</span>
+  </div>
+
+  <form id="poolForm">
+    <!-- Match rows injected by JS -->
+  </form>
+
+  <div class="submit-section">
+    <button class="submit-btn" onclick="handleSubmit()">Happy with your picks?</button>
+    <div class="validation-msg" id="validationMsg"></div>
+    <div class="confirm-row" id="confirmRow">
+      <button class="confirm-btn" onclick="confirmSubmit()">Submit</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Summary modal ──────────────────────────────────── -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Entry summary</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ── Pool config ───────────────────────────────────────────
+// Change these two values to configure each pool version
+const POOL_ID   = 'fandf';             // used in CSV filename
+const POOL_NAME = 'Friends & Family';  // displayed in the page header
+// ──────────────────────────────────────────────────────────
+
+// ── Match data ────────────────────────────────────────────
+// [match#, group, date, time (ET), team1, team2]
+const MATCHES = [
+  [1,  "A", "Thu, Jun 12", "3:00 PM ET",  "Mexico",                "South Africa"],
+  [2,  "A", "Thu, Jun 12", "10:00 PM ET", "Korea Republic",        "Czechia"],
+  [3,  "B", "Fri, Jun 13", "3:00 PM ET",  "Canada",                "Bosnia and Herzegovina"],
+  [4,  "D", "Fri, Jun 13", "9:00 PM ET",  "United States",         "Paraguay"],
+  [5,  "C", "Sat, Jun 14", "9:00 PM ET",  "Haiti",                 "Scotland"],
+  [6,  "D", "Sun, Jun 15", "12:00 AM ET", "Australia",             "Türkiye"],
+  [7,  "C", "Sat, Jun 14", "6:00 PM ET",  "Brazil",                "Morocco"],
+  [8,  "B", "Sat, Jun 14", "3:00 PM ET",  "Qatar",                 "Switzerland"],
+  [9,  "E", "Sun, Jun 15", "7:00 PM ET",  "Côte d'Ivoire",         "Ecuador"],
+  [10, "E", "Sun, Jun 15", "1:00 PM ET",  "Germany",               "Curaçao"],
+  [11, "F", "Sun, Jun 15", "4:00 PM ET",  "Netherlands",           "Japan"],
+  [12, "F", "Sun, Jun 15", "10:00 PM ET", "Sweden",                "Tunisia"],
+  [13, "H", "Mon, Jun 16", "6:00 PM ET",  "Saudi Arabia",          "Uruguay"],
+  [14, "H", "Mon, Jun 16", "12:00 PM ET", "Spain",                 "Cabo Verde"],
+  [15, "G", "Mon, Jun 16", "9:00 PM ET",  "Iran",                  "New Zealand"],
+  [16, "G", "Mon, Jun 16", "3:00 PM ET",  "Belgium",               "Egypt"],
+  [17, "I", "Tue, Jun 17", "3:00 PM ET",  "France",                "Senegal"],
+  [18, "I", "Tue, Jun 17", "6:00 PM ET",  "Iraq",                  "Norway"],
+  [19, "J", "Tue, Jun 17", "9:00 PM ET",  "Argentina",             "Algeria"],
+  [20, "J", "Wed, Jun 18", "12:00 AM ET", "Austria",               "Jordan"],
+  [21, "L", "Wed, Jun 18", "7:00 PM ET",  "Ghana",                 "Panama"],
+  [22, "L", "Wed, Jun 18", "4:00 PM ET",  "England",               "Croatia"],
+  [23, "K", "Wed, Jun 18", "1:00 PM ET",  "Portugal",              "Congo DR"],
+  [24, "K", "Wed, Jun 18", "10:00 PM ET", "Uzbekistan",            "Colombia"],
+  [25, "A", "Thu, Jun 19", "12:00 PM ET", "Czechia",               "South Africa"],
+  [26, "B", "Thu, Jun 19", "3:00 PM ET",  "Switzerland",           "Bosnia and Herzegovina"],
+  [27, "B", "Thu, Jun 19", "6:00 PM ET",  "Canada",                "Qatar"],
+  [28, "A", "Thu, Jun 19", "9:00 PM ET",  "Mexico",                "Korea Republic"],
+  [29, "C", "Fri, Jun 20", "8:30 PM ET",  "Brazil",                "Haiti"],
+  [30, "C", "Fri, Jun 20", "6:00 PM ET",  "Scotland",              "Morocco"],
+  [31, "D", "Fri, Jun 20", "11:00 PM ET", "Türkiye",               "Paraguay"],
+  [32, "D", "Fri, Jun 20", "3:00 PM ET",  "United States",         "Australia"],
+  [33, "E", "Sat, Jun 21", "4:00 PM ET",  "Germany",               "Côte d'Ivoire"],
+  [34, "E", "Sat, Jun 21", "8:00 PM ET",  "Ecuador",               "Curaçao"],
+  [35, "F", "Sat, Jun 21", "1:00 PM ET",  "Netherlands",           "Sweden"],
+  [36, "F", "Sun, Jun 22", "12:00 AM ET", "Tunisia",               "Japan"],
+  [37, "H", "Sun, Jun 22", "6:00 PM ET",  "Uruguay",               "Cabo Verde"],
+  [38, "H", "Sun, Jun 22", "12:00 PM ET", "Spain",                 "Saudi Arabia"],
+  [39, "G", "Sun, Jun 22", "3:00 PM ET",  "Belgium",               "Iran"],
+  [40, "G", "Sun, Jun 22", "9:00 PM ET",  "New Zealand",           "Egypt"],
+  [41, "I", "Mon, Jun 23", "8:00 PM ET",  "Norway",                "Senegal"],
+  [42, "I", "Mon, Jun 23", "5:00 PM ET",  "France",                "Iraq"],
+  [43, "J", "Mon, Jun 23", "1:00 PM ET",  "Argentina",             "Austria"],
+  [44, "J", "Mon, Jun 23", "11:00 PM ET", "Jordan",                "Algeria"],
+  [45, "L", "Tue, Jun 24", "4:00 PM ET",  "England",               "Ghana"],
+  [46, "L", "Tue, Jun 24", "7:00 PM ET",  "Panama",                "Croatia"],
+  [47, "K", "Tue, Jun 24", "1:00 PM ET",  "Portugal",              "Uzbekistan"],
+  [48, "K", "Tue, Jun 24", "10:00 PM ET", "Colombia",              "Congo DR"],
+  [49, "C", "Wed, Jun 25", "6:00 PM ET",  "Scotland",              "Brazil"],
+  [50, "C", "Wed, Jun 25", "6:00 PM ET",  "Morocco",               "Haiti"],
+  [51, "B", "Wed, Jun 25", "3:00 PM ET",  "Switzerland",           "Canada"],
+  [52, "B", "Wed, Jun 25", "3:00 PM ET",  "Bosnia and Herzegovina","Qatar"],
+  [53, "A", "Wed, Jun 25", "9:00 PM ET",  "Czechia",               "Mexico"],
+  [54, "A", "Wed, Jun 25", "9:00 PM ET",  "South Africa",          "Korea Republic"],
+  [55, "E", "Thu, Jun 26", "4:00 PM ET",  "Curaçao",               "Côte d'Ivoire"],
+  [56, "E", "Thu, Jun 26", "4:00 PM ET",  "Ecuador",               "Germany"],
+  [57, "F", "Thu, Jun 26", "7:00 PM ET",  "Japan",                 "Sweden"],
+  [58, "F", "Thu, Jun 26", "7:00 PM ET",  "Tunisia",               "Netherlands"],
+  [59, "D", "Thu, Jun 26", "10:00 PM ET", "Türkiye",               "United States"],
+  [60, "D", "Thu, Jun 26", "10:00 PM ET", "Paraguay",              "Australia"],
+  [61, "I", "Fri, Jun 27", "3:00 PM ET",  "Norway",                "France"],
+  [62, "I", "Fri, Jun 27", "3:00 PM ET",  "Senegal",               "Iraq"],
+  [63, "G", "Fri, Jun 27", "11:00 PM ET", "Egypt",                 "Iran"],
+  [64, "G", "Fri, Jun 27", "11:00 PM ET", "New Zealand",           "Belgium"],
+  [65, "H", "Fri, Jun 27", "8:00 PM ET",  "Cabo Verde",            "Saudi Arabia"],
+  [66, "H", "Fri, Jun 27", "8:00 PM ET",  "Uruguay",               "Spain"],
+  [67, "L", "Sat, Jun 28", "5:00 PM ET",  "Panama",                "England"],
+  [68, "L", "Sat, Jun 28", "5:00 PM ET",  "Croatia",               "Ghana"],
+  [69, "J", "Sat, Jun 28", "10:00 PM ET", "Algeria",               "Austria"],
+  [70, "J", "Sat, Jun 28", "10:00 PM ET", "Jordan",                "Argentina"],
+  [71, "K", "Sat, Jun 28", "7:30 PM ET",  "Colombia",              "Portugal"],
+  [72, "K", "Sat, Jun 28", "7:30 PM ET",  "Congo DR",              "Uzbekistan"],
+];
+
+// ── Build form ────────────────────────────────────────────
+function buildForm() {
+  const form = document.getElementById('poolForm');
+
+  // Single table with all 72 matches sorted by match number
+  const table = document.createElement('div');
+  table.className = 'matches-table';
+
+  // Column header row
+  const hdr = document.createElement('div');
+  hdr.className = 'col-layout col-header';
+  hdr.innerHTML = `
+    <span>#</span>
+    <span class="ch-date">Date</span>
+    <span>Grp</span>
+    <span class="ch-time">Time (ET)</span>
+    <span style="text-align:center">Your pick</span>
+  `;
+  table.appendChild(hdr);
+
+  MATCHES.forEach(m => {
+    const [num, grp, date, time, t1, t2] = m;
+
+    const row = document.createElement('div');
+    row.className = 'match-row col-layout';
+    row.id = `row-${num}`;
+
+    row.innerHTML = `
+      <div class="match-num">${num}</div>
+      <div class="match-date">${date}</div>
+      <div class="match-grp">${grp}</div>
+      <div class="match-time">${time.replace(' ET', '')}</div>
+      <div class="pick-group">
+        <input type="radio" name="m${num}" id="m${num}_w1" value="w1" class="win1-radio" onchange="onPick(${num})">
+        <label class="pick-btn" for="m${num}_w1">${t1} win</label>
+
+        <input type="radio" name="m${num}" id="m${num}_d" value="draw" class="draw-radio" onchange="onPick(${num})">
+        <label class="pick-btn" for="m${num}_d">Draw</label>
+
+        <input type="radio" name="m${num}" id="m${num}_w2" value="w2" class="win2-radio" onchange="onPick(${num})">
+        <label class="pick-btn" for="m${num}_w2">${t2} win</label>
+      </div>
+    `;
+
+    table.appendChild(row);
+  });
+
+  form.appendChild(table);
+}
+
+// ── Progress tracking ─────────────────────────────────────
+let picked = 0;
+
+function onPick(num) {
+  const row = document.getElementById(`row-${num}`);
+  if (!row.classList.contains('picked')) {
+    row.classList.add('picked');
+    picked++;
+    updateProgress();
+  }
+  document.getElementById('confirmRow').classList.remove('visible');
+  document.querySelector('.submit-btn').style.display = '';
+}
+
+function updateProgress() {
+  document.getElementById('progressCount').textContent = `${picked} / 72 matches picked`;
+  document.getElementById('progressFill').style.width = `${(picked / 72) * 100}%`;
+}
+
+// ── Submit / validation ───────────────────────────────────
+function handleSubmit() {
+  const name = document.getElementById('entrantName').value.trim();
+  const valMsg = document.getElementById('validationMsg');
+  valMsg.style.display = 'none';
+
+  if (!name) {
+    valMsg.textContent = 'Please enter your name before reviewing your picks.';
+    valMsg.style.display = 'block';
+    document.getElementById('entrantName').focus();
+    return;
+  }
+
+  if (picked < 72) {
+    const remaining = 72 - picked;
+    valMsg.textContent = `You still have ${remaining} match${remaining === 1 ? '' : 'es'} without a pick. Please select a result for every match before submitting.`;
+    valMsg.style.display = 'block';
+
+    for (const m of MATCHES) {
+      const row = document.getElementById(`row-${m[0]}`);
+      if (!row.classList.contains('picked')) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.style.outline = `2px solid var(--swiftly-orange)`;
+        setTimeout(() => row.style.outline = '', 2200);
+        break;
+      }
+    }
+    return;
+  }
+
+  document.getElementById('confirmRow').classList.add('visible');
+  document.querySelector('.submit-btn').style.display = 'none';
+}
+
+// ── Summary modal ─────────────────────────────────────────
+function showSummary(name) {
+  let w1 = 0, draws = 0, w2 = 0;
+  let rows = '';
+
+  MATCHES.forEach(m => {
+    const [num, grp, date, , t1, t2] = m;
+    const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
+    let pickLabel = '', badgeClass = '';
+
+    if (val === 'w1')   { pickLabel = t1;     badgeClass = 'badge-w1';   w1++; }
+    if (val === 'draw') { pickLabel = 'Draw';  badgeClass = 'badge-draw'; draws++; }
+    if (val === 'w2')   { pickLabel = t2;     badgeClass = 'badge-w2';   w2++; }
+
+    rows += `<tr>
+      <td style="color:var(--neutral-medium);font-size:0.78rem">#${num}</td>
+      <td>
+        ${t1} vs ${t2}
+        <br><span style="font-size:0.72rem;color:var(--neutral-dark)">Group ${grp} · ${date}</span>
+      </td>
+      <td><span class="pick-badge ${badgeClass}">${pickLabel}</span></td>
+    </tr>`;
+  });
+
+  document.getElementById('modalBody').innerHTML = `
+    <div class="summary-name">${name}</div>
+    <div class="summary-stats">
+      <span class="stat-pill stat-w1">Team 1 wins: ${w1}</span>
+      <span class="stat-pill stat-draw">Draws: ${draws}</span>
+      <span class="stat-pill stat-w2">Team 2 wins: ${w2}</span>
+    </div>
+    <table class="summary-table">
+      <thead><tr><th>#</th><th>Match</th><th>Your pick</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="modal-actions">
+      <button class="copy-btn" onclick="copyToClipboard('${name.replace(/'/g,"\\'")}')">Copy to clipboard</button>
+      <button class="csv-btn" onclick="downloadCSV('${name.replace(/'/g,"\\'")}')">Download CSV</button>
+    </div>
+  `;
+
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function copyToClipboard(name) {
+  let text = `World Cup 2026 pool entry\nName: ${name}\n\n`;
+  MATCHES.forEach(m => {
+    const [num, grp, date, time, t1, t2] = m;
+    const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
+    const pick = val === 'w1' ? t1 : val === 'draw' ? 'Draw' : t2;
+    text += `Match ${num} (${date}, Group ${grp}): ${t1} vs ${t2} → ${pick}\n`;
+  });
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy picks to clipboard', 2200);
+  });
+}
+
+// FIFA rankings (lower = better)
+const RANKINGS = {
+  'Mexico': 15, 'South Africa': 60, 'Korea Republic': 25, 'Czechia': 41,
+  'Canada': 30, 'Bosnia and Herzegovina': 65, 'Qatar': 55, 'Switzerland': 19,
+  'Brazil': 6, 'Morocco': 8, 'Haiti': 83, 'Scotland': 43,
+  'United States': 16, 'Paraguay': 40, 'Australia': 27, 'Türkiye': 22,
+  'Germany': 10, 'Curaçao': 82, 'Côte d\'Ivoire': 34, 'Ecuador': 23,
+  'Netherlands': 7, 'Japan': 18, 'Sweden': 38, 'Tunisia': 44,
+  'Belgium': 9, 'Egypt': 29, 'Iran': 21, 'New Zealand': 85,
+  'Spain': 2, 'Cabo Verde': 69, 'Saudi Arabia': 61, 'Uruguay': 17,
+  'France': 1, 'Senegal': 14, 'Iraq': 57, 'Norway': 31,
+  'Argentina': 3, 'Algeria': 28, 'Austria': 24, 'Jordan': 63,
+  'Portugal': 5, 'Congo DR': 46, 'Uzbekistan': 50, 'Colombia': 13,
+  'England': 4, 'Croatia': 11, 'Ghana': 74, 'Panama': 33,
+};
+
+function requireName() {
+  const name = document.getElementById('entrantName').value.trim();
+  if (!name) {
+    const msg = document.getElementById('nameRequiredMsg');
+    msg.style.display = 'inline';
+    document.getElementById('entrantName').focus();
+    setTimeout(() => msg.style.display = 'none', 3000);
+    return false;
+  }
+  return true;
+}
+
+function confirmSubmit() {
+  const name = document.getElementById('entrantName').value.trim();
+  downloadCSV(name);
+  document.getElementById('confirmRow').classList.remove('visible');
+  const msg = document.getElementById('validationMsg');
+  msg.style.background = '#ebf9ff';
+  msg.style.borderColor = 'var(--swiftly-blue)';
+  msg.style.color = 'var(--neutral-darkest)';
+  msg.textContent = `✓ Done! Your picks have been downloaded as a CSV file. Please send to Ritesh.`;
+  msg.style.display = 'block';
+}
+
+function runShortcut(mode) {
+  if (!requireName()) return;
+  const options = ['w1', 'draw', 'w2'];
+  MATCHES.forEach(m => {
+    const [num, , , , t1, t2] = m;
+    let pick;
+    if (mode === 'random') {
+      pick = options[Math.floor(Math.random() * 3)];
+    } else if (mode === 'draw') {
+      pick = 'draw';
+    } else {
+      const r1 = RANKINGS[t1] ?? 999;
+      const r2 = RANKINGS[t2] ?? 999;
+      pick = r1 <= r2 ? 'w1' : 'w2';
+    }
+    const idSuffix = pick === 'w1' ? 'w1' : pick === 'draw' ? 'd' : 'w2';
+    const radio = document.getElementById(`m${num}_${idSuffix}`);
+    if (radio) { radio.checked = true; onPick(num); }
+  });
+}
+
+function downloadCSV(name) {
+  const escape = v => (String(v).includes(',') ? `"${v}"` : v);
+
+  // One row per match
+  const rows = [];
+
+  MATCHES.forEach(m => {
+    const [num, , , , t1, t2] = m;
+    const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
+    const label = val === 'w1' ? `${t1} win` : val === 'draw' ? 'Draw' : `${t2} win`;
+    rows.push([
+      num,
+      escape(label),
+      val === 'w1' ? 1 : 0,
+      val === 'draw' ? 1 : 0,
+      val === 'w2' ? 1 : 0,
+    ]);
+  });
+
+  const csv = rows.map(r => r.join(',')).join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `wc26group_${POOL_ID}_${name.replace(/\s+/g, '-').toLowerCase()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Close modal when clicking the overlay
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Init
+document.getElementById('headerSubtitle').textContent =
+  `${POOL_NAME} pool · Pick a result for all 72 group stage matches`;
+buildForm();
+</script>
+</body>
+</html>
