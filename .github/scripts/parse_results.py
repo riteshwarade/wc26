@@ -9,6 +9,17 @@ import os
 import re
 import requests
 
+# ── FIFA ↔ Wikipedia name mapping (for reference) ────────────────────────────
+# FIFA official name   → Wikipedia name (used throughout this system)
+# "Korea Republic"     → "South Korea"
+# "Türkiye"            → "Turkey"
+# "Côte d'Ivoire"      → "Ivory Coast"
+# "Cabo Verde"         → "Cape Verde"
+# "IR Iran"            → "Iran"
+# "Congo DR"           → "DR Congo"
+# "Czechia"            → "Czechia"  (same on both)
+# ─────────────────────────────────────────────────────────────────────────────
+
 # ── Wikipedia country code → team name ───────────────────────────────────────
 TEAM_CODES = {
     'MEX': 'Mexico',          'RSA': 'South Africa',      'KOR': 'South Korea',
