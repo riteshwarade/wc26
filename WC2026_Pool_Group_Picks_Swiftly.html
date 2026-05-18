@@ -579,6 +579,87 @@
     header { padding: 20px 18px 18px; }
     .header-title { font-size: 1.35rem; }
     .pick-btn { padding: 4px 5px; font-size: 0.72rem; }
+    .pick-layout { flex-direction: column; }
+    .pick-sidebar { width: 100%; position: static; }
+  }
+
+  /* ── Pick page two-column layout ── */
+  .pick-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .pick-sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 52px;
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+  }
+
+  .pick-main { flex: 1; min-width: 0; }
+
+  /* ── Pick group tables ── */
+  .pick-group-table-card {
+    background: #ffffff;
+    border: 1px solid var(--neutral-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.04);
+    margin-bottom: 8px;
+  }
+
+  .pick-group-header {
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 5px 10px;
+  }
+
+  .pick-group-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+  }
+
+  .pick-group-table th {
+    padding: 4px 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: center;
+    background: var(--neutral-lightest);
+    border-bottom: 1px solid var(--neutral-light);
+  }
+
+  .pick-group-table th.th-team { text-align: left; }
+
+  .pick-group-table tbody tr { border-bottom: 0.5px solid var(--neutral-light); }
+  .pick-group-table tbody tr:last-child { border-bottom: none; }
+  .pick-group-table tbody tr:nth-child(even) { background: var(--neutral-lightest); }
+  .pick-group-table tbody tr.q-zone { background: var(--blue-lightest); }
+
+  .pick-group-table td {
+    padding: 4px 6px;
+    text-align: center;
+    color: var(--neutral-darkest);
+    font-size: 0.78rem;
+  }
+
+  .pick-group-table td.td-team { text-align: left; font-weight: 700; }
+  .pick-group-table td.td-pts  { font-weight: 700; color: var(--swiftly-blue); }
+
+  .sidebar-note {
+    font-size: 0.68rem;
+    color: var(--neutral-medium);
+    text-align: center;
+    padding: 6px 0 10px;
   }
 </style>
 </head>
@@ -618,16 +699,27 @@
     <span class="name-required-msg" id="nameRequiredMsg">← Enter your name first</span>
   </div>
 
-  <form id="poolForm">
-    <!-- Match rows injected by JS -->
-  </form>
+  <div class="pick-layout">
 
-  <div class="submit-section">
-    <button class="submit-btn" onclick="handleSubmit()">Happy with your picks?</button>
-    <div class="validation-msg" id="validationMsg"></div>
-    <div class="confirm-row" id="confirmRow">
-      <button class="confirm-btn" onclick="confirmSubmit()">Submit</button>
+    <div class="pick-sidebar">
+      <p class="sidebar-note">Your predicted standings · updates as you pick</p>
+      <div id="pickGroupTables"></div>
     </div>
+
+    <div class="pick-main">
+      <form id="poolForm">
+        <!-- Match rows injected by JS -->
+      </form>
+
+      <div class="submit-section">
+        <button class="submit-btn" onclick="handleSubmit()">Happy with your picks?</button>
+        <div class="validation-msg" id="validationMsg"></div>
+        <div class="confirm-row" id="confirmRow">
+          <button class="confirm-btn" onclick="confirmSubmit()">Submit</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -790,6 +882,67 @@ function onPick(num) {
   }
   document.getElementById('confirmRow').classList.remove('visible');
   document.querySelector('.submit-btn').style.display = '';
+  renderPickGroupTables();
+}
+
+// ── Live group tables ─────────────────────────────────────
+function renderPickGroupTables() {
+  const groups = {}, stats = {};
+
+  MATCHES.forEach(([num, grp, , , t1, t2]) => {
+    if (!groups[grp]) groups[grp] = [];
+    if (!groups[grp].includes(t1)) groups[grp].push(t1);
+    if (!groups[grp].includes(t2)) groups[grp].push(t2);
+    [t1, t2].forEach(t => {
+      if (!stats[t]) stats[t] = { P:0, W:0, D:0, L:0, Pts:0 };
+    });
+
+    const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
+    if (!val) return;
+
+    stats[t1].P++; stats[t2].P++;
+    if (val === 'w1') {
+      stats[t1].W++; stats[t1].Pts += 3; stats[t2].L++;
+    } else if (val === 'w2') {
+      stats[t2].W++; stats[t2].Pts += 3; stats[t1].L++;
+    } else {
+      stats[t1].D++; stats[t1].Pts++;
+      stats[t2].D++; stats[t2].Pts++;
+    }
+  });
+
+  const html = Object.keys(groups).sort().map(grp => {
+    const teams = [...groups[grp]].sort((a, b) => {
+      const sa = stats[a], sb = stats[b];
+      return (sb.Pts - sa.Pts) || (sb.W - sa.W) || a.localeCompare(b);
+    });
+
+    const rows = teams.map((t, i) => {
+      const s = stats[t];
+      const qClass = i < 2 ? ' class="q-zone"' : '';
+      return `<tr${qClass}>
+        <td class="td-team">${t}</td>
+        <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
+        <td class="td-pts">${s.Pts}</td>
+      </tr>`;
+    }).join('');
+
+    return `
+      <div class="pick-group-table-card">
+        <div class="pick-group-header">Group ${grp}</div>
+        <table class="pick-group-table">
+          <thead><tr>
+            <th class="th-team">Team</th>
+            <th title="Played">P</th><th title="Won">W</th>
+            <th title="Drawn">D</th><th title="Lost">L</th>
+            <th title="Points">Pts</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }).join('');
+
+  document.getElementById('pickGroupTables').innerHTML = html;
 }
 
 function updateProgress() {
@@ -985,6 +1138,7 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
 document.getElementById('headerSubtitle').textContent =
   `${POOL_NAME} pool · Pick a result for all 72 group stage matches`;
 buildForm();
+renderPickGroupTables();
 </script>
 </body>
 </html>
