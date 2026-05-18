@@ -835,12 +835,64 @@ function renderGroupTables(results) {
     return;
   }
 
+  // H2H stats between two teams using actual results
+  function h2hStats(teamA, teamB, grpMatches) {
+    let Pts = 0, GF = 0, GA = 0;
+    grpMatches.forEach(([num, , , , t1, t2]) => {
+      const r = results[num];
+      if (!r) return;
+      if (t1===teamA && t2===teamB) {
+        GF += r.home; GA += r.away;
+        if (r.outcome==='W1') Pts += 3;
+        else if (r.outcome==='Draw') Pts += 1;
+      } else if (t1===teamB && t2===teamA) {
+        GF += r.away; GA += r.home;
+        if (r.outcome==='W2') Pts += 3;
+        else if (r.outcome==='Draw') Pts += 1;
+      }
+    });
+    return { Pts, GF, GA };
+  }
+
+  // FIFA rankings for tiebreaker g
+  const LB_RANKINGS = {
+    'Mexico':15,'South Africa':60,'South Korea':25,'Czech Republic':41,
+    'Canada':30,'Bosnia and Herzegovina':65,'Qatar':55,'Switzerland':19,
+    'Brazil':6,'Morocco':8,'Haiti':83,'Scotland':43,
+    'United States':16,'Paraguay':40,'Australia':27,'Turkey':22,
+    'Germany':10,'Curaçao':82,'Ivory Coast':34,'Ecuador':23,
+    'Netherlands':7,'Japan':18,'Sweden':38,'Tunisia':44,
+    'Belgium':9,'Egypt':29,'Iran':21,'New Zealand':85,
+    'Spain':2,'Cape Verde':69,'Saudi Arabia':61,'Uruguay':17,
+    'France':1,'Senegal':14,'Iraq':57,'Norway':31,
+    'Argentina':3,'Algeria':28,'Austria':24,'Jordan':63,
+    'Portugal':5,'DR Congo':46,'Uzbekistan':50,'Colombia':13,
+    'England':4,'Croatia':11,'Ghana':74,'Panama':33,
+  };
+
   const cards = completedGroups.map(grp => {
     const order = GROUP_ORDER[grp] || groups[grp];
+    const grpMatches = MATCHES.filter(([, g]) => g === grp);
     const teams = [...order].sort((a, b) => {
       const sa = stats[a] || {Pts:0,GF:0,GA:0};
       const sb = stats[b] || {Pts:0,GF:0,GA:0};
-      return (sb.Pts - sa.Pts) || ((sb.GF-sb.GA) - (sa.GF-sa.GA)) || (sb.GF - sa.GF) || (order.indexOf(a) - order.indexOf(b));
+      // 1. Overall points
+      if (sb.Pts !== sa.Pts) return sb.Pts - sa.Pts;
+      // Criteria a–c: H2H among tied teams
+      const ha = h2hStats(a, b, grpMatches);
+      const hb = h2hStats(b, a, grpMatches);
+      if (hb.Pts !== ha.Pts) return hb.Pts - ha.Pts;          // a. H2H Pts
+      if ((hb.GF-hb.GA) !== (ha.GF-ha.GA)) return (hb.GF-hb.GA) - (ha.GF-ha.GA); // b. H2H GD
+      if (hb.GF !== ha.GF) return hb.GF - ha.GF;              // c. H2H GF
+      // Criteria d–e: overall
+      if ((sb.GF-sb.GA) !== (sa.GF-sa.GA)) return (sb.GF-sb.GA) - (sa.GF-sa.GA); // d. GD
+      if (sb.GF !== sa.GF) return sb.GF - sa.GF;              // e. GF
+      // f. Fair play — not implemented (no card data)
+      // g. FIFA ranking
+      const ra = LB_RANKINGS[a] ?? 999, rb = LB_RANKINGS[b] ?? 999;
+      if (ra !== rb) return ra - rb;
+      // h. Wikipedia order
+      return order.indexOf(a) - order.indexOf(b);
     });
 
     const rows = teams.map((t, i) => {

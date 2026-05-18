@@ -924,11 +924,37 @@ function renderPickGroupTables() {
     }
   });
 
+  // H2H points from user's picks between two teams
+  function h2hPts(teamA, teamB) {
+    let pa = 0, pb = 0;
+    MATCHES.forEach(([num, , , , t1, t2]) => {
+      if (!((t1===teamA&&t2===teamB)||(t1===teamB&&t2===teamA))) return;
+      const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
+      if (!val) return;
+      const aIsT1 = t1 === teamA;
+      if (val==='draw') { pa++; pb++; }
+      else if ((val==='w1'&&aIsT1)||(val==='w2'&&!aIsT1)) pa += 3;
+      else pb += 3;
+    });
+    return { a: pa, b: pb };
+  }
+
   const html = Object.keys(groups).sort().map(grp => {
     const order = GROUP_ORDER[grp] || groups[grp];
     const teams = [...order].sort((a, b) => {
       const sa = stats[a], sb = stats[b];
-      return (sb.Pts - sa.Pts) || (sb.W - sa.W) || (order.indexOf(a) - order.indexOf(b));
+      // 1. Points
+      if (sb.Pts !== sa.Pts) return sb.Pts - sa.Pts;
+      // 2. H2H points (criterion a)
+      const h2h = h2hPts(a, b);
+      if (h2h.b !== h2h.a) return h2h.b - h2h.a;
+      // 3. Overall wins (proxy for GD — no scores in picks)
+      if (sb.W !== sa.W) return sb.W - sa.W;
+      // 4. FIFA ranking (lower = better)
+      const ra = RANKINGS[a] ?? 999, rb = RANKINGS[b] ?? 999;
+      if (ra !== rb) return ra - rb;
+      // 5. Wikipedia order
+      return order.indexOf(a) - order.indexOf(b);
     });
 
     const rows = teams.map((t, i) => {
