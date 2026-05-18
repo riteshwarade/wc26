@@ -1,7 +1,7 @@
 """
 aggregate_picks.py
-Reads all individual pick CSVs from picks/swiftly/ and picks/fandf/,
-combines them into data/swiftly_picks.json and data/fandf_picks.json
+Reads all individual pick CSVs from picks/group/swiftly/ and picks/group/fandf/,
+combines them into data/group_swiftly_picks.json and data/group_fandf_picks.json
 for use by the leaderboard pages.
 """
 
@@ -52,10 +52,6 @@ MATCH_TEAMS = {
 
 
 def name_from_filename(filename, pool_id):
-    """
-    Convert filename to display name.
-    e.g. wc26group_swiftly_john-smith.csv → John Smith
-    """
     base = os.path.basename(filename)
     prefix = f'wc26group_{pool_id}_'
     name_part = base.replace(prefix, '').replace('.csv', '')
@@ -63,11 +59,6 @@ def name_from_filename(filename, pool_id):
 
 
 def load_picks_csv(filepath, match_teams):
-    """
-    Load a picks CSV file and return a dict of {match_num: outcome}.
-    Format: match#, "Team1 v Team2", "Team1 win" / "Draw" / "Team2 win"
-    Outcome returned as 'W1', 'Draw', or 'W2'.
-    """
     picks = {}
     with open(filepath, newline='', encoding='utf-8') as f:
         for row in csv.reader(f):
@@ -84,16 +75,15 @@ def load_picks_csv(filepath, match_teams):
                 elif label == f'{t2} win':
                     outcome = 'W2'
                 else:
-                    continue  # unrecognised label
+                    continue
                 picks[match_num] = outcome
             except (ValueError, IndexError):
                 continue
     return picks
 
 
-def aggregate_pool(pool_id):
-    """Aggregate all CSV picks for a pool into a single dict."""
-    picks_dir = f'picks/{pool_id}'
+def aggregate_pool(stage, pool_id):
+    picks_dir = f'picks/{stage}/{pool_id}'
     if not os.path.exists(picks_dir):
         print(f'  No picks directory: {picks_dir}')
         return {}
@@ -112,9 +102,9 @@ def aggregate_pool(pool_id):
     return all_picks
 
 
-def write_json(pool_id, all_picks):
+def write_json(stage, pool_id, all_picks):
     os.makedirs('data', exist_ok=True)
-    path = f'data/{pool_id}_picks.json'
+    path = f'data/{stage}_{pool_id}_picks.json'
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(all_picks, f, indent=2)
     print(f'Wrote {len(all_picks)} participants → {path}')
@@ -122,6 +112,6 @@ def write_json(pool_id, all_picks):
 
 if __name__ == '__main__':
     for pool_id in ['swiftly', 'fandf']:
-        print(f'\nAggregating {pool_id} picks...')
-        picks = aggregate_pool(pool_id)
-        write_json(pool_id, picks)
+        print(f'\nAggregating group stage — {pool_id}...')
+        picks = aggregate_pool('group', pool_id)
+        write_json('group', pool_id, picks)

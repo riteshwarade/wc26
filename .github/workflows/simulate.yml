@@ -1,0 +1,38 @@
+name: Simulate picks and results
+
+on:
+  workflow_dispatch:
+    inputs:
+      participants:
+        description: 'Number of simulated participants per pool'
+        required: true
+        default: '5'
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate simulation data (all 72 matches)
+        run: python .github/scripts/simulate.py --participants ${{ github.event.inputs.participants }}
+
+      - name: Aggregate picks
+        run: python .github/scripts/aggregate_picks.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add picks/ results/ data/
+          git diff --staged --quiet || git commit -m "simulation: ${{ github.event.inputs.participants }} participants, all 72 matches"
+          git push
