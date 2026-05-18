@@ -414,6 +414,94 @@
   .group-table tr.eliminated     td { background: #fdf0f0; color: var(--neutral-medium); }
   .group-table tr.eliminated td.td-team { color: var(--neutral-dark); }
 
+  /* ── Knockout bracket ── */
+  .bracket-rounds {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid var(--neutral-light);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 5px rgba(0,0,0,0.04);
+  }
+
+  .bracket-round {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 180px;
+    flex-shrink: 0;
+  }
+
+  .bracket-round-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    padding: 4px 0 6px;
+    border-bottom: 1px solid var(--neutral-light);
+    margin-bottom: 4px;
+  }
+
+  .bracket-match {
+    background: var(--neutral-lightest);
+    border: 1px solid var(--neutral-light);
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 0.78rem;
+  }
+
+  .bracket-match-num {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--neutral-medium);
+    background: var(--neutral-light);
+    padding: 2px 6px;
+    text-align: right;
+  }
+
+  .bracket-team {
+    padding: 4px 8px;
+    font-weight: 700;
+    color: var(--neutral-darkest);
+    border-bottom: 0.5px solid var(--neutral-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bracket-team:last-child { border-bottom: none; }
+  .bracket-team.tbd { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
+  .bracket-team.winner { background: var(--blue-lightest); color: var(--swiftly-blue); }
+
+  .bracket-final {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 180px;
+    flex-shrink: 0;
+  }
+
+  .bracket-final-label {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: var(--swiftly-blue);
+    text-align: center;
+  }
+
+  .bracket-pending {
+    font-size: 0.82rem;
+    color: var(--neutral-dark);
+    text-align: center;
+    padding: 32px 16px;
+    font-style: italic;
+  }
+
   /* ── Loading / error states ── */
   .state-msg {
     text-align: center;
@@ -474,6 +562,15 @@
           <div class="state-msg"><span class="emoji">⏳</span>Loading…</div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <p class="section-label" onclick="toggleSection('bracket')">
+    <span class="section-chevron">▼</span> Knockout bracket
+  </p>
+  <div class="section-body" id="bracket-body">
+    <div id="bracketCard">
+      <div class="state-msg"><span class="emoji">⏳</span>Loading…</div>
     </div>
   </div>
 
@@ -983,6 +1080,610 @@ function toggleSection(id) {
   chevron.style.transform = isOpen ? 'rotate(-90deg)' : '';
 }
 
+// ── Knockout bracket ─────────────────────────────────────
+// 495 combinations: key = sorted 8 qualifying group letters
+// value = [1A-opp, 1B-opp, 1D-opp, 1E-opp, 1G-opp, 1I-opp, 1K-opp, 1L-opp]
+// These map to matches: [M79, M85, M81, M74, M82, M77, M87, M80]
+const THIRD_COMBOS = (function() {
+  const raw = `EFGHIJKL:E J I F H G L K
+DFGHIJKL:H G I D J F L K
+DEGHIJKL:E J I D H G L K
+DEFHIJKL:E J I D H F L K
+DEFGIJKL:E G I D J F L K
+DEFGHJKL:E G J D H F L K
+DEFGHIKL:E G I D H F L K
+DEFGHIJL:E G J D H F L I
+DEFGHIJK:E G J D H F I K
+CFGHIJKL:H G I C J F L K
+CEGHIJKL:E J I C H G L K
+CEFHIJKL:E J I C H F L K
+CEFGIJKL:E G I C J F L K
+CEFGHJKL:E G J C H F L K
+CEFGHIKL:E G I C H F L K
+CEFGHIJL:E G J C H F L I
+CEFGHIJK:E G J C H F I K
+CDGHIJKL:H G I C J D L K
+CDFHIJKL:C J I D H F L K
+CDFGIJKL:C G I D J F L K
+CDFGHJKL:C G J D H F L K
+CDFGHIKL:C G I D H F L K
+CDFGHIJL:C G J D H F L I
+CDFGHIJK:C G J D H F I K
+CDEHIJKL:E J I C H D L K
+CDEGIJKL:E G I C J D L K
+CDEGHJKL:E G J C H D L K
+CDEGHIKL:E G I C H D L K
+CDEGHIJL:E G J C H D L I
+CDEGHIJK:E G J C H D I K
+CDEFIJKL:C J E D I F L K
+CDEFHJKL:C J E D H F L K
+CDEFHIKL:C E I D H F L K
+CDEFHIJL:C J E D H F L I
+CDEFHIJK:C J E D H F I K
+CDEFGJKL:C G E D J F L K
+CDEFGIKL:C G E D I F L K
+CDEFGIJL:C G E D J F L I
+CDEFGIJK:C G E D J F I K
+CDEFGHKL:C G E D H F L K
+CDEFGHJL:C G J D H F L E
+CDEFGHJK:C G J D H F E K
+CDEFGHIL:C G E D H F L I
+CDEFGHIK:C G E D H F I K
+CDEFGHIJ:C G J D H F E I
+BFGHIJKL:H J B F I G L K
+BEGHIJKL:E J I B H G L K
+BEFHIJKL:E J B F I H L K
+BEFGIJKL:E J B F I G L K
+BEFGHJKL:E J B F H G L K
+BEFGHIKL:E G B F I H L K
+BEFGHIJL:E J B F H G L I
+BEFGHIJK:E J B F H G I K
+BDGHIJKL:H J B D I G L K
+BDFHIJKL:H J B D I F L K
+BDFGIJKL:I G B D J F L K
+BDFGHJKL:H G B D J F L K
+BDFGHIKL:H G B D I F L K
+BDFGHIJL:H G B D J F L I
+BDFGHIJK:H G B D J F I K
+BDEHIJKL:E J B D I H L K
+BDEGIJKL:E J B D I G L K
+BDEGHJKL:E J B D H G L K
+BDEGHIKL:E G B D I H L K
+BDEGHIJL:E J B D H G L I
+BDEGHIJK:E J B D H G I K
+BDEFIJKL:E J B D I F L K
+BDEFHJKL:E J B D H F L K
+BDEFHIKL:E I B D H F L K
+BDEFHIJL:E J B D H F L I
+BDEFHIJK:E J B D H F I K
+BDEFGJKL:E G B D J F L K
+BDEFGIKL:E G B D I F L K
+BDEFGIJL:E G B D J F L I
+BDEFGIJK:E G B D J F I K
+BDEFGHKL:E G B D H F L K
+BDEFGHJL:H G B D J F L E
+BDEFGHJK:H G B D J F E K
+BDEFGHIL:E G B D H F L I
+BDEFGHIK:E G B D H F I K
+BDEFGHIJ:H G B D J F E I
+BCGHIJKL:H J B C I G L K
+BCFHIJKL:H J B C I F L K
+BCFGIJKL:I G B C J F L K
+BCFGHJKL:H G B C J F L K
+BCFGHIKL:H G B C I F L K
+BCFGHIJL:H G B C J F L I
+BCFGHIJK:H G B C J F I K
+BCEHIJKL:E J B C I H L K
+BCEGIJKL:E J B C I G L K
+BCEGHJKL:E J B C H G L K
+BCEGHIKL:E G B C I H L K
+BCEGHIJL:E J B C H G L I
+BCEGHIJK:E J B C H G I K
+BCEFIJKL:E J B C I F L K
+BCEFHJKL:E J B C H F L K
+BCEFHIKL:E I B C H F L K
+BCEFHIJL:E J B C H F L I
+BCEFHIJK:E J B C H F I K
+BCEFGJKL:E G B C J F L K
+BCEFGIKL:E G B C I F L K
+BCEFGIJL:E G B C J F L I
+BCEFGIJK:E G B C J F I K
+BCEFGHKL:E G B C H F L K
+BCEFGHJL:H G B C J F L E
+BCEFGHJK:H G B C J F E K
+BCEFGHIL:E G B C H F L I
+BCEFGHIK:E G B C H F I K
+BCEFGHIJ:H G B C J F E I
+BCDGHIJKL:H J B C I D L K
+BCDFGIJKL:I G B C J F L K
+BCDFGHJKL:H G B C J F L K
+BCDFGHIKL:H G B C I F L K
+BCDFGHIJL:H G B C J F L I
+BCDFGHIJK:H G B C J F I K
+BCDFIJKL:C J B D I F L K
+BCDFHJKL:C J B D H F L K
+BCDFHIKL:C I B D H F L K
+BCDFHIJL:C J B D H F L I
+BCDFHIJK:C J B D H F I K
+BCDFGJKL:C G B D J F L K
+BCDFGIKL:C G B D I F L K
+BCDFGIJL:C G B D J F L I
+BCDFGIJK:C G B D J F I K
+BCDFGHKL:C G B D H F L K
+BCDFGHJL:C G B D H F L J
+BCDFGHJK:H G B C J F D K
+BCDFGHIL:C G B D H F L I
+BCDFGHIK:C G B D H F I K
+BCDFGHIJ:H G B C J F D I
+BCDEHIJKL:E J B C I D L K
+BCDEHJKL:E J B C H D L K
+BCDEHIKL:E I B C H D L K
+BCDEHIJL:E J B C H D L I
+BCDEHIJK:E J B C H D I K
+BCDEGJKL:E G B C J D L K
+BCDEGIKL:E G B C I D L K
+BCDEGIJL:E G B C J D L I
+BCDEGIJK:E G B C J D I K
+BCDEGHKL:E G B C H D L K
+BCDEGHIJL:H G B C J D L E
+BCDEGHIJK:H G B C J D E K
+BCDEGHIL:E G B C H D L I
+BCDEGHIK:E G B C H D I K
+BCDEGHIJ:H G B C J D E I
+BCDEFIJKL:C J B D E F L K
+BCDEFIKL:C E B D I F L K
+BCDEFIJL:C J B D E F L I
+BCDEFIJK:C J B D E F I K
+BCDEFHKL:C E B D H F L K
+BCDEFHJL:C J B D H F L E
+BCDEFHJK:C J B D H F E K
+BCDEFHIL:C E B D H F L I
+BCDEFHIK:C E B D H F I K
+BCDEFHIJ:C J B D H F E I
+BCDEFGKL:C E B D E F L K
+BCDEFGJL:C J B D J F L E
+BCDEFGJK:C J B D J F E K
+BCDEFGIL:C E B D E F L I
+BCDEFGIK:C E B D E F I K
+BCDEFGIJ:C E B D J F E I
+BCDEFGHL:C G B D H F L E
+BCDEFGHK:H G B C H F D K
+BCDEFGHJ:H G B C J F D E
+BCDEFGHI:C G B D H F E I
+AFGHIJKL:H J I F A G L K
+AEGHIJKL:E J I A H G L K
+AEFHIJKL:E J I F A H L K
+AEFGIJKL:E J I F A G L K
+AEFGHJKL:E G J F A H L K
+AEFGHIKL:E G I F A H L K
+AEFGHIJL:E G J F A H L I
+AEFGHIJK:E G J F A H I K
+ADGHIJKL:H J I D A G L K
+ADFHIJKL:H J I D A F L K
+ADFGIJKL:I G J D A F L K
+ADFGHJKL:H G J D A F L K
+ADFGHIKL:H G I D A F L K
+ADFGHIJL:H G J D A F L I
+ADFGHIJK:H G J D A F I K
+ADEHIJKL:E J I D A H L K
+ADEGIJKL:E J I D A G L K
+ADEGHJKL:E G J D A H L K
+ADEGHIKL:E G I D A H L K
+ADEGHIJL:E G J D A H L I
+ADEGHIJK:E G J D A H I K
+ADEFIJKL:E J I D A F L K
+ADEFHJKL:H J E D A F L K
+ADEFHIKL:H E I D A F L K
+ADEFHIJL:H J E D A F L I
+ADEFHIJK:H J E D A F I K
+ADEFGJKL:E G J D A F L K
+ADEFGIKL:E G I D A F L K
+ADEFGIJL:E G J D A F L I
+ADEFGIJK:E G J D A F I K
+ADEFGHKL:H G E D A F L K
+ADEFGHJL:H G J D A F L E
+ADEFGHJK:H G J D A F E K
+ADEFGHIL:H G E D A F L I
+ADEFGHIK:H G E D A F I K
+ADEFGHIJ:H G J D A F E I
+ACGHIJKL:H J I C A G L K
+ACFHIJKL:H J I C A F L K
+ACFGIJKL:I G J C A F L K
+ACFGHJKL:H G J C A F L K
+ACFGHIKL:H G I C A F L K
+ACFGHIJL:H G J C A F L I
+ACFGHIJK:H G J C A F I K
+ACEHIJKL:E J I C A H L K
+ACEGIJKL:E J I C A G L K
+ACEGHJKL:E G J C A H L K
+ACEGHIKL:E G I C A H L K
+ACEGHIJL:E G J C A H L I
+ACEGHIJK:E G J C A H I K
+ACEFIJKL:E J I C A F L K
+ACEFHJKL:H J E C A F L K
+ACEFHIKL:H E I C A F L K
+ACEFHIJL:H J E C A F L I
+ACEFHIJK:H J E C A F I K
+ACEFGJKL:E G J C A F L K
+ACEFGIKL:E G I C A F L K
+ACEFGIJL:E G J C A F L I
+ACEFGIJK:E G J C A F I K
+ACEFGHKL:H G E C A F L K
+ACEFGHJL:H G J C A F L E
+ACEFGHJK:H G J C A F E K
+ACEFGHIL:H G E C A F L I
+ACEFGHIK:H G E C A F I K
+ACEFGHIJ:H G J C A F E I
+ACDGHIJKL:H J I C A D L K
+ACDGIJKL:I G J C A D L K
+ACDGHJKL:H G J C A D L K
+ACDGHIKL:H G I C A D L K
+ACDGHIJL:H G J C A D L I
+ACDGHIJK:H G J C A D I K
+ACDFIJKL:C J I D A F L K
+ACDFHJKL:H J F C A D L K
+ACDFHIKL:H F I C A D L K
+ACDFHIJL:H J F C A D L I
+ACDFHIJK:H J F C A D I K
+ACDFGJKL:C G J D A F L K
+ACDFGIKL:C G I D A F L K
+ACDFGIJL:C G J D A F L I
+ACDFGIJK:C G J D A F I K
+ACDFGHKL:H G F C A D L K
+ACDFGHJL:C G J D A F L H
+ACDFGHJK:H G J C A F D K
+ACDFGHIL:H G F C A D L I
+ACDFGHIK:H G F C A D I K
+ACDFGHIJ:H G J C A F D I
+ACDEHIJKL:E J I C A D L K
+ACDEHJKL:H J E C A D L K
+ACDEHIKL:H E I C A D L K
+ACDEHIJL:H J E C A D L I
+ACDEHIJK:H J E C A D I K
+ACDEGJKL:E G J C A D L K
+ACDEGIKL:E G I C A D L K
+ACDEGIJL:E G J C A D L I
+ACDEGIJK:E G J C A D I K
+ACDEGHKL:H G E C A D L K
+ACDEGHIJL:H G J C A D L E
+ACDEGHIJK:H G J C A D E K
+ACDEGHIL:H G E C A D L I
+ACDEGHIK:H G E C A D I K
+ACDEGHIJ:H G J C A D E I
+ACDEFIJKL:C J E D A F L K
+ACDEFIKL:C E I D A F L K
+ACDEFIJL:C J E D A F L I
+ACDEFIJK:C J E D A F I K
+ACDEFHKL:H E F C A D L K
+ACDEFHJL:H J F C A D L E
+ACDEFHJK:H J E C A F D K
+ACDEFHIL:H E F C A D L I
+ACDEFHIK:H E F C A D I K
+ACDEFHIJ:H J E C A F D I
+ACDEFGKL:C G E D A F L K
+ACDEFGJL:C G J D A F L E
+ACDEFGJK:C G J D A F E K
+ACDEFGIL:C G E D A F L I
+ACDEFGIK:C G E D A F I K
+ACDEFGIJ:C G J D A F E I
+ACDEFGHL:H G F C A D L E
+ACDEFGHK:H G E C A F D K
+ACDEFGHJ:H G J C A F D E
+ACDEFGHI:H G E C A F D I
+ABGHIJKL:H J B A I G L K
+ABFHIJKL:H J B A I F L K
+ABFGIJKL:I J B F A G L K
+ABFGHJKL:H J B F A G L K
+ABFGHIKL:H G B A I F L K
+ABFGHIJL:H J B F A G L I
+ABFGHIJK:H J B F A G I K
+ABEHIJKL:E J B A I H L K
+ABEGIJKL:E J B A I G L K
+ABEGHJKL:E J B A H G L K
+ABEGHIKL:E G B A I H L K
+ABEGHIJL:E J B A H G L I
+ABEGHIJK:E J B A H G I K
+ABEFIJKL:E J B A I F L K
+ABEFHJKL:E J B F A H L K
+ABEFHIKL:E I B F A H L K
+ABEFHIJL:E J B F A H L I
+ABEFHIJK:E J B F A H I K
+ABEFGJKL:E J B F A G L K
+ABEFGIKL:E G B A I F L K
+ABEFGIJL:E J B F A G L I
+ABEFGIJK:E J B F A G I K
+ABEFGHKL:E G B F A H L K
+ABEFGHJL:H J B F A G L E
+ABEFGHJK:H J B F A G E K
+ABEFGHIL:E G B F A H L I
+ABEFGHIK:E G B F A H I K
+ABEFGHIJ:H J B F A G E I
+ABDGHIJKL:I J B D A H L K
+ABDGIJKL:I J B D A G L K
+ABDGHJKL:H J B D A G L K
+ABDGHIKL:I G B D A H L K
+ABDGHIJL:H J B D A G L I
+ABDGHIJK:H J B D A G I K
+ABDFIJKL:I J B D A F L K
+ABDFHJKL:H J B D A F L K
+ABDFHIKL:H I B D A F L K
+ABDFHIJL:H J B D A F L I
+ABDFHIJK:H J B D A F I K
+ABDFGJKL:F J B D A G L K
+ABDFGIKL:I G B D A F L K
+ABDFGIJL:F J B D A G L I
+ABDFGIJK:F J B D A G I K
+ABDFGHKL:H G B D A F L K
+ABDFGHJL:H G B D A F L J
+ABDFGHJK:H G B D A F J K
+ABDFGHIL:H G B D A F L I
+ABDFGHIK:H G B D A F I K
+ABDFGHIJ:H G B D A F I J
+ABDEHIJKL:E J B A I D L K
+ABDEHJKL:E J B D A H L K
+ABDEHIKL:E I B D A H L K
+ABDEHIJL:E J B D A H L I
+ABDEHIJK:E J B D A H I K
+ABDEGJKL:E J B D A G L K
+ABDEGIKL:E G B A I D L K
+ABDEGIJL:E J B D A G L I
+ABDEGIJK:E J B D A G I K
+ABDEGHKL:E G B D A H L K
+ABDEGHIJL:H J B D A G L E
+ABDEGHIJK:H J B D A G E K
+ABDEGHIL:E G B D A H L I
+ABDEGHIK:E G B D A H I K
+ABDEGHIJ:H J B D A G E I
+ABDEFIJKL:E J B D A F L K
+ABDEFIKL:E I B D A F L K
+ABDEFIJL:E J B D A F L I
+ABDEFIJK:E J B D A F I K
+ABDEFHKL:H E B D A F L K
+ABDEFHJL:H J B D A F L E
+ABDEFHJK:H J B D A F E K
+ABDEFHIL:H E B D A F L I
+ABDEFHIK:H E B D A F I K
+ABDEFHIJ:H J B D A F E I
+ABDEFGKL:E G B D A F L K
+ABDEFGJL:E G B D A F L J
+ABDEFGJK:E G B D A F J K
+ABDEFGIL:E G B D A F L I
+ABDEFGIK:E G B D A F I K
+ABDEFGIJ:E G B D A F I J
+ABDEFGHL:H G B D A F L E
+ABDEFGHK:H G B D A F E K
+ABDEFGHJ:H G B D A F E J
+ABDEFGHI:H G B D A F E I
+ABCGHIJKL:I J B C A H L K
+ABCGIJKL:I J B C A G L K
+ABCGHJKL:H J B C A G L K
+ABCGHIKL:I G B C A H L K
+ABCGHIJL:H J B C A G L I
+ABCGHIJK:H J B C A G I K
+ABCFIJKL:I J B C A F L K
+ABCFHJKL:H J B C A F L K
+ABCFHIKL:H I B C A F L K
+ABCFHIJL:H J B C A F L I
+ABCFHIJK:H J B C A F I K
+ABCFGJKL:C J B F A G L K
+ABCFGIKL:I G B C A F L K
+ABCFGIJL:C J B F A G L I
+ABCFGIJK:C J B F A G I K
+ABCFGHKL:H G B C A F L K
+ABCFGHJL:H G B C A F L J
+ABCFGHJK:H G B C A F J K
+ABCFGHIL:H G B C A F L I
+ABCFGHIK:H G B C A F I K
+ABCFGHIJ:H G B C A F I J
+ABCEIJKL:E J B A I C L K
+ABCEHJKL:E J B C A H L K
+ABCEHIKL:E I B C A H L K
+ABCEHIJL:E J B C A H L I
+ABCEHIJK:E J B C A H I K
+ABCEGJKL:E J B C A G L K
+ABCEGIKL:E G B A I C L K
+ABCEGIJL:E J B C A G L I
+ABCEGIJK:E J B C A G I K
+ABCEGHKL:E G B C A H L K
+ABCEGHIJL:H J B C A G L E
+ABCEGHIJK:H J B C A G E K
+ABCEGHIL:E G B C A H L I
+ABCEGHIK:E G B C A H I K
+ABCEGHIJ:H J B C A G E I
+ABCEFIJKL:E J B C A F L K
+ABCEFIKL:E I B C A F L K
+ABCEFIJL:E J B C A F L I
+ABCEFIJK:E J B C A F I K
+ABCEFHKL:H E B C A F L K
+ABCEFHJL:H J B C A F L E
+ABCEFHJK:H J B C A F E K
+ABCEFHIL:H E B C A F L I
+ABCEFHIK:H E B C A F I K
+ABCEFHIJ:H J B C A F E I
+ABCEFGKL:E G B C A F L K
+ABCEFGJL:E G B C A F L J
+ABCEFGJK:E G B C A F J K
+ABCEFGIL:E G B C A F L I
+ABCEFGIK:E G B C A F I K
+ABCEFGIJ:E G B C A F I J
+ABCEFGHL:H G B C A F L E
+ABCEFGHK:H G B C A F E K
+ABCEFGHJ:H G B C A F E J
+ABCEFGHI:H G B C A F E I
+ABCDHIJKL:I J B C A D L K
+ABCDGIJKL:I J B C A D L K
+ABCDGHJKL:H J B C A D L K
+ABCDGHIKL:H I B C A D L K
+ABCDGHIJL:H J B C A D L I
+ABCDGHIJK:H J B C A D I K
+ABCDFJKL:C J B D A G L K
+ABCDFIJKL:C J B D A F L K
+ABCDFIKL:C I B D A F L K
+ABCDFIJL:C J B D A F L I
+ABCDFIJK:C J B D A F I K
+ABCDFHKL:H F B C A D L K
+ABCDFHJL:C J B D A F L H
+ABCDFHJK:H J B C A F D K
+ABCDFHIL:H F B C A D L I
+ABCDFHIK:H F B C A D I K
+ABCDFHIJ:H J B C A F D I
+ABCDEHIJKL:E J B C A D L K
+ABCDEIJKL:E I B C A D L K
+ABCDEHIJL:E J B C A D L I
+ABCDEHIJK:E J B C A D I K
+ABCDEHKL:H E B C A D L K
+ABCDEHJL:H J B C A D L E
+ABCDEHJK:H J B C A D E K
+ABCDEHIL:H E B C A D L I
+ABCDEHIK:H E B C A D I K
+ABCDEHIJ:H J B C A D E I
+ABCDEGKL:E G B C A D L K
+ABCDEGJL:E G B C A D L J
+ABCDEGJK:E G B C A D J K
+ABCDEGIL:E G B C A D L I
+ABCDEGIK:E G B C A D I K
+ABCDEGIJ:E G B C A D I J
+ABCDEGHIJL:H G B C A D L E
+ABCDEGHIJK:H G B C A D E K
+ABCDEGHIJ:H G B C A D E J
+ABCDEGHI:H G B C A D E I
+ABCDEFKL:C E B D A F L K
+ABCDEFJL:C J B D A F L E
+ABCDEFJK:C J B D A F E K
+ABCDEFIL:C E B D A F L I
+ABCDEFIK:C E B D A F I K
+ABCDEFIJ:C J B D A F E I
+ABCDEFHL:H F B C A D L E
+ABCDEFHK:H E B C A F D K
+ABCDEFHJ:H J B C A F D E
+ABCDEFHI:H E B C A F D I
+ABCDEFGL:C G B D A F L E
+ABCDEFGK:C G B D A F E K
+ABCDEFGJ:C G B D A F E J
+ABCDEFGI:C G B D A F E I
+ABCDEFGH:H G B C A F D E`;
+  const t = {};
+  raw.split('\n').forEach(line => {
+    const [k, v] = line.split(':');
+    const key = k.trim().split('').filter(c => c !== ' ').sort().join('');
+    if (key.length === 8) t[key] = v.trim().split(' ');
+  });
+  return t;
+})();
+
+// Round of 32 structure — match → [home slot, away slot]
+// Slots: 1X = winner group X, 2X = runner-up, 3rd = best third
+const R32_SLOTS = {
+  73: ['2A','2B'], 74: ['1E','3M74'], 75: ['1F','2C'], 76: ['1C','2F'],
+  77: ['1I','3M77'], 78: ['2E','2I'], 79: ['1A','3M79'], 80: ['1L','3M80'],
+  81: ['1D','3M81'], 82: ['1G','3M82'], 83: ['2K','2L'], 84: ['1H','2J'],
+  85: ['1B','3M85'], 86: ['1J','2H'], 87: ['1K','3M87'], 88: ['2D','2G'],
+};
+// 3rd place slots: match → column index in combination [M79,M85,M81,M74,M82,M77,M87,M80]
+const THIRD_MATCH_COL = {79:0, 85:1, 81:2, 74:3, 82:4, 77:5, 87:6, 80:7};
+
+// Round of 16 and beyond
+const R16 = {89:[74,77], 90:[73,75], 91:[76,78], 92:[79,80],
+             93:[83,84], 94:[81,82], 95:[86,88], 96:[85,87]};
+const QF  = {97:[89,90], 98:[93,94], 99:[91,92], 100:[95,96]};
+const SF  = {101:[97,98], 102:[99,100]};
+
+function computeBracket(standings, qualifiedThirds, results) {
+  // Build position lookup
+  const pos = {};
+  Object.entries(standings).forEach(([grp, teams]) => {
+    if (teams[0]) pos[`1${grp}`] = teams[0][0];
+    if (teams[1]) pos[`2${grp}`] = teams[1][0];
+    if (teams[2]) pos[`3${grp}`] = teams[2][0];
+  });
+
+  // 3rd place combination lookup
+  const qualGroups = qualifiedThirds.slice(0,8).map(([g]) => g).sort().join('');
+  const combo = THIRD_COMBOS[qualGroups];
+  const thirdSlot = {}; // match → team
+  if (combo) {
+    [79,85,81,74,82,77,87,80].forEach((m,i) => {
+      const grp = combo[i];
+      thirdSlot[m] = pos[`3${grp}`] || `3${grp}`;
+    });
+  } else {
+    [79,85,81,74,82,77,87,80].forEach(m => { thirdSlot[m] = 'TBD'; });
+  }
+
+  // Resolve team for a slot string
+  function slotTeam(slot) {
+    if (slot.startsWith('3M')) {
+      const m = parseInt(slot.slice(2));
+      return thirdSlot[m] || 'TBD';
+    }
+    return pos[slot] || slot;
+  }
+
+  // Build R32 matchups
+  const r32teams = {};
+  Object.entries(R32_SLOTS).forEach(([m, [h, a]]) => {
+    r32teams[+m] = [slotTeam(h), slotTeam(a)];
+  });
+
+  return { pos, thirdSlot, r32teams, combo: !!combo, qualGroups };
+}
+
+function matchCard(num, home, away, label) {
+  const homeCls = home === 'TBD' || home.startsWith('1') || home.startsWith('2') || home.startsWith('3') ? 'tbd' : '';
+  const awayCls = away === 'TBD' || away.startsWith('1') || away.startsWith('2') || away.startsWith('3') ? 'tbd' : '';
+  return `<div class="bracket-match">
+    <div class="bracket-match-num">M${num}${label ? ' · '+label : ''}</div>
+    <div class="bracket-team ${homeCls}">${home}</div>
+    <div class="bracket-team ${awayCls}">${away}</div>
+  </div>`;
+}
+
+function renderBracket(results, standings, qualifiedThirds, allGroupsStarted) {
+  const el = document.getElementById('bracketCard');
+
+  if (!allGroupsStarted) {
+    el.innerHTML = '<div class="bracket-pending">Bracket appears once all groups have kicked off.</div>';
+    return;
+  }
+
+  const { r32teams } = computeBracket(standings, qualifiedThirds, results);
+
+  // Helper: team for a later-round slot
+  const wteam = (m) => {
+    if (r32teams[m]) return r32teams[m].join(' / ');
+    return `W${m}`;
+  };
+
+  // Render rounds as columns
+  const rounds = [
+    { label: 'Round of 32', matches: [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88] },
+    { label: 'Round of 16', matches: [89,90,91,92,93,94,95,96] },
+    { label: 'Quarterfinals', matches: [97,98,99,100] },
+    { label: 'Semifinals', matches: [101,102] },
+    { label: 'Final / 3rd', matches: [103,104] },
+  ];
+
+  const cols = rounds.map(round => {
+    const cards = round.matches.map(m => {
+      let home = 'TBD', away = 'TBD';
+      if (r32teams[m]) { [home, away] = r32teams[m]; }
+      else if (R16[m])  { home = `W${R16[m][0]}`; away = `W${R16[m][1]}`; }
+      else if (QF[m])   { home = `W${QF[m][0]}`;  away = `W${QF[m][1]}`; }
+      else if (SF[m])   { home = `W${SF[m][0]}`;  away = `W${SF[m][1]}`; }
+      else if (m===103) { home = 'L101'; away = 'L102'; }
+      else if (m===104) { home = 'W101'; away = 'W102'; }
+      const label = m===103 ? '3rd' : m===104 ? '🏆' : '';
+      return matchCard(m, home, away, label);
+    }).join('');
+    return `<div class="bracket-round">
+      <div class="bracket-round-label">${round.label}</div>
+      ${cards}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `<div class="bracket-rounds">${cols}</div>`;
+}
+
 // ── Tooltip ───────────────────────────────────────────────
 const tooltip = document.getElementById('sq-tooltip');
 
@@ -1054,12 +1755,14 @@ async function init() {
     renderStandings(standings, results);
     renderResults(results);
     renderGroupTables(results);
+    renderBracket(results, standings, sortedThirds, allGroupsStarted);
 
   } catch (err) {
     const msg = `<div class="state-msg"><span class="emoji">⚠️</span>${err.message}</div>`;
     document.getElementById('standingsCard').innerHTML  = msg;
     document.getElementById('resultsCard').innerHTML    = msg;
     document.getElementById('groupTablesCard').innerHTML = msg;
+    document.getElementById('bracketCard').innerHTML    = msg;
     document.getElementById('matchesPlayed').textContent = 'Could not load data';
   }
 }
