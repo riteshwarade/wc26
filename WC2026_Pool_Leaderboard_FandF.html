@@ -415,85 +415,95 @@
   .group-table tr.eliminated td.td-team { color: var(--neutral-dark); }
 
   /* ── Knockout bracket ── */
-  .bracket-rounds {
-    display: flex;
-    gap: 8px;
+  .bk-wrap {
     overflow-x: auto;
-    padding: 12px;
-    background: #ffffff;
-    border: 1px solid var(--neutral-light);
-    border-radius: var(--radius);
-    box-shadow: 0 1px 5px rgba(0,0,0,0.04);
+    padding: 14px 4px 18px;
   }
-
-  .bracket-round {
+  .bk-bracket {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 180px;
-    flex-shrink: 0;
+    gap: 0;
+    min-width: max-content;
+    align-items: flex-start;
   }
-
-  .bracket-round-label {
-    font-size: 0.65rem;
+  .bk-col {
+    width: 158px;
+    flex-shrink: 0;
+    padding: 0 7px;
+  }
+  .bk-col-hdr {
+    font-size: 0.6rem;
     font-weight: 700;
-    color: var(--neutral-dark);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
     text-align: center;
-    padding: 4px 0 6px;
-    border-bottom: 1px solid var(--neutral-light);
-    margin-bottom: 4px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid;
+    margin-bottom: 10px;
   }
-
-  .bracket-match {
-    background: var(--neutral-lightest);
-    border: 1px solid var(--neutral-light);
-    border-radius: 6px;
-    overflow: hidden;
-    font-size: 0.78rem;
-  }
-
-  .bracket-match-num {
-    font-size: 0.62rem;
-    font-weight: 700;
-    color: var(--neutral-medium);
-    background: var(--neutral-light);
-    padding: 2px 6px;
-    text-align: right;
-  }
-
-  .bracket-team {
-    padding: 4px 8px;
-    font-weight: 700;
-    color: var(--neutral-darkest);
-    border-bottom: 0.5px solid var(--neutral-light);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .bracket-team:last-child { border-bottom: none; }
-  .bracket-team.tbd { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
-  .bracket-team.winner { background: var(--blue-lightest); color: var(--swiftly-blue); }
-
-  .bracket-final {
+  .bk-col.r32 .bk-col-hdr { border-color: #B5D4F4; color: #378ADD; }
+  .bk-col.r16 .bk-col-hdr { border-color: #85B7EB; color: #185FA5; }
+  .bk-col.qf  .bk-col-hdr { border-color: #378ADD; color: #185FA5; }
+  .bk-col.sf  .bk-col-hdr { border-color: #185FA5; color: #0C447C; }
+  .bk-col.fin .bk-col-hdr { border-color: #0C447C; color: #0C447C; }
+  .bk-matches {
     display: flex;
     flex-direction: column;
+    gap: 6px;
+  }
+  .bk-card {
+    background: #ffffff;
+    border: 0.5px solid var(--neutral-light);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .bk-mnum {
+    font-size: 0.6rem;
+    color: var(--neutral-medium);
+    text-align: right;
+    padding: 2px 8px;
+    background: var(--neutral-lightest);
+    letter-spacing: 0.2px;
+  }
+  .bk-team {
+    display: flex;
     align-items: center;
-    gap: 8px;
-    min-width: 180px;
-    flex-shrink: 0;
+    gap: 6px;
+    padding: 5px 8px;
+    font-size: 0.72rem;
   }
-
-  .bracket-final-label {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    font-size: 0.78rem;
-    color: var(--swiftly-blue);
+  .bk-team + .bk-team { border-top: 0.5px solid var(--neutral-light); }
+  .bk-fl { font-size: 0.85rem; line-height: 1; flex-shrink: 0; width: 16px; text-align: center; }
+  .bk-tn { flex: 1; font-weight: 600; color: var(--neutral-darkest); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk-sc { font-size: 0.72rem; font-weight: 700; color: var(--neutral-medium); min-width: 12px; text-align: right; flex-shrink: 0; }
+  .bk-team.tbd .bk-fl { opacity: 0.25; }
+  .bk-team.tbd .bk-tn { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
+  .bk-team.w { background: var(--blue-lightest); }
+  .bk-team.w .bk-tn { color: #042C53; font-weight: 700; }
+  .bk-team.w .bk-sc { color: #185FA5; }
+  .bk-team.l .bk-fl { opacity: 0.35; }
+  .bk-team.l .bk-tn { color: var(--neutral-medium); font-weight: 400; }
+  .bk-team.l .bk-sc { color: var(--neutral-light2); }
+  .bk-pens {
+    font-size: 0.58rem;
+    color: var(--neutral-medium);
+    padding: 1px 8px 3px;
+    font-style: italic;
+    text-align: right;
+    background: var(--neutral-lightest);
+    border-top: 0.5px solid var(--neutral-light);
+  }
+  .bk-3rd-sep {
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--neutral-medium);
     text-align: center;
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 0.5px solid var(--neutral-light);
+    margin-bottom: 6px;
   }
-
+  .bk-3rd-card { opacity: 0.65; }
   .bracket-pending {
     font-size: 0.82rem;
     color: var(--neutral-dark);
@@ -1634,13 +1644,40 @@ function computeBracket(grpStandings, qualifiedThirds, results) {
   return { pos, thirdSlot, r32teams, combo: !!combo, qualGroups };
 }
 
-function matchCard(num, home, away, label) {
-  const homeCls = home === 'TBD' || home.startsWith('1') || home.startsWith('2') || home.startsWith('3') ? 'tbd' : '';
-  const awayCls = away === 'TBD' || away.startsWith('1') || away.startsWith('2') || away.startsWith('3') ? 'tbd' : '';
-  return `<div class="bracket-match">
-    <div class="bracket-match-num">M${num}${label ? ' · '+label : ''}</div>
-    <div class="bracket-team ${homeCls}">${home}</div>
-    <div class="bracket-team ${awayCls}">${away}</div>
+// ── Flag emoji lookup ─────────────────────────────────────
+const FLAGS = {
+  'Mexico':'🇲🇽','South Africa':'🇿🇦','South Korea':'🇰🇷','Czech Republic':'🇨🇿',
+  'Canada':'🇨🇦','Bosnia and Herzegovina':'🇧🇦','Qatar':'🇶🇦','Switzerland':'🇨🇭',
+  'Brazil':'🇧🇷','Morocco':'🇲🇦','Haiti':'🇭🇹','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  'United States':'🇺🇸','Paraguay':'🇵🇾','Australia':'🇦🇺','Turkey':'🇹🇷',
+  'Germany':'🇩🇪','Curaçao':'🇨🇼','Ivory Coast':'🇨🇮','Ecuador':'🇪🇨',
+  'Netherlands':'🇳🇱','Japan':'🇯🇵','Sweden':'🇸🇪','Tunisia':'🇹🇳',
+  'Belgium':'🇧🇪','Egypt':'🇪🇬','Iran':'🇮🇷','New Zealand':'🇳🇿',
+  'Spain':'🇪🇸','Cape Verde':'🇨🇻','Saudi Arabia':'🇸🇦','Uruguay':'🇺🇾',
+  'France':'🇫🇷','Senegal':'🇸🇳','Iraq':'🇮🇶','Norway':'🇳🇴',
+  'Argentina':'🇦🇷','Algeria':'🇩🇿','Austria':'🇦🇹','Jordan':'🇯🇴',
+  'Portugal':'🇵🇹','DR Congo':'🇨🇩','Uzbekistan':'🇺🇿','Colombia':'🇨🇴',
+  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Croatia':'🇭🇷','Ghana':'🇬🇭','Panama':'🇵🇦',
+};
+
+function isTbd(name) {
+  return !name || name === 'TBD' || /^[WL]\d+$/.test(name) || /^[12][A-L]$/.test(name) || /^3M\d+$/.test(name);
+}
+
+function bkTeamRow(name, stateCls, score) {
+  const tbd = isTbd(name);
+  const cls = tbd ? 'tbd' : (stateCls || '');
+  const flag = tbd ? '—' : (FLAGS[name] || '🏳');
+  const sc = (score !== undefined && score !== null && score !== '') ? `<span class="bk-sc">${score}</span>` : '';
+  return `<div class="bk-team ${cls}"><span class="bk-fl">${flag}</span><span class="bk-tn">${name}</span>${sc}</div>`;
+}
+
+function matchCard(num, home, away, label, homeScore, awayScore, homeCls, awayCls) {
+  const mnumText = `M${num}${label ? ' · ' + label : ''}`;
+  return `<div class="bk-card">
+    <div class="bk-mnum">${mnumText}</div>
+    ${bkTeamRow(home, homeCls, homeScore)}
+    ${bkTeamRow(away, awayCls, awayScore)}
   </div>`;
 }
 
@@ -1756,8 +1793,8 @@ function renderBracket(results, allGroupsStarted) {
 
   const isConfirmed = Object.keys(results).length >= 72;
   const statusBadge = isConfirmed
-    ? '<span style="margin-left:8px;font-size:0.65rem;background:#22863a;color:#fff;padding:2px 7px;border-radius:10px;font-weight:700;text-transform:none;letter-spacing:0">Confirmed ✓</span>'
-    : '<span style="margin-left:8px;font-size:0.65rem;background:#ff9e16;color:#131e27;padding:2px 7px;border-radius:10px;font-weight:700;text-transform:none;letter-spacing:0">Provisional</span>';
+    ? '<span style="margin-left:8px;font-size:0.6rem;background:#22863a;color:#fff;padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:0">Confirmed ✓</span>'
+    : '<span style="margin-left:8px;font-size:0.6rem;background:#ff9e16;color:#131e27;padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:0">Provisional</span>';
   const bracketLabel = document.querySelector('[onclick*="bracket"]');
   if (bracketLabel && !bracketLabel.querySelector('.bracket-badge')) {
     const span = document.createElement('span');
@@ -1769,40 +1806,52 @@ function renderBracket(results, allGroupsStarted) {
   const { grpStandings, thirds } = computeGroupStandings(results);
   const { r32teams } = computeBracket(grpStandings, thirds, results);
 
-  // Helper: team for a later-round slot
-  const wteam = (m) => {
-    if (r32teams[m]) return r32teams[m].join(' / ');
-    return `W${m}`;
-  };
+  // Resolve teams for a match slot — returns [home, away]
+  function slotTeams(m) {
+    if (r32teams[m]) return r32teams[m];
+    if (R16[m])  return [`W${R16[m][0]}`, `W${R16[m][1]}`];
+    if (QF[m])   return [`W${QF[m][0]}`,  `W${QF[m][1]}`];
+    if (SF[m])   return [`W${SF[m][0]}`,  `W${SF[m][1]}`];
+    if (m===103) return ['L101','L102'];
+    if (m===104) return ['W101','W102'];
+    return ['TBD','TBD'];
+  }
 
-  // Render rounds as columns
-  const rounds = [
-    { label: 'Round of 32', matches: [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88] },
-    { label: 'Round of 16', matches: [89,90,91,92,93,94,95,96] },
-    { label: 'Quarterfinals', matches: [97,98,99,100] },
-    { label: 'Semifinals', matches: [101,102] },
-    { label: 'Final / 3rd', matches: [103,104] },
-  ];
-
-  const cols = rounds.map(round => {
-    const cards = round.matches.map(m => {
-      let home = 'TBD', away = 'TBD';
-      if (r32teams[m]) { [home, away] = r32teams[m]; }
-      else if (R16[m])  { home = `W${R16[m][0]}`; away = `W${R16[m][1]}`; }
-      else if (QF[m])   { home = `W${QF[m][0]}`;  away = `W${QF[m][1]}`; }
-      else if (SF[m])   { home = `W${SF[m][0]}`;  away = `W${SF[m][1]}`; }
-      else if (m===103) { home = 'L101'; away = 'L102'; }
-      else if (m===104) { home = 'W101'; away = 'W102'; }
-      const label = m===103 ? '3rd' : m===104 ? '🏆' : '';
+  function renderCol(cls, hdr, matches) {
+    const cards = matches.map(m => {
+      const [home, away] = slotTeams(m);
+      const label = m === 104 ? '🏆' : '';
       return matchCard(m, home, away, label);
     }).join('');
-    return `<div class="bracket-round">
-      <div class="bracket-round-label">${round.label}</div>
-      ${cards}
+    return `<div class="bk-col ${cls}">
+      <div class="bk-col-hdr">${hdr}</div>
+      <div class="bk-matches">${cards}</div>
     </div>`;
-  }).join('');
+  }
 
-  el.innerHTML = `<div class="bracket-rounds">${cols}</div>`;
+  // Final column: trophy match + separated 3rd-place match
+  function renderFinalCol() {
+    const [fh, fa] = slotTeams(104);
+    const [th, ta] = slotTeams(103);
+    return `<div class="bk-col fin">
+      <div class="bk-col-hdr">🏆 Final</div>
+      <div class="bk-matches">
+        ${matchCard(104, fh, fa, '')}
+        <div class="bk-3rd-sep">3rd place · M103</div>
+        <div class="bk-3rd-card">${matchCard(103, th, ta, '')}</div>
+      </div>
+    </div>`;
+  }
+
+  const html = `<div class="bk-wrap"><div class="bk-bracket">
+    ${renderCol('r32','Round of 32',[73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88])}
+    ${renderCol('r16','Round of 16',[89,90,91,92,93,94,95,96])}
+    ${renderCol('qf','Quarterfinals',[97,98,99,100])}
+    ${renderCol('sf','Semifinals',[101,102])}
+    ${renderFinalCol()}
+  </div></div>`;
+
+  el.innerHTML = html;
 }
 
 // ── Tooltip ───────────────────────────────────────────────
