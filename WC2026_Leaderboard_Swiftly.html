@@ -197,6 +197,31 @@
   .sq-wrong   { background: var(--neutral-light); }
   .sq-pending { background: transparent; border: 1px solid var(--neutral-light); }
   .sq-empty   { background: transparent; }
+  .sq         { cursor: pointer; }
+
+  /* ── Tooltip ── */
+  #sq-tooltip {
+    position: fixed;
+    z-index: 1000;
+    background: var(--neutral-darkest);
+    color: #ffffff;
+    border-radius: 7px;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    pointer-events: none;
+    display: none;
+    max-width: 220px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    line-height: 1.5;
+  }
+
+  #sq-tooltip .tt-match  { font-weight: 700; margin-bottom: 4px; color: var(--blue-light); }
+  #sq-tooltip .tt-pick   { margin-bottom: 2px; }
+  #sq-tooltip .tt-result { margin-bottom: 4px; color: var(--neutral-medium); }
+  #sq-tooltip .tt-status { font-weight: 700; }
+  #sq-tooltip .tt-status.correct { color: #5ce65c; }
+  #sq-tooltip .tt-status.wrong   { color: #ff6b6b; }
+  #sq-tooltip .tt-status.pending { color: var(--neutral-medium); }
 
   /* ── Results table ── */
   .results-table {
@@ -229,29 +254,34 @@
   .results-table tbody tr:nth-child(even) { background: var(--neutral-lightest); }
 
   .results-table td {
-    padding: 8px 12px;
+    padding: 5px 12px;
     vertical-align: middle;
     white-space: nowrap;
   }
 
   .td-match-num { color: var(--neutral-medium); font-weight: 700; text-align: center; width: 36px; }
-  .td-grp { color: var(--swiftly-blue); font-weight: 700; }
-  .td-score { font-weight: 700; }
-  .td-teams { color: var(--neutral-dark); }
+  .td-grp       { color: var(--swiftly-blue); font-weight: 700; }
+  .td-score     { font-weight: 700; color: var(--neutral-darkest); }
+  .td-teams     { font-weight: 700; color: var(--neutral-darkest); }
 
   .outcome-pill {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 0.72rem;
-    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    border-radius: 5px;
+    border: 1.5px solid var(--swiftly-blue);
     background: var(--swiftly-blue);
     color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 700;
+    white-space: nowrap;
   }
 
   .outcome-pill.draw {
-    background: var(--swiftly-orange);
-    color: var(--neutral-darkest);
+    border-color: var(--neutral-dark);
+    background: var(--neutral-dark);
+    color: #ffffff;
   }
 
   /* ── Loading / error states ── */
@@ -269,7 +299,7 @@
 
 <header>
   <div class="header-inner">
-    <div class="header-title">World Cup 2026 pool — leaderboard</div>
+    <div class="header-title">World Cup 2026 pool — Leaderboard</div>
     <div class="header-subtitle" id="headerSubtitle">Swiftly pool · group stage</div>
   </div>
 </header>
@@ -280,6 +310,8 @@
     <span class="updated-at" id="updatedAt"></span>
   </div>
 </div>
+
+<div id="sq-tooltip"></div>
 
 <div class="container">
 
@@ -301,8 +333,91 @@ const POOL_ID   = 'swiftly';
 const POOL_NAME = 'Swiftly';
 // ──────────────────────────────────────────────────────────
 
+// ── Dev mode ──────────────────────────────────────────────
+// Set to true to use embedded simulation data (no network needed).
+// Set to false to fetch live data from GitHub.
+const USE_LOCAL_DATA = false;
+// ──────────────────────────────────────────────────────────
+
 const PICKS_URL   = `https://raw.githubusercontent.com/riteshwarade/wc26/main/data/group_${POOL_ID}_picks.json`;
 const RESULTS_URL = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/results/group_results.csv';
+
+// ── Embedded simulation data (used when USE_LOCAL_DATA = true) ────────────────
+const LOCAL_PICKS = {"Simulation 1":{"1":"Draw","2":"Draw","3":"Draw","4":"W2","5":"W1","6":"W1","7":"Draw","8":"W2","9":"W1","10":"W1","11":"Draw","12":"W1","13":"Draw","14":"W1","15":"W1","16":"Draw","17":"W1","18":"W1","19":"Draw","20":"Draw","21":"W2","22":"W2","23":"Draw","24":"Draw","25":"W1","26":"W2","27":"W1","28":"Draw","29":"Draw","30":"Draw","31":"W2","32":"Draw","33":"W1","34":"Draw","35":"W1","36":"Draw","37":"W2","38":"W1","39":"Draw","40":"W2","41":"Draw","42":"W1","43":"W2","44":"W2","45":"W2","46":"W2","47":"Draw","48":"Draw","49":"W2","50":"W2","51":"W2","52":"W2","53":"W1","54":"W1","55":"W1","56":"W1","57":"W1","58":"W2","59":"W1","60":"W1","61":"W1","62":"Draw","63":"Draw","64":"W1","65":"Draw","66":"W2","67":"W2","68":"W1","69":"Draw","70":"W1","71":"W1","72":"W1"},"Simulation 2":{"1":"Draw","2":"W1","3":"W2","4":"W1","5":"W1","6":"W2","7":"Draw","8":"W1","9":"Draw","10":"W1","11":"W1","12":"Draw","13":"W2","14":"W1","15":"W1","16":"W2","17":"W1","18":"W2","19":"W1","20":"W1","21":"W1","22":"Draw","23":"Draw","24":"W2","25":"W1","26":"Draw","27":"Draw","28":"W2","29":"W2","30":"Draw","31":"W1","32":"W2","33":"Draw","34":"W1","35":"W1","36":"W1","37":"Draw","38":"W1","39":"W1","40":"W1","41":"Draw","42":"W1","43":"Draw","44":"Draw","45":"W2","46":"W1","47":"W1","48":"W1","49":"Draw","50":"W2","51":"W2","52":"W1","53":"Draw","54":"W2","55":"Draw","56":"Draw","57":"Draw","58":"W1","59":"W1","60":"W1","61":"W2","62":"W1","63":"W2","64":"W1","65":"Draw","66":"W2","67":"Draw","68":"Draw","69":"Draw","70":"Draw","71":"Draw","72":"Draw"},"Simulation 3":{"1":"W1","2":"W1","3":"W2","4":"W1","5":"W2","6":"W1","7":"W2","8":"W2","9":"Draw","10":"Draw","11":"Draw","12":"W2","13":"Draw","14":"Draw","15":"Draw","16":"W2","17":"W1","18":"W1","19":"W2","20":"Draw","21":"W2","22":"W2","23":"Draw","24":"Draw","25":"Draw","26":"W1","27":"W2","28":"W1","29":"Draw","30":"Draw","31":"Draw","32":"Draw","33":"W2","34":"W2","35":"W2","36":"Draw","37":"Draw","38":"Draw","39":"Draw","40":"W2","41":"W2","42":"W2","43":"W2","44":"W1","45":"W2","46":"W1","47":"Draw","48":"W1","49":"W1","50":"Draw","51":"W1","52":"Draw","53":"Draw","54":"W1","55":"Draw","56":"W2","57":"Draw","58":"Draw","59":"Draw","60":"Draw","61":"Draw","62":"W2","63":"Draw","64":"Draw","65":"W1","66":"W1","67":"W2","68":"Draw","69":"Draw","70":"W2","71":"W1","72":"W2"},"Simulation 4":{"1":"Draw","2":"Draw","3":"W1","4":"W2","5":"W2","6":"W2","7":"W2","8":"W1","9":"W2","10":"W2","11":"W1","12":"W1","13":"Draw","14":"W1","15":"W2","16":"W1","17":"Draw","18":"Draw","19":"W2","20":"Draw","21":"Draw","22":"W2","23":"Draw","24":"W1","25":"Draw","26":"W2","27":"W2","28":"W2","29":"Draw","30":"W1","31":"W1","32":"Draw","33":"Draw","34":"W2","35":"Draw","36":"Draw","37":"W1","38":"W2","39":"W2","40":"W1","41":"W2","42":"Draw","43":"W2","44":"W1","45":"W2","46":"W1","47":"Draw","48":"W1","49":"W2","50":"Draw","51":"W2","52":"W1","53":"W1","54":"W2","55":"W2","56":"W2","57":"Draw","58":"W1","59":"W1","60":"W1","61":"W1","62":"W2","63":"Draw","64":"W1","65":"W1","66":"W2","67":"W2","68":"W1","69":"W2","70":"W1","71":"W2","72":"Draw"},"Simulation 5":{"1":"Draw","2":"W1","3":"Draw","4":"W2","5":"W2","6":"W2","7":"W2","8":"W2","9":"W2","10":"W2","11":"Draw","12":"W1","13":"Draw","14":"W1","15":"Draw","16":"Draw","17":"Draw","18":"Draw","19":"W2","20":"W1","21":"Draw","22":"Draw","23":"Draw","24":"Draw","25":"W2","26":"W1","27":"W1","28":"W2","29":"W2","30":"W1","31":"W2","32":"W2","33":"W1","34":"W2","35":"W1","36":"W1","37":"W2","38":"W1","39":"W2","40":"Draw","41":"W1","42":"Draw","43":"W1","44":"Draw","45":"W1","46":"W2","47":"W2","48":"Draw","49":"Draw","50":"W1","51":"W2","52":"W1","53":"W1","54":"Draw","55":"Draw","56":"W2","57":"Draw","58":"W2","59":"W1","60":"W1","61":"W1","62":"W1","63":"W1","64":"W2","65":"W2","66":"W2","67":"Draw","68":"W2","69":"Draw","70":"W1","71":"Draw","72":"W1"}};
+const LOCAL_RESULTS_CSV = `match,home_score,away_score,outcome
+1,2,2,Draw
+2,2,2,Draw
+3,1,1,Draw
+4,2,2,Draw
+5,2,1,W1
+6,1,2,W2
+7,0,1,W2
+8,0,3,W2
+9,2,2,Draw
+10,4,0,W1
+11,0,1,W2
+12,1,1,Draw
+13,0,4,W2
+14,2,4,W2
+15,1,0,W1
+16,3,1,W1
+17,0,0,Draw
+18,1,2,W2
+19,3,1,W1
+20,2,1,W1
+21,3,4,W2
+22,3,1,W1
+23,0,3,W2
+24,1,0,W1
+25,0,1,W2
+26,1,2,W2
+27,2,3,W2
+28,2,0,W1
+29,4,0,W1
+30,0,0,Draw
+31,2,1,W1
+32,0,0,Draw
+33,2,2,Draw
+34,0,0,Draw
+35,2,2,Draw
+36,2,2,Draw
+37,1,1,Draw
+38,0,0,Draw
+39,4,3,W1
+40,1,0,W1
+41,0,1,W2
+42,1,4,W2
+43,2,4,W2
+44,2,2,Draw
+45,0,1,W2
+46,1,1,Draw
+47,0,3,W2
+48,2,2,Draw
+49,0,2,W2
+50,2,0,W1
+51,3,2,W1
+52,1,0,W1
+53,1,1,Draw
+54,1,1,Draw
+55,0,1,W2
+56,1,0,W1
+57,1,0,W1
+58,1,1,Draw
+59,1,1,Draw
+60,0,1,W2
+61,2,0,W1
+62,2,1,W1
+63,0,1,W2
+64,0,2,W2
+65,3,4,W2
+66,1,2,W2
+67,2,1,W1
+68,0,0,Draw
+69,1,1,Draw
+70,0,4,W2
+71,1,0,W1
+72,0,2,W2`;
+// ─────────────────────────────────────────────────────────
 
 // ── Match data ────────────────────────────────────────────
 const MATCHES = [
@@ -394,21 +509,28 @@ function parseResults(csvText) {
 }
 
 // ── Compute scores ────────────────────────────────────────
+function pickLabel(outcome, t1, t2) {
+  if (outcome === 'W1')   return `${t1} win`;
+  if (outcome === 'W2')   return `${t2} win`;
+  if (outcome === 'Draw') return 'Draw';
+  return '—';
+}
+
 function computeStandings(picksData, results) {
   return Object.entries(picksData).map(([name, picks]) => {
     let points = 0;
     const pickResults = {};
-    MATCHES.forEach(([num]) => {
+    MATCHES.forEach(([num, , , , t1, t2]) => {
       const result  = results[num];
       const pick    = picks[String(num)];
       if (result && pick) {
         const correct = pick === result.outcome;
         if (correct) points += 2;
-        pickResults[num] = correct ? 'correct' : 'wrong';
+        pickResults[num] = { status: correct ? 'correct' : 'wrong', pick, result };
       } else if (pick) {
-        pickResults[num] = 'pending';
+        pickResults[num] = { status: 'pending', pick, result: null };
       } else {
-        pickResults[num] = 'empty';
+        pickResults[num] = { status: 'empty', pick: null, result: null };
       }
     });
     return { name, points, pickResults };
@@ -429,10 +551,15 @@ function renderStandings(standings, results) {
   standings.forEach((p, i) => {
     if (p.points !== prevPts) { rank = i + 1; prevPts = p.points; }
     const topClass = rank <= 3 ? ' top3' : '';
-    const squares = MATCHES.map(([num]) => {
-      const s = p.pickResults[num] || 'empty';
-      const t1 = MATCHES[num - 1][4], t2 = MATCHES[num - 1][5];
-      return `<span class="sq sq-${s}" title="M${num}: ${t1} v ${t2}"></span>`;
+    const squares = MATCHES.map(([num, , , , t1, t2]) => {
+      const pr = p.pickResults[num] || { status: 'empty', pick: null, result: null };
+      const myPick = pr.pick ? pickLabel(pr.pick, t1, t2) : '—';
+      const res = pr.result
+        ? `${pr.result.home}–${pr.result.away} (${pickLabel(pr.result.outcome, t1, t2)})`
+        : 'Not played yet';
+      return `<span class="sq sq-${pr.status}"
+        data-match="${num}" data-teams="${t1} v ${t2}"
+        data-pick="${myPick}" data-result="${res}" data-status="${pr.status}"></span>`;
     }).join('');
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
@@ -449,7 +576,7 @@ function renderStandings(standings, results) {
           <th>#</th>
           <th>Name</th>
           <th>Pts</th>
-          <th class="th-squares">Picks (blue = correct · grey = wrong · empty = pending)</th>
+          <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · grey = wrong · empty = pending)</span></th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -474,9 +601,9 @@ function renderResults(results) {
     const pillClass = r.outcome === 'Draw' ? 'outcome-pill draw' : 'outcome-pill';
     return `<tr>
       <td class="td-match-num">${num}</td>
-      <td class="td-grp">${grp}</td>
       <td>${date}</td>
-      <td>${time} ET</td>
+      <td class="td-grp">${grp}</td>
+      <td>${time}</td>
       <td class="td-teams">${t1} v ${t2}</td>
       <td class="td-score">${score}</td>
       <td><span class="${pillClass}">${winnerLabel}</span></td>
@@ -488,8 +615,8 @@ function renderResults(results) {
       <thead>
         <tr>
           <th>#</th>
-          <th>Grp</th>
           <th>Date</th>
+          <th>Grp</th>
           <th>Time (ET)</th>
           <th>Match</th>
           <th>Score</th>
@@ -500,21 +627,66 @@ function renderResults(results) {
     </table>`;
 }
 
+// ── Tooltip ───────────────────────────────────────────────
+const tooltip = document.getElementById('sq-tooltip');
+
+document.addEventListener('mouseover', e => {
+  const sq = e.target.closest('.sq');
+  if (!sq) { tooltip.style.display = 'none'; return; }
+
+  const match  = sq.dataset.match;
+  const teams  = sq.dataset.teams;
+  const pick   = sq.dataset.pick;
+  const result = sq.dataset.result;
+  const status = sq.dataset.status;
+
+  const statusText = status === 'correct' ? '✓ Correct'
+                   : status === 'wrong'   ? '✗ Wrong'
+                   : status === 'pending' ? '⏳ Pending'
+                   : '—';
+
+  tooltip.innerHTML = `
+    <div class="tt-match">Match ${match} · ${teams}</div>
+    <div class="tt-pick">Your pick: <strong>${pick}</strong></div>
+    <div class="tt-result">Result: ${result}</div>
+    <div class="tt-status ${status}">${statusText}</div>
+  `;
+  tooltip.style.display = 'block';
+});
+
+document.addEventListener('mousemove', e => {
+  if (tooltip.style.display === 'none') return;
+  const x = e.clientX + 14, y = e.clientY + 14;
+  const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+  tooltip.style.left = (x + tw > window.innerWidth  ? x - tw - 28 : x) + 'px';
+  tooltip.style.top  = (y + th > window.innerHeight ? y - th - 28 : y) + 'px';
+});
+
+document.addEventListener('mouseout', e => {
+  if (!e.target.closest('.sq')) tooltip.style.display = 'none';
+});
+
 // ── Main ──────────────────────────────────────────────────
 async function init() {
-  const ts = Date.now();
   try {
-    const [picksResp, resultsResp] = await Promise.all([
-      fetch(`${PICKS_URL}?t=${ts}`),
-      fetch(`${RESULTS_URL}?t=${ts}`),
-    ]);
+    let picksData, resultsCSV;
 
-    if (!picksResp.ok) throw new Error('Could not load picks');
-    if (!resultsResp.ok) throw new Error('Could not load results');
+    if (USE_LOCAL_DATA) {
+      picksData  = LOCAL_PICKS;
+      resultsCSV = LOCAL_RESULTS_CSV;
+    } else {
+      const ts = Date.now();
+      const [picksResp, resultsResp] = await Promise.all([
+        fetch(`${PICKS_URL}?t=${ts}`),
+        fetch(`${RESULTS_URL}?t=${ts}`),
+      ]);
+      if (!picksResp.ok) throw new Error('Could not load picks');
+      if (!resultsResp.ok) throw new Error('Could not load results');
+      picksData  = await picksResp.json();
+      resultsCSV = await resultsResp.text();
+    }
 
-    const picksData  = await picksResp.json();
-    const resultsCSV = await resultsResp.text();
-    const results    = parseResults(resultsCSV);
+    const results = parseResults(resultsCSV);
     const standings  = computeStandings(picksData, results);
     const played     = Object.keys(results).length;
 
