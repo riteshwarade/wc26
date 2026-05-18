@@ -1734,6 +1734,18 @@ function renderBracket(results, allGroupsStarted) {
     return;
   }
 
+  const isConfirmed = Object.keys(results).length >= 72;
+  const statusBadge = isConfirmed
+    ? '<span style="margin-left:8px;font-size:0.65rem;background:#22863a;color:#fff;padding:2px 7px;border-radius:10px;font-weight:700;text-transform:none;letter-spacing:0">Confirmed ✓</span>'
+    : '<span style="margin-left:8px;font-size:0.65rem;background:#ff9e16;color:#131e27;padding:2px 7px;border-radius:10px;font-weight:700;text-transform:none;letter-spacing:0">Provisional</span>';
+  const bracketLabel = document.querySelector('[onclick*="bracket"]');
+  if (bracketLabel && !bracketLabel.querySelector('.bracket-badge')) {
+    const span = document.createElement('span');
+    span.className = 'bracket-badge';
+    span.innerHTML = statusBadge;
+    bracketLabel.appendChild(span);
+  }
+
   const { grpStandings, thirds } = computeGroupStandings(results);
   const { r32teams } = computeBracket(grpStandings, thirds, results);
 

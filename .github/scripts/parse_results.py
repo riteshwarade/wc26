@@ -767,10 +767,25 @@ def compute_group_standings(results):
 
 
 def write_bracket_json(results):
-    """Compute and write knockout_bracket.json when all 72 matches are done."""
-    if len(results) < 72:
-        print(f'Group stage incomplete ({len(results)}/72) — bracket not yet generated')
+    """
+    Write knockout_bracket.json:
+    - Provisional (confirmed=false): once all 12 groups have ≥1 result (after round 1)
+    - Confirmed   (confirmed=true):  once all 72 group matches have results
+    Wikipedia is always the canonical source — confirmed=true means crosscheck is done.
+    """
+    # Check which groups have started
+    groups_started = set()
+    for num, grp, t1, t2 in GROUP_MATCHES:
+        if num in results:
+            groups_started.add(grp)
+
+    if len(groups_started) < 12:
+        print(f'Only {len(groups_started)}/12 groups have started — bracket not yet generated')
         return
+
+    confirmed = len(results) >= 72
+    status    = 'confirmed' if confirmed else 'provisional'
+    print(f'Generating {status} bracket ({len(results)}/72 matches played)...')
 
     grp_standings, _ = compute_group_standings(results)
 
@@ -824,7 +839,10 @@ def write_bracket_json(results):
     import json, datetime
     bracket = {
         'generated_at': datetime.datetime.utcnow().isoformat() + 'Z',
-        'confirmed': True,
+        'confirmed': confirmed,
+        'status': status,
+        'matches_played': len(results),
+        'source': 'Wikipedia (canonical)',
         'combination_key': qual_groups,
         'combination_found': combo is not None,
         'groups': {
