@@ -101,6 +101,35 @@
     text-transform: uppercase;
     letter-spacing: 0.6px;
     margin-bottom: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+  }
+
+  .section-label:hover { color: var(--swiftly-blue); }
+
+  .section-chevron {
+    font-size: 0.65rem;
+    transition: transform 0.2s ease;
+    display: inline-block;
+  }
+
+  .section-collapsed .section-chevron { transform: rotate(-90deg); }
+
+  .section-body {
+    overflow: hidden;
+    transition: max-height 0.25s ease, opacity 0.2s ease;
+    max-height: 9999px;
+    opacity: 1;
+    margin-bottom: 32px;
+  }
+
+  .section-body.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-bottom: 0;
   }
 
   /* ── Card ── */
@@ -284,11 +313,28 @@
     color: #ffffff;
   }
 
+  /* ── Side-by-side layout ── */
+  .side-by-side-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .side-left {
+    width: 320px;
+    flex-shrink: 0;
+  }
+
+  .side-right {
+    flex: 1;
+    min-width: 0;
+  }
+
   /* ── Group tables ── */
   .group-tables-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     margin-bottom: 8px;
   }
 
@@ -388,19 +434,36 @@
 
 <div class="container">
 
-  <p class="section-label">Standings</p>
-  <div class="card" id="standingsCard">
-    <div class="state-msg"><span class="emoji">⏳</span>Loading picks and results…</div>
+  <p class="section-label" onclick="toggleSection('standings')">
+    <span class="section-chevron">▼</span> Standings
+  </p>
+  <div class="section-body" id="standings-body">
+    <div class="card" id="standingsCard">
+      <div class="state-msg"><span class="emoji">⏳</span>Loading picks and results…</div>
+    </div>
   </div>
 
-  <p class="section-label">Match results</p>
-  <div class="card" id="resultsCard">
-    <div class="state-msg"><span class="emoji">⏳</span>Loading results…</div>
-  </div>
-
-  <p class="section-label">Group tables</p>
-  <div id="groupTablesCard">
-    <div class="state-msg"><span class="emoji">⏳</span>Loading group tables…</div>
+  <div class="side-by-side-layout">
+    <div class="side-left">
+      <p class="section-label" onclick="toggleSection('groups')">
+        <span class="section-chevron">▼</span> Group tables
+      </p>
+      <div class="section-body" id="groups-body">
+        <div id="groupTablesCard">
+          <div class="state-msg"><span class="emoji">⏳</span>Loading…</div>
+        </div>
+      </div>
+    </div>
+    <div class="side-right">
+      <p class="section-label" onclick="toggleSection('results')">
+        <span class="section-chevron">▼</span> Match results
+      </p>
+      <div class="section-body" id="results-body">
+        <div class="card" id="resultsCard">
+          <div class="state-msg"><span class="emoji">⏳</span>Loading…</div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -789,6 +852,16 @@ function renderGroupTables(results) {
 
   document.getElementById('groupTablesCard').innerHTML =
     `<div class="group-tables-grid">${cards}</div>`;
+}
+
+// ── Collapsible sections ──────────────────────────────────
+function toggleSection(id) {
+  const body    = document.getElementById(`${id}-body`);
+  const label   = body.previousElementSibling;
+  const chevron = label.querySelector('.section-chevron');
+  const isOpen  = !body.classList.contains('collapsed');
+  body.classList.toggle('collapsed', isOpen);
+  chevron.style.transform = isOpen ? 'rotate(-90deg)' : '';
 }
 
 // ── Tooltip ───────────────────────────────────────────────
