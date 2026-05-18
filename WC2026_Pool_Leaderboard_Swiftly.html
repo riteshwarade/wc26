@@ -285,13 +285,18 @@
   .results-table td {
     padding: 5px 12px;
     vertical-align: middle;
+  }
+
+  /* Compact columns: shrink to content */
+  .td-match-num, .td-grp, .td-score, .td-date, .td-time, .td-result {
+    width: 1%;
     white-space: nowrap;
   }
 
-  .td-match-num { color: var(--neutral-medium); font-weight: 700; text-align: center; width: 36px; }
+  .td-match-num { color: var(--neutral-medium); font-weight: 700; text-align: center; }
   .td-grp       { color: var(--swiftly-blue); font-weight: 700; }
   .td-score     { font-weight: 700; color: var(--neutral-darkest); }
-  .td-teams     { font-weight: 700; color: var(--neutral-darkest); }
+  .td-teams     { font-weight: 700; color: var(--neutral-darkest); min-width: 160px; }
 
   .outcome-pill {
     display: inline-flex;
@@ -744,12 +749,12 @@ function renderResults(results) {
     const pillClass = r.outcome === 'Draw' ? 'outcome-pill draw' : 'outcome-pill';
     return `<tr>
       <td class="td-match-num">${num}</td>
-      <td>${date}</td>
+      <td class="td-date">${date}</td>
       <td class="td-grp">${grp}</td>
-      <td>${time}</td>
+      <td class="td-time">${time}</td>
       <td class="td-teams">${t1} v ${t2}</td>
       <td class="td-score">${score}</td>
-      <td><span class="${pillClass}">${winnerLabel}</span></td>
+      <td class="td-result"><span class="${pillClass}">${winnerLabel}</span></td>
     </tr>`;
   }).join('');
 
