@@ -962,7 +962,7 @@ function renderPickGroupTables() {
       const rank = RANKINGS[t] ?? '–';
       const qClass = i < 2 ? ' class="q-zone"' : '';
       return `<tr${qClass}>
-        <td class="td-team">${t}</td>
+        <td class="td-team">${(FLAGS[t]||'')+' '+t}</td>
         <td style="color:var(--neutral-medium);font-size:0.68rem">${rank}</td>
         <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
         <td class="td-pts">${s.Pts}</td>
@@ -1092,6 +1092,21 @@ function copyToClipboard(name) {
 }
 
 // FIFA rankings (lower = better)
+const FLAGS = {
+  'Mexico':'🇲🇽','South Africa':'🇿🇦','South Korea':'🇰🇷','Czech Republic':'🇨🇿',
+  'Canada':'🇨🇦','Bosnia and Herzegovina':'🇧🇦','Qatar':'🇶🇦','Switzerland':'🇨🇭',
+  'Brazil':'🇧🇷','Morocco':'🇲🇦','Haiti':'🇭🇹','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  'United States':'🇺🇸','Paraguay':'🇵🇾','Australia':'🇦🇺','Turkey':'🇹🇷',
+  'Germany':'🇩🇪','Curaçao':'🇨🇼','Ivory Coast':'🇨🇮','Ecuador':'🇪🇨',
+  'Netherlands':'🇳🇱','Japan':'🇯🇵','Sweden':'🇸🇪','Tunisia':'🇹🇳',
+  'Belgium':'🇧🇪','Egypt':'🇪🇬','Iran':'🇮🇷','New Zealand':'🇳🇿',
+  'Spain':'🇪🇸','Cape Verde':'🇨🇻','Saudi Arabia':'🇸🇦','Uruguay':'🇺🇾',
+  'France':'🇫🇷','Senegal':'🇸🇳','Iraq':'🇮🇶','Norway':'🇳🇴',
+  'Argentina':'🇦🇷','Algeria':'🇩🇿','Austria':'🇦🇹','Jordan':'🇯🇴',
+  'Portugal':'🇵🇹','DR Congo':'🇨🇩','Uzbekistan':'🇺🇿','Colombia':'🇨🇴',
+  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Croatia':'🇭🇷','Ghana':'🇬🇭','Panama':'🇵🇦',
+};
+
 const RANKINGS = {
   'Mexico': 15, 'South Africa': 60, 'South Korea': 25, 'Czech Republic': 41,
   'Canada': 30, 'Bosnia and Herzegovina': 65, 'Qatar': 55, 'Switzerland': 19,

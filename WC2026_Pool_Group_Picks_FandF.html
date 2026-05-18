@@ -962,7 +962,7 @@ function renderPickGroupTables() {
       const rank = RANKINGS[t] ?? '–';
       const qClass = i < 2 ? ' class="q-zone"' : '';
       return `<tr${qClass}>
-        <td class="td-team">${t}</td>
+        <td class="td-team">${(FLAGS[t]||'')+' '+t}</td>
         <td style="color:var(--neutral-medium);font-size:0.68rem">${rank}</td>
         <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
         <td class="td-pts">${s.Pts}</td>
