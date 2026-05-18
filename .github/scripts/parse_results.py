@@ -168,6 +168,749 @@ def write_csv(results):
     print(f'Wrote {len(results)} results → {path}')
 
 
+# ── Knockout bracket generation ───────────────────────────────────────────────
+# Only runs once all 72 group stage matches have results.
+
+GROUP_ORDER = {
+    'A': ['Mexico','South Africa','South Korea','Czech Republic'],
+    'B': ['Canada','Bosnia and Herzegovina','Qatar','Switzerland'],
+    'C': ['Brazil','Morocco','Haiti','Scotland'],
+    'D': ['United States','Paraguay','Australia','Turkey'],
+    'E': ['Germany','Curaçao','Ivory Coast','Ecuador'],
+    'F': ['Netherlands','Japan','Sweden','Tunisia'],
+    'G': ['Belgium','Egypt','Iran','New Zealand'],
+    'H': ['Spain','Cape Verde','Saudi Arabia','Uruguay'],
+    'I': ['France','Senegal','Iraq','Norway'],
+    'J': ['Argentina','Algeria','Austria','Jordan'],
+    'K': ['Portugal','DR Congo','Uzbekistan','Colombia'],
+    'L': ['England','Croatia','Ghana','Panama'],
+}
+
+RANKINGS = {
+    'Mexico':15,'South Africa':60,'South Korea':25,'Czech Republic':41,
+    'Canada':30,'Bosnia and Herzegovina':65,'Qatar':55,'Switzerland':19,
+    'Brazil':6,'Morocco':8,'Haiti':83,'Scotland':43,
+    'United States':16,'Paraguay':40,'Australia':27,'Turkey':22,
+    'Germany':10,'Curaçao':82,'Ivory Coast':34,'Ecuador':23,
+    'Netherlands':7,'Japan':18,'Sweden':38,'Tunisia':44,
+    'Belgium':9,'Egypt':29,'Iran':21,'New Zealand':85,
+    'Spain':2,'Cape Verde':69,'Saudi Arabia':61,'Uruguay':17,
+    'France':1,'Senegal':14,'Iraq':57,'Norway':31,
+    'Argentina':3,'Algeria':28,'Austria':24,'Jordan':63,
+    'Portugal':5,'DR Congo':46,'Uzbekistan':50,'Colombia':13,
+    'England':4,'Croatia':11,'Ghana':74,'Panama':33,
+}
+
+# 495-combination table: key = sorted 8 qualifying group letters
+# value = [1A-opp, 1B-opp, 1D-opp, 1E-opp, 1G-opp, 1I-opp, 1K-opp, 1L-opp]
+# → maps to matches [M79, M85, M81, M74, M82, M77, M87, M80]
+THIRD_COMBOS = {}
+_RAW = """
+A B C D E F G H:H G B C A F D E
+A B C D E F G I:C G B D A F E I
+A B C D E F G J:C G B D A F E J
+A B C D E F G K:C G B D A F E K
+A B C D E F G L:C G B D A F L E
+A B C D E F H I:H E B C A F D I
+A B C D E F H J:H J B C A F D E
+A B C D E F H K:H E B C A F D K
+A B C D E F H L:H F B C A D L E
+A B C D E F I J:C J B D A F E I
+A B C D E F I K:C E B D A F I K
+A B C D E F I L:C E B D A F L I
+A B C D E F J K:C J B D A F E K
+A B C D E F J L:C J B D A F L E
+A B C D E F K L:C E B D A F L K
+A B C D E G H I:H G B C A D E I
+A B C D E G H J:H G B C A D E J
+A B C D E G H K:H G B C A D E K
+A B C D E G H L:H G B C A D L E
+A B C D E G I J:E G B C A D I J
+A B C D E G I K:E G B C A D I K
+A B C D E G I L:E G B C A D L I
+A B C D E G J K:E G B C A D J K
+A B C D E G J L:E G B C A D L J
+A B C D E G K L:E G B C A D L K
+A B C D E H I J:H J B C A D E I
+A B C D E H I K:H E B C A D I K
+A B C D E H I L:H E B C A D L I
+A B C D E H J K:H J B C A D E K
+A B C D E H J L:H J B C A D L E
+A B C D E H K L:H E B C A D L K
+A B C D E I J K:E J B C A D I K
+A B C D E I J L:E J B C A D L I
+A B C D E I K L:E I B C A D L K
+A B C D E J K L:E J B C A D L K
+A B C D F G H I:H G B C A F D I
+A B C D F G H J:H G B C A F D J
+A B C D F G H K:H G B C A F D K
+A B C D F G H L:C G B D A F L H
+A B C D F G I J:C G B D A F I J
+A B C D F G I K:C G B D A F I K
+A B C D F G I L:C G B D A F L I
+A B C D F G J K:C G B D A F J K
+A B C D F G J L:C G B D A F L J
+A B C D F G K L:C G B D A F L K
+A B C D F H I J:H J B C A F D I
+A B C D F H I K:H F B C A D I K
+A B C D F H I L:H F B C A D L I
+A B C D F H J K:H J B C A F D K
+A B C D F H J L:C J B D A F L H
+A B C D F H K L:H F B C A D L K
+A B C D F I J K:C J B D A F I K
+A B C D F I J L:C J B D A F L I
+A B C D F I K L:C I B D A F L K
+A B C D F J K L:C J B D A F L K
+A B C D G H I J:H G B C A D I J
+A B C D G H I K:H G B C A D I K
+A B C D G H I L:H G B C A D L I
+A B C D G H J K:H G B C A D J K
+A B C D G H J L:H G B C A D L J
+A B C D G H K L:H G B C A D L K
+A B C D G I J K:C J B D A G I K
+A B C D G I J L:C J B D A G L I
+A B C D G I K L:I G B C A D L K
+A B C D G J K L:C J B D A G L K
+A B C D H I J K:H J B C A D I K
+A B C D H I J L:H J B C A D L I
+A B C D H I K L:H I B C A D L K
+A B C D H J K L:H J B C A D L K
+A B C D I J K L:I J B C A D L K
+A B C E F G H I:H G B C A F E I
+A B C E F G H J:H G B C A F E J
+A B C E F G H K:H G B C A F E K
+A B C E F G H L:H G B C A F L E
+A B C E F G I J:E G B C A F I J
+A B C E F G I K:E G B C A F I K
+A B C E F G I L:E G B C A F L I
+A B C E F G J K:E G B C A F J K
+A B C E F G J L:E G B C A F L J
+A B C E F G K L:E G B C A F L K
+A B C E F H I J:H J B C A F E I
+A B C E F H I K:H E B C A F I K
+A B C E F H I L:H E B C A F L I
+A B C E F H J K:H J B C A F E K
+A B C E F H J L:H J B C A F L E
+A B C E F H K L:H E B C A F L K
+A B C E F I J K:E J B C A F I K
+A B C E F I J L:E J B C A F L I
+A B C E F I K L:E I B C A F L K
+A B C E F J K L:E J B C A F L K
+A B C E G H I J:H J B C A G E I
+A B C E G H I K:E G B C A H I K
+A B C E G H I L:E G B C A H L I
+A B C E G H J K:H J B C A G E K
+A B C E G H J L:H J B C A G L E
+A B C E G H K L:E G B C A H L K
+A B C E G I J K:E J B C A G I K
+A B C E G I J L:E J B C A G L I
+A B C E G I K L:E G B A I C L K
+A B C E G J K L:E J B C A G L K
+A B C E H I J K:E J B C A H I K
+A B C E H I J L:E J B C A H L I
+A B C E H I K L:E I B C A H L K
+A B C E H J K L:E J B C A H L K
+A B C E I J K L:E J B A I C L K
+A B C F G H I J:H G B C A F I J
+A B C F G H I K:H G B C A F I K
+A B C F G H I L:H G B C A F L I
+A B C F G H J K:H G B C A F J K
+A B C F G H J L:H G B C A F L J
+A B C F G H K L:H G B C A F L K
+A B C F G I J K:C J B F A G I K
+A B C F G I J L:C J B F A G L I
+A B C F G I K L:I G B C A F L K
+A B C F G J K L:C J B F A G L K
+A B C F H I J K:H J B C A F I K
+A B C F H I J L:H J B C A F L I
+A B C F H I K L:H I B C A F L K
+A B C F H J K L:H J B C A F L K
+A B C F I J K L:I J B C A F L K
+A B C G H I J K:H J B C A G I K
+A B C G H I J L:H J B C A G L I
+A B C G H I K L:I G B C A H L K
+A B C G H J K L:H J B C A G L K
+A B C G I J K L:I J B C A G L K
+A B C H I J K L:I J B C A H L K
+A B D E F G H I:H G B D A F E I
+A B D E F G H J:H G B D A F E J
+A B D E F G H K:H G B D A F E K
+A B D E F G H L:H G B D A F L E
+A B D E F G I J:E G B D A F I J
+A B D E F G I K:E G B D A F I K
+A B D E F G I L:E G B D A F L I
+A B D E F G J K:E G B D A F J K
+A B D E F G J L:E G B D A F L J
+A B D E F G K L:E G B D A F L K
+A B D E F H I J:H J B D A F E I
+A B D E F H I K:H E B D A F I K
+A B D E F H I L:H E B D A F L I
+A B D E F H J K:H J B D A F E K
+A B D E F H J L:H J B D A F L E
+A B D E F H K L:H E B D A F L K
+A B D E F I J K:E J B D A F I K
+A B D E F I J L:E J B D A F L I
+A B D E F I K L:E I B D A F L K
+A B D E F J K L:E J B D A F L K
+A B D E G H I J:H J B D A G E I
+A B D E G H I K:E G B D A H I K
+A B D E G H I L:E G B D A H L I
+A B D E G H J K:H J B D A G E K
+A B D E G H J L:H J B D A G L E
+A B D E G H K L:E G B D A H L K
+A B D E G I J K:E J B D A G I K
+A B D E G I J L:E J B D A G L I
+A B D E G I K L:E G B A I D L K
+A B D E G J K L:E J B D A G L K
+A B D E H I J K:E J B D A H I K
+A B D E H I J L:E J B D A H L I
+A B D E H I K L:E I B D A H L K
+A B D E H J K L:E J B D A H L K
+A B D E I J K L:E J B A I D L K
+A B D F G H I J:H G B D A F I J
+A B D F G H I K:H G B D A F I K
+A B D F G H I L:H G B D A F L I
+A B D F G H J K:H G B D A F J K
+A B D F G H J L:H G B D A F L J
+A B D F G H K L:H G B D A F L K
+A B D F G I J K:F J B D A G I K
+A B D F G I J L:F J B D A G L I
+A B D F G I K L:I G B D A F L K
+A B D F G J K L:F J B D A G L K
+A B D F H I J K:H J B D A F I K
+A B D F H I J L:H J B D A F L I
+A B D F H I K L:H I B D A F L K
+A B D F H J K L:H J B D A F L K
+A B D F I J K L:I J B D A F L K
+A B D G H I J K:H J B D A G I K
+A B D G H I J L:H J B D A G L I
+A B D G H I K L:I G B D A H L K
+A B D G H J K L:H J B D A G L K
+A B D G I J K L:I J B D A G L K
+A B D H I J K L:I J B D A H L K
+A B E F G H I J:H J B F A G E I
+A B E F G H I K:E G B F A H I K
+A B E F G H I L:E G B F A H L I
+A B E F G H J K:H J B F A G E K
+A B E F G H J L:H J B F A G L E
+A B E F G H K L:E G B F A H L K
+A B E F G I J K:E J B F A G I K
+A B E F G I J L:E J B F A G L I
+A B E F G I K L:E G B A I F L K
+A B E F G J K L:E J B F A G L K
+A B E F H I J K:E J B F A H I K
+A B E F H I J L:E J B F A H L I
+A B E F H I K L:E I B F A H L K
+A B E F H J K L:E J B F A H L K
+A B E F I J K L:E J B A I F L K
+A B E G H I J K:E J B A H G I K
+A B E G H I J L:E J B A H G L I
+A B E G H I K L:E G B A I H L K
+A B E G H J K L:E J B A H G L K
+A B E G I J K L:E J B A I G L K
+A B E H I J K L:E J B A I H L K
+A B F G H I J K:H J B F A G I K
+A B F G H I J L:H J B F A G L I
+A B F G H I K L:H G B A I F L K
+A B F G H J K L:H J B F A G L K
+A B F G I J K L:I J B F A G L K
+A B F H I J K L:H J B A I F L K
+A B G H I J K L:H J B A I G L K
+A C D E F G H I:H G E C A F D I
+A C D E F G H J:H G J C A F D E
+A C D E F G H K:H G E C A F D K
+A C D E F G H L:H G F C A D L E
+A C D E F G I J:C G J D A F E I
+A C D E F G I K:C G E D A F I K
+A C D E F G I L:C G E D A F L I
+A C D E F G J K:C G J D A F E K
+A C D E F G J L:C G J D A F L E
+A C D E F G K L:C G E D A F L K
+A C D E F H I J:H J E C A F D I
+A C D E F H I K:H E F C A D I K
+A C D E F H I L:H E F C A D L I
+A C D E F H J K:H J E C A F D K
+A C D E F H J L:H J F C A D L E
+A C D E F H K L:H E F C A D L K
+A C D E F I J K:C J E D A F I K
+A C D E F I J L:C J E D A F L I
+A C D E F I K L:C E I D A F L K
+A C D E F J K L:C J E D A F L K
+A C D E G H I J:H G J C A D E I
+A C D E G H I K:H G E C A D I K
+A C D E G H I L:H G E C A D L I
+A C D E G H J K:H G J C A D E K
+A C D E G H J L:H G J C A D L E
+A C D E G H K L:H G E C A D L K
+A C D E G I J K:E G J C A D I K
+A C D E G I J L:E G J C A D L I
+A C D E G I K L:E G I C A D L K
+A C D E G J K L:E G J C A D L K
+A C D E H I J K:H J E C A D I K
+A C D E H I J L:H J E C A D L I
+A C D E H I K L:H E I C A D L K
+A C D E H J K L:H J E C A D L K
+A C D E I J K L:E J I C A D L K
+A C D F G H I J:H G J C A F D I
+A C D F G H I K:H G F C A D I K
+A C D F G H I L:H G F C A D L I
+A C D F G H J K:H G J C A F D K
+A C D F G H J L:C G J D A F L H
+A C D F G H K L:H G F C A D L K
+A C D F G I J K:C G J D A F I K
+A C D F G I J L:C G J D A F L I
+A C D F G I K L:C G I D A F L K
+A C D F G J K L:C G J D A F L K
+A C D F H I J K:H J F C A D I K
+A C D F H I J L:H J F C A D L I
+A C D F H I K L:H F I C A D L K
+A C D F H J K L:H J F C A D L K
+A C D F I J K L:C J I D A F L K
+A C D G H I J K:H G J C A D I K
+A C D G H I J L:H G J C A D L I
+A C D G H I K L:H G I C A D L K
+A C D G H J K L:H G J C A D L K
+A C D G I J K L:I G J C A D L K
+A C D H I J K L:H J I C A D L K
+A C E F G H I J:H G J C A F E I
+A C E F G H I K:H G E C A F I K
+A C E F G H I L:H G E C A F L I
+A C E F G H J K:H G J C A F E K
+A C E F G H J L:H G J C A F L E
+A C E F G H K L:H G E C A F L K
+A C E F G I J K:E G J C A F I K
+A C E F G I J L:E G J C A F L I
+A C E F G I K L:E G I C A F L K
+A C E F G J K L:E G J C A F L K
+A C E F H I J K:H J E C A F I K
+A C E F H I J L:H J E C A F L I
+A C E F H I K L:H E I C A F L K
+A C E F H J K L:H J E C A F L K
+A C E F I J K L:E J I C A F L K
+A C E G H I J K:E G J C A H I K
+A C E G H I J L:E G J C A H L I
+A C E G H I K L:E G I C A H L K
+A C E G H J K L:E G J C A H L K
+A C E G I J K L:E J I C A G L K
+A C E H I J K L:E J I C A H L K
+A C F G H I J K:H G J C A F I K
+A C F G H I J L:H G J C A F L I
+A C F G H I K L:H G I C A F L K
+A C F G H J K L:H G J C A F L K
+A C F G I J K L:I G J C A F L K
+A C F H I J K L:H J I C A F L K
+A C G H I J K L:H J I C A G L K
+A D E F G H I J:H G J D A F E I
+A D E F G H I K:H G E D A F I K
+A D E F G H I L:H G E D A F L I
+A D E F G H J K:H G J D A F E K
+A D E F G H J L:H G J D A F L E
+A D E F G H K L:H G E D A F L K
+A D E F G I J K:E G J D A F I K
+A D E F G I J L:E G J D A F L I
+A D E F G I K L:E G I D A F L K
+A D E F G J K L:E G J D A F L K
+A D E F H I J K:H J E D A F I K
+A D E F H I J L:H J E D A F L I
+A D E F H I K L:H E I D A F L K
+A D E F H J K L:H J E D A F L K
+A D E F I J K L:E J I D A F L K
+A D E G H I J K:E G J D A H I K
+A D E G H I J L:E G J D A H L I
+A D E G H I K L:E G I D A H L K
+A D E G H J K L:E G J D A H L K
+A D E G I J K L:E J I D A G L K
+A D E H I J K L:E J I D A H L K
+A D F G H I J K:H G J D A F I K
+A D F G H I J L:H G J D A F L I
+A D F G H I K L:H G I D A F L K
+A D F G H J K L:H G J D A F L K
+A D F G I J K L:I G J D A F L K
+A D F H I J K L:H J I D A F L K
+A D G H I J K L:H J I D A G L K
+A E F G H I J K:E G J F A H I K
+A E F G H I J L:E G J F A H L I
+A E F G H I K L:E G I F A H L K
+A E F G H J K L:E G J F A H L K
+A E F G I J K L:E J I F A G L K
+A E F H I J K L:E J I F A H L K
+A E G H I J K L:E J I A H G L K
+A F G H I J K L:H J I F A G L K
+B C D E F G H I:C G B D H F E I
+B C D E F G H J:H G B C J F D E
+B C D E F G H K:H G B C H F D K
+B C D E F G H L:C G B D H F L E
+B C D E F G I J:C E B D J F E I
+B C D E F G I K:C E B D E F I K
+B C D E F G I L:C E B D E F L I
+B C D E F G J K:C J B D J F E K
+B C D E F G J L:C J B D J F L E
+B C D E F G K L:C E B D E F L K
+B C D E F H I J:C J B D H F E I
+B C D E F H I K:C E B D H F I K
+B C D E F H I L:C E B D H F L I
+B C D E F H J K:C J B D H F E K
+B C D E F H J L:C J B D H F L E
+B C D E F H K L:C E B D H F L K
+B C D E F I J K:C J B D E F I K
+B C D E F I J L:C J B D E F L I
+B C D E F I K L:C E B D I F L K
+B C D E F J K L:C J B D E F L K
+B C D E G H I J:H G B C J D E I
+B C D E G H I K:E G B C H D I K
+B C D E G H I L:E G B C H D L I
+B C D E G H J K:H G B C J D E K
+B C D E G H J L:H G B C J D L E
+B C D E G H K L:E G B C H D L K
+B C D E G I J K:E G B C J D I K
+B C D E G I J L:E G B C J D L I
+B C D E G I K L:E G B C I D L K
+B C D E G J K L:E G B C J D L K
+B C D E H I J K:E J B C H D I K
+B C D E H I J L:E J B C H D L I
+B C D E H I K L:E I B C H D L K
+B C D E H J K L:E J B C H D L K
+B C D E I J K L:E J B C I D L K
+B C D F G H I J:H G B C J F D I
+B C D F G H I K:C G B D H F I K
+B C D F G H I L:C G B D H F L I
+B C D F G H J K:H G B C J F D K
+B C D F G H J L:C G B D H F L J
+B C D F G H K L:C G B D H F L K
+B C D F G I J K:C G B D J F I K
+B C D F G I J L:C G B D J F L I
+B C D F G I K L:C G B D I F L K
+B C D F G J K L:C G B D J F L K
+B C D F H I J K:C J B D H F I K
+B C D F H I J L:C J B D H F L I
+B C D F H I K L:C I B D H F L K
+B C D F H J K L:C J B D H F L K
+B C D F I J K L:C J B D I F L K
+B C D G H I J K:H G B C J D I K
+B C D G H I J L:H G B C J D L I
+B C D G H I K L:H G B C I D L K
+B C D G H J K L:H G B C J D L K
+B C D G I J K L:I G B C J D L K
+B C D H I J K L:H J B C I D L K
+B C E F G H I J:H G B C J F E I
+B C E F G H I K:E G B C H F I K
+B C E F G H I L:E G B C H F L I
+B C E F G H J K:H G B C J F E K
+B C E F G H J L:H G B C J F L E
+B C E F G H K L:E G B C H F L K
+B C E F G I J K:E G B C J F I K
+B C E F G I J L:E G B C J F L I
+B C E F G I K L:E G B C I F L K
+B C E F G J K L:E G B C J F L K
+B C E F H I J K:E J B C H F I K
+B C E F H I J L:E J B C H F L I
+B C E F H I K L:E I B C H F L K
+B C E F H J K L:E J B C H F L K
+B C E F I J K L:E J B C I F L K
+B C E G H I J K:E J B C H G I K
+B C E G H I J L:E J B C H G L I
+B C E G H I K L:E G B C I H L K
+B C E G H J K L:E J B C H G L K
+B C E G I J K L:E J B C I G L K
+B C E H I J K L:E J B C I H L K
+B C F G H I J K:H G B C J F I K
+B C F G H I J L:H G B C J F L I
+B C F G H I K L:H G B C I F L K
+B C F G H J K L:H G B C J F L K
+B C F G I J K L:I G B C J F L K
+B C F H I J K L:H J B C I F L K
+B C G H I J K L:H J B C I G L K
+B D E F G H I J:H G B D J F E I
+B D E F G H I K:E G B D H F I K
+B D E F G H I L:E G B D H F L I
+B D E F G H J K:H G B D J F E K
+B D E F G H J L:H G B D J F L E
+B D E F G H K L:E G B D H F L K
+B D E F G I J K:E G B D J F I K
+B D E F G I J L:E G B D J F L I
+B D E F G I K L:E G B D I F L K
+B D E F G J K L:E G B D J F L K
+B D E F H I J K:E J B D H F I K
+B D E F H I J L:E J B D H F L I
+B D E F H I K L:E I B D H F L K
+B D E F H J K L:E J B D H F L K
+B D E F I J K L:E J B D I F L K
+B D E G H I J K:E J B D H G I K
+B D E G H I J L:E J B D H G L I
+B D E G H I K L:E G B D I H L K
+B D E G H J K L:E J B D H G L K
+B D E G I J K L:E J B D I G L K
+B D E H I J K L:E J B D I H L K
+B D F G H I J K:H G B D J F I K
+B D F G H I J L:H G B D J F L I
+B D F G H I K L:H G B D I F L K
+B D F G H J K L:H G B D J F L K
+B D F G I J K L:I G B D J F L K
+B D F H I J K L:H J B D I F L K
+B D G H I J K L:H J B D I G L K
+B E F G H I J K:E J B F H G I K
+B E F G H I J L:E J B F H G L I
+B E F G H I K L:E G B F I H L K
+B E F G H J K L:E J B F H G L K
+B E F G I J K L:E J B F I G L K
+B E F H I J K L:E J B F I H L K
+B E G H I J K L:E J I B H G L K
+B F G H I J K L:H J B F I G L K
+C D E F G H I J:C G J D H F E I
+C D E F G H I K:C G E D H F I K
+C D E F G H I L:C G E D H F L I
+C D E F G H J K:C G J D H F E K
+C D E F G H J L:C G J D H F L E
+C D E F G H K L:C G E D H F L K
+C D E F G I J K:C G E D J F I K
+C D E F G I J L:C G E D J F L I
+C D E F G I K L:C G E D I F L K
+C D E F G J K L:C G E D J F L K
+C D E F H I J K:C J E D H F I K
+C D E F H I J L:C J E D H F L I
+C D E F H I K L:C E I D H F L K
+C D E F H J K L:C J E D H F L K
+C D E F I J K L:C J E D I F L K
+C D E G H I J K:E G J C H D I K
+C D E G H I J L:E G J C H D L I
+C D E G H I K L:E G I C H D L K
+C D E G H J K L:E G J C H D L K
+C D E G I J K L:E G I C J D L K
+C D E H I J K L:E J I C H D L K
+C D F G H I J K:C G J D H F I K
+C D F G H I J L:C G J D H F L I
+C D F G H I K L:C G I D H F L K
+C D F G H J K L:C G J D H F L K
+C D F G I J K L:C G I D J F L K
+C D F H I J K L:C J I D H F L K
+C D G H I J K L:H G I C J D L K
+C E F G H I J K:E G J C H F I K
+C E F G H I J L:E G J C H F L I
+C E F G H I K L:E G I C H F L K
+C E F G H J K L:E G J C H F L K
+C E F G I J K L:E G I C J F L K
+C E F H I J K L:E J I C H F L K
+C E G H I J K L:E J I C H G L K
+C F G H I J K L:H G I C J F L K
+D E F G H I J K:E G J D H F I K
+D E F G H I J L:E G J D H F L I
+D E F G H I K L:E G I D H F L K
+D E F G H J K L:E G J D H F L K
+D E F G I J K L:E G I D J F L K
+D E F H I J K L:E J I D H F L K
+D E G H I J K L:E J I D H G L K
+D F G H I J K L:H G I D J F L K
+E F G H I J K L:E J I F H G L K
+"""
+
+for _line in _RAW.strip().split('\n'):
+    _k, _v = _line.split(':')
+    _key = ''.join(sorted(_k.strip().split()))
+    if len(_key) == 8:
+        THIRD_COMBOS[_key] = _v.strip().split()
+
+
+GROUP_MATCHES = [
+    (1,'A','Mexico','South Africa'),(2,'A','South Korea','Czech Republic'),
+    (3,'B','Canada','Bosnia and Herzegovina'),(4,'D','United States','Paraguay'),
+    (5,'C','Haiti','Scotland'),(6,'D','Australia','Turkey'),
+    (7,'C','Brazil','Morocco'),(8,'B','Qatar','Switzerland'),
+    (9,'E','Ivory Coast','Ecuador'),(10,'E','Germany','Curaçao'),
+    (11,'F','Netherlands','Japan'),(12,'F','Sweden','Tunisia'),
+    (13,'H','Saudi Arabia','Uruguay'),(14,'H','Spain','Cape Verde'),
+    (15,'G','Iran','New Zealand'),(16,'G','Belgium','Egypt'),
+    (17,'I','France','Senegal'),(18,'I','Iraq','Norway'),
+    (19,'J','Argentina','Algeria'),(20,'J','Austria','Jordan'),
+    (21,'L','Ghana','Panama'),(22,'L','England','Croatia'),
+    (23,'K','Portugal','DR Congo'),(24,'K','Uzbekistan','Colombia'),
+    (25,'A','Czech Republic','South Africa'),(26,'B','Switzerland','Bosnia and Herzegovina'),
+    (27,'B','Canada','Qatar'),(28,'A','Mexico','South Korea'),
+    (29,'C','Brazil','Haiti'),(30,'C','Scotland','Morocco'),
+    (31,'D','Turkey','Paraguay'),(32,'D','United States','Australia'),
+    (33,'E','Germany','Ivory Coast'),(34,'E','Ecuador','Curaçao'),
+    (35,'F','Netherlands','Sweden'),(36,'F','Tunisia','Japan'),
+    (37,'H','Uruguay','Cape Verde'),(38,'H','Spain','Saudi Arabia'),
+    (39,'G','Belgium','Iran'),(40,'G','New Zealand','Egypt'),
+    (41,'I','Norway','Senegal'),(42,'I','France','Iraq'),
+    (43,'J','Argentina','Austria'),(44,'J','Jordan','Algeria'),
+    (45,'L','England','Ghana'),(46,'L','Panama','Croatia'),
+    (47,'K','Portugal','Uzbekistan'),(48,'K','Colombia','DR Congo'),
+    (49,'C','Scotland','Brazil'),(50,'C','Morocco','Haiti'),
+    (51,'B','Switzerland','Canada'),(52,'B','Bosnia and Herzegovina','Qatar'),
+    (53,'A','Czech Republic','Mexico'),(54,'A','South Africa','South Korea'),
+    (55,'E','Curaçao','Ivory Coast'),(56,'E','Ecuador','Germany'),
+    (57,'F','Japan','Sweden'),(58,'F','Tunisia','Netherlands'),
+    (59,'D','Turkey','United States'),(60,'D','Paraguay','Australia'),
+    (61,'I','Norway','France'),(62,'I','Senegal','Iraq'),
+    (63,'G','Egypt','Iran'),(64,'G','New Zealand','Belgium'),
+    (65,'H','Cape Verde','Saudi Arabia'),(66,'H','Uruguay','Spain'),
+    (67,'L','Panama','England'),(68,'L','Croatia','Ghana'),
+    (69,'J','Algeria','Austria'),(70,'J','Jordan','Argentina'),
+    (71,'K','Colombia','Portugal'),(72,'K','DR Congo','Uzbekistan'),
+]
+
+
+def compute_group_standings(results):
+    """Compute group standings from results dict."""
+    stats = {}
+    all_matches = GROUP_MATCHES
+
+    stats = {}
+    for num, grp, t1, t2 in all_matches:
+        for t in [t1, t2]:
+            if t not in stats:
+                stats[t] = {'P':0,'W':0,'D':0,'L':0,'GF':0,'GA':0,'Pts':0,'grp':grp}
+        r = results.get(num)
+        if not r: continue
+        home, away, outcome = r
+        stats[t1]['P'] += 1; stats[t2]['P'] += 1
+        stats[t1]['GF'] += home; stats[t1]['GA'] += away
+        stats[t2]['GF'] += away; stats[t2]['GA'] += home
+        if outcome == 'W1':
+            stats[t1]['W'] += 1; stats[t1]['Pts'] += 3; stats[t2]['L'] += 1
+        elif outcome == 'W2':
+            stats[t2]['W'] += 1; stats[t2]['Pts'] += 3; stats[t1]['L'] += 1
+        else:
+            stats[t1]['D'] += 1; stats[t1]['Pts'] += 1
+            stats[t2]['D'] += 1; stats[t2]['Pts'] += 1
+
+    grp_standings = {}
+    for grp, teams in GROUP_ORDER.items():
+        sorted_teams = sorted(teams, key=lambda t: (
+            -stats.get(t, {}).get('Pts', 0),
+            -(stats.get(t, {}).get('GF', 0) - stats.get(t, {}).get('GA', 0)),
+            -stats.get(t, {}).get('GF', 0),
+            RANKINGS.get(t, 999)
+        ))
+        grp_standings[grp] = [(t, stats.get(t, {})) for t in sorted_teams]
+
+    return grp_standings, stats
+
+
+def write_bracket_json(results):
+    """
+    Write knockout_bracket.json:
+    - Provisional (confirmed=false): once all 12 groups have ≥1 result (after round 1)
+    - Confirmed   (confirmed=true):  once all 72 group matches have results
+    Wikipedia is always the canonical source — confirmed=true means crosscheck is done.
+    """
+    # Check which groups have started
+    groups_started = set()
+    for num, grp, t1, t2 in GROUP_MATCHES:
+        if num in results:
+            groups_started.add(grp)
+
+    if len(groups_started) < 12:
+        print(f'Only {len(groups_started)}/12 groups have started — bracket not yet generated')
+        return
+
+    confirmed = len(results) >= 72
+    status    = 'confirmed' if confirmed else 'provisional'
+    print(f'Generating {status} bracket ({len(results)}/72 matches played)...')
+
+    grp_standings, _ = compute_group_standings(results)
+
+    # Build position lookup
+    pos = {}
+    for grp, teams in grp_standings.items():
+        if len(teams) > 0: pos[f'1{grp}'] = teams[0][0]
+        if len(teams) > 1: pos[f'2{grp}'] = teams[1][0]
+        if len(teams) > 2: pos[f'3{grp}'] = teams[2][0]
+
+    # Best 8 third-place teams
+    thirds = sorted(
+        [(grp, teams[2][0], teams[2][1]) for grp, teams in grp_standings.items() if len(teams) >= 3],
+        key=lambda x: (-x[2].get('Pts',0), -(x[2].get('GF',0)-x[2].get('GA',0)),
+                       -x[2].get('GF',0), RANKINGS.get(x[1], 999))
+    )[:8]
+
+    qual_groups = ''.join(sorted(g for g,_,_ in thirds))
+    combo = THIRD_COMBOS.get(qual_groups)
+
+    # 3rd place slot assignments: [M79,M85,M81,M74,M82,M77,M87,M80]
+    third_slot = {}
+    if combo:
+        for match, grp_letter in zip([79,85,81,74,82,77,87,80], combo):
+            third_slot[match] = pos.get(f'3{grp_letter}', f'3{grp_letter}')
+    else:
+        print(f'Warning: combination key "{qual_groups}" not found — using placeholders')
+        for m in [79,85,81,74,82,77,87,80]:
+            third_slot[m] = 'TBD'
+
+    # Round of 32 matchups
+    r32 = {
+        73: (pos.get('2A'), pos.get('2B')),
+        74: (pos.get('1E'), third_slot.get(74)),
+        75: (pos.get('1F'), pos.get('2C')),
+        76: (pos.get('1C'), pos.get('2F')),
+        77: (pos.get('1I'), third_slot.get(77)),
+        78: (pos.get('2E'), pos.get('2I')),
+        79: (pos.get('1A'), third_slot.get(79)),
+        80: (pos.get('1L'), third_slot.get(80)),
+        81: (pos.get('1D'), third_slot.get(81)),
+        82: (pos.get('1G'), third_slot.get(82)),
+        83: (pos.get('2K'), pos.get('2L')),
+        84: (pos.get('1H'), pos.get('2J')),
+        85: (pos.get('1B'), third_slot.get(85)),
+        86: (pos.get('1J'), pos.get('2H')),
+        87: (pos.get('1K'), third_slot.get(87)),
+        88: (pos.get('2D'), pos.get('2G')),
+    }
+
+    import json, datetime
+    bracket = {
+        'generated_at': datetime.datetime.utcnow().isoformat() + 'Z',
+        'confirmed': confirmed,
+        'status': status,
+        'matches_played': len(results),
+        'source': 'Wikipedia (canonical)',
+        'combination_key': qual_groups,
+        'combination_found': combo is not None,
+        'groups': {
+            grp: {
+                'first':  teams[0][0] if len(teams) > 0 else None,
+                'second': teams[1][0] if len(teams) > 1 else None,
+                'third':  teams[2][0] if len(teams) > 2 else None,
+                'fourth': teams[3][0] if len(teams) > 3 else None,
+            }
+            for grp, teams in grp_standings.items()
+        },
+        'qualified_thirds': [
+            {'group': g, 'team': t, 'pts': s.get('Pts',0),
+             'gd': s.get('GF',0)-s.get('GA',0), 'gf': s.get('GF',0)}
+            for g, t, s in thirds
+        ],
+        'round_of_32': {
+            str(m): {'home': home, 'away': away}
+            for m, (home, away) in r32.items()
+        },
+        'round_of_16': {
+            '89': {'home': 'W74', 'away': 'W77'}, '90': {'home': 'W73', 'away': 'W75'},
+            '91': {'home': 'W76', 'away': 'W78'}, '92': {'home': 'W79', 'away': 'W80'},
+            '93': {'home': 'W83', 'away': 'W84'}, '94': {'home': 'W81', 'away': 'W82'},
+            '95': {'home': 'W86', 'away': 'W88'}, '96': {'home': 'W85', 'away': 'W87'},
+        },
+        'quarterfinals': {
+            '97': {'home': 'W89', 'away': 'W90'}, '98': {'home': 'W93', 'away': 'W94'},
+            '99': {'home': 'W91', 'away': 'W92'}, '100': {'home': 'W95', 'away': 'W96'},
+        },
+        'semifinals': {
+            '101': {'home': 'W97', 'away': 'W98'},
+            '102': {'home': 'W99', 'away': 'W100'},
+        },
+        'third_place': {'103': {'home': 'L101', 'away': 'L102'}},
+        'final':       {'104': {'home': 'W101', 'away': 'W102'}},
+    }
+
+    os.makedirs('data', exist_ok=True)
+    path = 'data/knockout_bracket.json'
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(bracket, f, indent=2)
+    print(f'Knockout bracket written → {path}')
+    for m, (h, a) in r32.items():
+        print(f'  M{m}: {h} vs {a}')
+
+
 if __name__ == '__main__':
     print('Fetching Wikipedia wikitext...')
     wikitext = fetch_wikitext()
@@ -175,3 +918,4 @@ if __name__ == '__main__':
     results = parse_results(wikitext)
     print(f'Found {len(results)} completed matches')
     write_csv(results)
+    write_bracket_json(results)
