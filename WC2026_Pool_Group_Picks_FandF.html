@@ -650,12 +650,6 @@ const POOL_ID   = 'fandf';             // used in CSV filename and GitHub folder
 const POOL_NAME = 'Friends & Family';  // displayed in the page header
 // ──────────────────────────────────────────────────────────
 
-// ── GitHub config ─────────────────────────────────────────
-// PAT scoped to wc26-picks repo only (Contents: Write)
-// Generate at: GitHub → Settings → Developer settings → Fine-grained tokens
-const GITHUB_PAT  = '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';
-const GITHUB_REPO = 'riteshwarade/wc26-picks';
-// ──────────────────────────────────────────────────────────
 
 // ── Match data ────────────────────────────────────────────
 // [match#, group, date, time (ET), team1, team2]
@@ -931,9 +925,7 @@ function requireName() {
 
 function confirmSubmit() {
   const name = document.getElementById('entrantName').value.trim();
-  const csv  = buildCSV(name);
-  downloadCSV(name, csv);
-  silentUploadToGitHub(name, csv);  // silent — not mentioned to user
+  downloadCSV(name);
   document.getElementById('confirmRow').classList.remove('visible');
   const msg = document.getElementById('validationMsg');
   msg.style.background = '#ebf9ff';
@@ -941,32 +933,6 @@ function confirmSubmit() {
   msg.style.color = 'var(--neutral-darkest)';
   msg.textContent = `✓ Done! Your picks have been downloaded as a CSV file. Please send to Ritesh.`;
   msg.style.display = 'block';
-}
-
-async function silentUploadToGitHub(name, csv) {
-  if (!GITHUB_PAT) return;  // skip if no token configured
-  const filename = `wc26group_${POOL_ID}_${name.replace(/\s+/g, '-').toLowerCase()}.csv`;
-  const path     = `${POOL_ID}/${filename}`;
-  const apiUrl   = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
-  const headers  = { 'Authorization': `Bearer ${GITHUB_PAT}`, 'Content-Type': 'application/json' };
-  const content  = btoa(unescape(encodeURIComponent(csv)));  // base64 encode
-
-  try {
-    // Check if file already exists (need SHA to update)
-    let sha;
-    const check = await fetch(apiUrl, { headers });
-    if (check.ok) { const j = await check.json(); sha = j.sha; }
-
-    await fetch(apiUrl, {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify({
-        message: `picks: ${name}`,
-        content,
-        ...(sha ? { sha } : {}),
-      }),
-    });
-  } catch (_) { /* fail silently */ }
 }
 
 function runShortcut(mode) {
@@ -990,7 +956,7 @@ function runShortcut(mode) {
   });
 }
 
-function buildCSV(name) {
+function downloadCSV(name) {
   const escape = v => (String(v).includes(',') ? `"${v}"` : v);
   const rows = [];
   MATCHES.forEach(m => {
@@ -999,10 +965,7 @@ function buildCSV(name) {
     const label = val === 'w1' ? `${t1} win` : val === 'draw' ? 'Draw' : `${t2} win`;
     rows.push([num, escape(label), val === 'w1' ? 1 : 0, val === 'draw' ? 1 : 0, val === 'w2' ? 1 : 0]);
   });
-  return rows.map(r => r.join(',')).join('\n');
-}
-
-function downloadCSV(name, csv) {
+  const csv  = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
