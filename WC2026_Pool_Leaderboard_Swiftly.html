@@ -284,6 +284,79 @@
     color: #ffffff;
   }
 
+  /* ── Group tables ── */
+  .group-tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  .group-table-card {
+    background: #ffffff;
+    border: 1px solid var(--neutral-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.04);
+  }
+
+  .group-table-header {
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 7px 12px;
+  }
+
+  .group-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+
+  .group-table thead tr {
+    background: var(--neutral-lightest);
+    border-bottom: 1px solid var(--neutral-light);
+  }
+
+  .group-table th {
+    padding: 5px 8px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: center;
+  }
+
+  .group-table th.th-team { text-align: left; }
+
+  .group-table tbody tr {
+    border-bottom: 1px solid var(--neutral-light);
+  }
+
+  .group-table tbody tr:last-child { border-bottom: none; }
+  .group-table tbody tr:nth-child(even) { background: var(--neutral-lightest); }
+
+  .group-table td {
+    padding: 5px 8px;
+    text-align: center;
+    color: var(--neutral-darkest);
+  }
+
+  .group-table td.td-team {
+    text-align: left;
+    font-weight: 700;
+  }
+
+  .group-table td.td-pts {
+    font-weight: 700;
+    color: var(--swiftly-blue);
+  }
+
+  .group-table tr.qualified td { background: var(--blue-lightest); }
+
   /* ── Loading / error states ── */
   .state-msg {
     text-align: center;
@@ -323,6 +396,11 @@
   <p class="section-label">Match results</p>
   <div class="card" id="resultsCard">
     <div class="state-msg"><span class="emoji">⏳</span>Loading results…</div>
+  </div>
+
+  <p class="section-label">Group tables</p>
+  <div id="groupTablesCard">
+    <div class="state-msg"><span class="emoji">⏳</span>Loading group tables…</div>
   </div>
 
 </div>
@@ -627,6 +705,92 @@ function renderResults(results) {
     </table>`;
 }
 
+// ── Group tables ─────────────────────────────────────────
+function renderGroupTables(results) {
+  // Build team stats from MATCHES + results
+  const groups = {};
+  const stats  = {};
+
+  MATCHES.forEach(([num, grp, , , t1, t2]) => {
+    if (!groups[grp]) groups[grp] = [];
+    if (!groups[grp].includes(t1)) groups[grp].push(t1);
+    if (!groups[grp].includes(t2)) groups[grp].push(t2);
+
+    [t1, t2].forEach(t => {
+      if (!stats[t]) stats[t] = { P:0, W:0, D:0, L:0, GF:0, GA:0, Pts:0 };
+    });
+
+    const r = results[num];
+    if (!r) return;
+
+    stats[t1].P++; stats[t2].P++;
+    stats[t1].GF += r.home; stats[t1].GA += r.away;
+    stats[t2].GF += r.away; stats[t2].GA += r.home;
+
+    if (r.outcome === 'W1') {
+      stats[t1].W++; stats[t1].Pts += 3;
+      stats[t2].L++;
+    } else if (r.outcome === 'W2') {
+      stats[t2].W++; stats[t2].Pts += 3;
+      stats[t1].L++;
+    } else {
+      stats[t1].D++; stats[t1].Pts++;
+      stats[t2].D++; stats[t2].Pts++;
+    }
+  });
+
+  const completedGroups = Object.keys(groups)
+    .filter(g => groups[g].some(t => stats[t] && stats[t].P > 0))
+    .sort();
+
+  if (!completedGroups.length) {
+    document.getElementById('groupTablesCard').innerHTML =
+      '<div class="state-msg"><span class="emoji">⚽</span>Group tables will appear once matches start on Jun 11.</div>';
+    return;
+  }
+
+  const cards = completedGroups.map(grp => {
+    const teams = [...groups[grp]].sort((a, b) => {
+      const sa = stats[a] || {Pts:0,GF:0,GA:0};
+      const sb = stats[b] || {Pts:0,GF:0,GA:0};
+      return (sb.Pts - sa.Pts) || ((sb.GF-sb.GA) - (sa.GF-sa.GA)) || (sb.GF - sa.GF);
+    });
+
+    const rows = teams.map((t, i) => {
+      const s = stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0};
+      const gd = s.GF - s.GA;
+      const qualClass = i < 2 ? ' class="qualified"' : '';
+      return `<tr${qualClass}>
+        <td class="td-team">${t}</td>
+        <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
+        <td>${s.GF}</td><td>${s.GA}</td>
+        <td>${gd >= 0 ? '+' : ''}${gd}</td>
+        <td class="td-pts">${s.Pts}</td>
+      </tr>`;
+    }).join('');
+
+    return `
+      <div class="group-table-card">
+        <div class="group-table-header">Group ${grp}</div>
+        <div class="group-table">
+          <table>
+            <thead><tr>
+              <th class="th-team">Team</th>
+              <th title="Played">P</th><th title="Won">W</th>
+              <th title="Drawn">D</th><th title="Lost">L</th>
+              <th title="Goals for">GF</th><th title="Goals against">GA</th>
+              <th title="Goal difference">GD</th><th title="Points">Pts</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('groupTablesCard').innerHTML =
+    `<div class="group-tables-grid">${cards}</div>`;
+}
+
 // ── Tooltip ───────────────────────────────────────────────
 const tooltip = document.getElementById('sq-tooltip');
 
@@ -697,11 +861,13 @@ async function init() {
 
     renderStandings(standings, results);
     renderResults(results);
+    renderGroupTables(results);
 
   } catch (err) {
     const msg = `<div class="state-msg"><span class="emoji">⚠️</span>${err.message}</div>`;
-    document.getElementById('standingsCard').innerHTML = msg;
-    document.getElementById('resultsCard').innerHTML   = msg;
+    document.getElementById('standingsCard').innerHTML  = msg;
+    document.getElementById('resultsCard').innerHTML    = msg;
+    document.getElementById('groupTablesCard').innerHTML = msg;
     document.getElementById('matchesPlayed').textContent = 'Could not load data';
   }
 }
