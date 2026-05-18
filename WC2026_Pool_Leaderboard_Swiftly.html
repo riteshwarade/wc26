@@ -408,7 +408,11 @@
     color: var(--swiftly-blue);
   }
 
-  .group-table tr.qualified td { background: var(--blue-lightest); }
+  .group-table tr.qualified      td { background: var(--blue-lightest); }
+  .group-table tr.third-qual     td { background: #e6f9ef; }
+  .group-table tr.third-pending  td { background: #fff8e6; }
+  .group-table tr.eliminated     td { background: #fdf0f0; color: var(--neutral-medium); }
+  .group-table tr.eliminated td.td-team { color: var(--neutral-dark); }
 
   /* ── Loading / error states ── */
   .state-msg {
@@ -870,35 +874,65 @@ function renderGroupTables(results) {
     'England':4,'Croatia':11,'Ghana':74,'Panama':33,
   };
 
-  const cards = completedGroups.map(grp => {
+  // ── Pass 1: compute sorted standings for all completed groups ──
+  function sortedStandings(grp) {
     const order = GROUP_ORDER[grp] || groups[grp];
     const grpMatches = MATCHES.filter(([, g]) => g === grp);
-    const teams = [...order].sort((a, b) => {
+    return [...order].sort((a, b) => {
       const sa = stats[a] || {Pts:0,GF:0,GA:0};
       const sb = stats[b] || {Pts:0,GF:0,GA:0};
-      // 1. Overall points
       if (sb.Pts !== sa.Pts) return sb.Pts - sa.Pts;
-      // Criteria a–c: H2H among tied teams
-      const ha = h2hStats(a, b, grpMatches);
-      const hb = h2hStats(b, a, grpMatches);
-      if (hb.Pts !== ha.Pts) return hb.Pts - ha.Pts;          // a. H2H Pts
-      if ((hb.GF-hb.GA) !== (ha.GF-ha.GA)) return (hb.GF-hb.GA) - (ha.GF-ha.GA); // b. H2H GD
-      if (hb.GF !== ha.GF) return hb.GF - ha.GF;              // c. H2H GF
-      // Criteria d–e: overall
-      if ((sb.GF-sb.GA) !== (sa.GF-sa.GA)) return (sb.GF-sb.GA) - (sa.GF-sa.GA); // d. GD
-      if (sb.GF !== sa.GF) return sb.GF - sa.GF;              // e. GF
-      // f. Fair play — not implemented (no card data)
-      // g. FIFA ranking
+      const ha = h2hStats(a, b, grpMatches), hb = h2hStats(b, a, grpMatches);
+      if (hb.Pts !== ha.Pts) return hb.Pts - ha.Pts;
+      if ((hb.GF-hb.GA) !== (ha.GF-ha.GA)) return (hb.GF-hb.GA) - (ha.GF-ha.GA);
+      if (hb.GF !== ha.GF) return hb.GF - ha.GF;
+      if ((sb.GF-sb.GA) !== (sa.GF-sa.GA)) return (sb.GF-sb.GA) - (sa.GF-sa.GA);
+      if (sb.GF !== sa.GF) return sb.GF - sa.GF;
       const ra = LB_RANKINGS[a] ?? 999, rb = LB_RANKINGS[b] ?? 999;
       if (ra !== rb) return ra - rb;
-      // h. Wikipedia order
-      return order.indexOf(a) - order.indexOf(b);
+      return (GROUP_ORDER[grp]||groups[grp]).indexOf(a) - (GROUP_ORDER[grp]||groups[grp]).indexOf(b);
     });
+  }
+
+  // Is a group fully played? (all 6 matches have results)
+  const isGroupDone = grp => MATCHES.filter(([, g]) => g === grp).every(([n]) => results[n]);
+
+  // Collect 3rd-place teams from all completed groups
+  const thirdPlaceTeams = completedGroups.map(grp => {
+    const s = sortedStandings(grp);
+    return s[2] ? { team: s[2], grp, stats: stats[s[2]] || {Pts:0,GF:0,GA:0} } : null;
+  }).filter(Boolean);
+
+  // Sort 3rd-place teams (cross-group: overall stats only)
+  const sortedThirds = [...thirdPlaceTeams].sort((a, b) => {
+    const sa = a.stats, sb = b.stats;
+    if (sb.Pts !== sa.Pts) return sb.Pts - sa.Pts;
+    if ((sb.GF-sb.GA) !== (sa.GF-sa.GA)) return (sb.GF-sb.GA) - (sa.GF-sa.GA);
+    if (sb.GF !== sa.GF) return sb.GF - sa.GF;
+    return (LB_RANKINGS[a.team]??999) - (LB_RANKINGS[b.team]??999);
+  });
+
+  const allGroupsDone = completedGroups.length === 12 && completedGroups.every(isGroupDone);
+  const qualifiedThirds = new Set(sortedThirds.slice(0, 8).map(t => t.team));
+
+  // ── Pass 2: render each group ──────────────────────────────
+  const cards = completedGroups.map(grp => {
+    const teams = sortedStandings(grp);
+    const grpDone = isGroupDone(grp);
 
     const rows = teams.map((t, i) => {
       const s = stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0};
       const gd = s.GF - s.GA;
-      const qualClass = i < 2 ? ' class="qualified"' : '';
+      let rowClass = '';
+      if (i < 2) {
+        rowClass = 'qualified';
+      } else if (i === 2) {
+        if (allGroupsDone) rowClass = qualifiedThirds.has(t) ? 'third-qual' : 'eliminated';
+        else rowClass = 'third-pending';
+      } else {
+        rowClass = grpDone ? 'eliminated' : '';
+      }
+      const qualClass = rowClass ? ` class="${rowClass}"` : '';
       return `<tr${qualClass}>
         <td class="td-team">${t}</td>
         <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
@@ -926,8 +960,15 @@ function renderGroupTables(results) {
       </div>`;
   }).join('');
 
+  const legend = `<div style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 0 4px;font-size:0.72rem;color:var(--neutral-dark)">
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:var(--blue-lightest);border:1px solid var(--swiftly-blue);display:inline-block"></span>Qualified (top 2)</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#e6f9ef;border:1px solid #22863a;display:inline-block"></span>3rd — qualified</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#fff8e6;border:1px solid #ff9e16;display:inline-block"></span>3rd — pending</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#fdf0f0;border:1px solid #e24b4a;display:inline-block"></span>Eliminated</span>
+  </div>`;
+
   document.getElementById('groupTablesCard').innerHTML =
-    `<div class="group-tables-grid">${cards}</div>`;
+    `<div class="group-tables-grid">${cards}</div>${legend}`;
 }
 
 // ── Collapsible sections ──────────────────────────────────
