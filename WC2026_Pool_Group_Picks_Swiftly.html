@@ -919,8 +919,10 @@ function renderPickGroupTables() {
 
     const rows = teams.map((t, i) => {
       const s = stats[t];
+      const rank = RANKINGS[t] ?? '–';
       const qClass = i < 2 ? ' class="q-zone"' : '';
       return `<tr${qClass}>
+        <td style="color:var(--neutral-medium);font-size:0.68rem">${rank}</td>
         <td class="td-team">${t}</td>
         <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
         <td class="td-pts">${s.Pts}</td>
@@ -932,6 +934,7 @@ function renderPickGroupTables() {
         <div class="pick-group-header">Group ${grp}</div>
         <table class="pick-group-table">
           <thead><tr>
+            <th title="FIFA Rank">Rk</th>
             <th class="th-team">Team</th>
             <th title="Played">P</th><th title="Won">W</th>
             <th title="Drawn">D</th><th title="Lost">L</th>
@@ -1054,7 +1057,7 @@ const RANKINGS = {
   'Canada': 30, 'Bosnia and Herzegovina': 65, 'Qatar': 55, 'Switzerland': 19,
   'Brazil': 6, 'Morocco': 8, 'Haiti': 83, 'Scotland': 43,
   'United States': 16, 'Paraguay': 40, 'Australia': 27, 'Turkey': 22,
-  'Germany': 10, 'Curaçao': 82, 'Côte d\'Ivoire': 34, 'Ecuador': 23,
+  'Germany': 10, 'Curaçao': 82, 'Ivory Coast': 34, 'Ecuador': 23,
   'Netherlands': 7, 'Japan': 18, 'Sweden': 38, 'Tunisia': 44,
   'Belgium': 9, 'Egypt': 29, 'Iran': 21, 'New Zealand': 85,
   'Spain': 2, 'Cape Verde': 69, 'Saudi Arabia': 61, 'Uruguay': 17,

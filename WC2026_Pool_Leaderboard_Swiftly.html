@@ -376,7 +376,9 @@
     text-align: center;
   }
 
-  .group-table th.th-team { text-align: left; }
+  .group-table th.th-team { text-align: left; min-width: 160px; }
+  .group-table table { table-layout: fixed; width: 100%; }
+  .group-table td, .group-table th { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .group-table tbody tr {
     border-bottom: 1px solid var(--neutral-light);
