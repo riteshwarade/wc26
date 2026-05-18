@@ -925,7 +925,11 @@ function renderPickGroupTables() {
   });
 
   const html = Object.keys(groups).sort().map(grp => {
-    const teams = GROUP_ORDER[grp] || groups[grp];
+    const order = GROUP_ORDER[grp] || groups[grp];
+    const teams = [...order].sort((a, b) => {
+      const sa = stats[a], sb = stats[b];
+      return (sb.Pts - sa.Pts) || (sb.W - sa.W) || (order.indexOf(a) - order.indexOf(b));
+    });
 
     const rows = teams.map((t, i) => {
       const s = stats[t];

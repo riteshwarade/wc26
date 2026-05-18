@@ -836,7 +836,12 @@ function renderGroupTables(results) {
   }
 
   const cards = completedGroups.map(grp => {
-    const teams = GROUP_ORDER[grp] || groups[grp];
+    const order = GROUP_ORDER[grp] || groups[grp];
+    const teams = [...order].sort((a, b) => {
+      const sa = stats[a] || {Pts:0,GF:0,GA:0};
+      const sb = stats[b] || {Pts:0,GF:0,GA:0};
+      return (sb.Pts - sa.Pts) || ((sb.GF-sb.GA) - (sa.GF-sa.GA)) || (sb.GF - sa.GF) || (order.indexOf(a) - order.indexOf(b));
+    });
 
     const rows = teams.map((t, i) => {
       const s = stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0};
