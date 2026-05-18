@@ -962,8 +962,9 @@ function downloadCSV(name) {
   MATCHES.forEach(m => {
     const [num, , , , t1, t2] = m;
     const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
+    const match = escape(`${t1} v ${t2}`);
     const label = val === 'w1' ? `${t1} win` : val === 'draw' ? 'Draw' : `${t2} win`;
-    rows.push([num, escape(label), val === 'w1' ? 1 : 0, val === 'draw' ? 1 : 0, val === 'w2' ? 1 : 0]);
+    rows.push([num, match, escape(label)]);
   });
   const csv  = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
