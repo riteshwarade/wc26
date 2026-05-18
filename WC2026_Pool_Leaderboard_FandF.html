@@ -895,7 +895,8 @@ function renderGroupTables(results) {
   }
 
   // Is a group fully played? (all 6 matches have results)
-  const isGroupDone = grp => MATCHES.filter(([, g]) => g === grp).every(([n]) => results[n]);
+  const isGroupDone    = grp => MATCHES.filter(([, g]) => g === grp).every(([n]) => results[n]);
+  const isGroupStarted = grp => MATCHES.filter(([, g]) => g === grp).some(([n])  => results[n]);
 
   // Collect 3rd-place teams from all completed groups
   const thirdPlaceTeams = completedGroups.map(grp => {
@@ -912,13 +913,14 @@ function renderGroupTables(results) {
     return (LB_RANKINGS[a.team]??999) - (LB_RANKINGS[b.team]??999);
   });
 
-  const allGroupsDone = completedGroups.length === 12 && completedGroups.every(isGroupDone);
+  const allGroupsDone    = completedGroups.length === 12 && completedGroups.every(isGroupDone);
+  const allGroupsStarted = completedGroups.length === 12 && completedGroups.every(isGroupStarted);
   const qualifiedThirds = new Set(sortedThirds.slice(0, 8).map(t => t.team));
 
   // ── Pass 2: render each group ──────────────────────────────
   const cards = completedGroups.map(grp => {
     const teams = sortedStandings(grp);
-    const grpDone = isGroupDone(grp);
+    const grpStarted = isGroupStarted(grp);
 
     const rows = teams.map((t, i) => {
       const s = stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0};
@@ -927,10 +929,10 @@ function renderGroupTables(results) {
       if (i < 2) {
         rowClass = 'qualified';
       } else if (i === 2) {
-        if (allGroupsDone) rowClass = qualifiedThirds.has(t) ? 'third-qual' : 'eliminated';
+        if (allGroupsStarted) rowClass = qualifiedThirds.has(t) ? 'third-qual' : 'eliminated';
         else rowClass = 'third-pending';
       } else {
-        rowClass = grpDone ? 'eliminated' : '';
+        rowClass = grpStarted ? 'eliminated' : '';
       }
       const qualClass = rowClass ? ` class="${rowClass}"` : '';
       return `<tr${qualClass}>
