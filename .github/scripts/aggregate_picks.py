@@ -12,7 +12,7 @@ import os
 
 # Match number → (team1, team2)
 MATCH_TEAMS = {
-    1: ('Mexico', 'South Africa'),          2: ('South Korea', 'Czechia'),
+    1: ('Mexico', 'South Africa'),          2: ('South Korea', 'Czech Republic'),
     3: ('Canada', 'Bosnia and Herzegovina'), 4: ('United States', 'Paraguay'),
     5: ('Haiti', 'Scotland'),               6: ('Australia', 'Turkey'),
     7: ('Brazil', 'Morocco'),               8: ('Qatar', 'Switzerland'),
@@ -24,7 +24,7 @@ MATCH_TEAMS = {
     19: ('Argentina', 'Algeria'),           20: ('Austria', 'Jordan'),
     21: ('Ghana', 'Panama'),                22: ('England', 'Croatia'),
     23: ('Portugal', 'DR Congo'),           24: ('Uzbekistan', 'Colombia'),
-    25: ('Czechia', 'South Africa'),        26: ('Switzerland', 'Bosnia and Herzegovina'),
+    25: ('Czech Republic', 'South Africa'),        26: ('Switzerland', 'Bosnia and Herzegovina'),
     27: ('Canada', 'Qatar'),                28: ('Mexico', 'South Korea'),
     29: ('Brazil', 'Haiti'),                30: ('Scotland', 'Morocco'),
     31: ('Turkey', 'Paraguay'),             32: ('United States', 'Australia'),
@@ -38,7 +38,7 @@ MATCH_TEAMS = {
     47: ('Portugal', 'Uzbekistan'),         48: ('Colombia', 'DR Congo'),
     49: ('Scotland', 'Brazil'),             50: ('Morocco', 'Haiti'),
     51: ('Switzerland', 'Canada'),          52: ('Bosnia and Herzegovina', 'Qatar'),
-    53: ('Czechia', 'Mexico'),              54: ('South Africa', 'South Korea'),
+    53: ('Czech Republic', 'Mexico'),              54: ('South Africa', 'South Korea'),
     55: ('Curaçao', 'Ivory Coast'),         56: ('Ecuador', 'Germany'),
     57: ('Japan', 'Sweden'),                58: ('Tunisia', 'Netherlands'),
     59: ('Turkey', 'United States'),        60: ('Paraguay', 'Australia'),

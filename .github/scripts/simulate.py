@@ -19,7 +19,7 @@ import random
 # ── Match data ────────────────────────────────────────────────────────────────
 MATCHES = [
     (1,  'Mexico',                'South Africa'),
-    (2,  'South Korea',           'Czechia'),
+    (2,  'South Korea',           'Czech Republic'),
     (3,  'Canada',                'Bosnia and Herzegovina'),
     (4,  'United States',         'Paraguay'),
     (5,  'Haiti',                 'Scotland'),
@@ -42,7 +42,7 @@ MATCHES = [
     (22, 'England',               'Croatia'),
     (23, 'Portugal',              'DR Congo'),
     (24, 'Uzbekistan',            'Colombia'),
-    (25, 'Czechia',               'South Africa'),
+    (25, 'Czech Republic',               'South Africa'),
     (26, 'Switzerland',           'Bosnia and Herzegovina'),
     (27, 'Canada',                'Qatar'),
     (28, 'Mexico',                'South Korea'),
@@ -70,7 +70,7 @@ MATCHES = [
     (50, 'Morocco',               'Haiti'),
     (51, 'Switzerland',           'Canada'),
     (52, 'Bosnia and Herzegovina','Qatar'),
-    (53, 'Czechia',               'Mexico'),
+    (53, 'Czech Republic',               'Mexico'),
     (54, 'South Africa',          'South Korea'),
     (55, 'Curaçao',               'Ivory Coast'),
     (56, 'Ecuador',               'Germany'),

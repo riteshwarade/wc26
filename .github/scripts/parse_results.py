@@ -17,13 +17,13 @@ import requests
 # "Cabo Verde"         → "Cape Verde"
 # "IR Iran"            → "Iran"
 # "Congo DR"           → "DR Congo"
-# "Czechia"            → "Czechia"  (same on both)
+# "Czech Republic"            → "Czech Republic"  (same on both)
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── Wikipedia country code → team name ───────────────────────────────────────
 TEAM_CODES = {
     'MEX': 'Mexico',          'RSA': 'South Africa',      'KOR': 'South Korea',
-    'CZE': 'Czechia',         'CAN': 'Canada',            'BIH': 'Bosnia and Herzegovina',
+    'CZE': 'Czech Republic',         'CAN': 'Canada',            'BIH': 'Bosnia and Herzegovina',
     'USA': 'United States',   'PAR': 'Paraguay',          'HAI': 'Haiti',
     'SCO': 'Scotland',        'AUS': 'Australia',         'TUR': 'Turkey',
     'BRA': 'Brazil',          'MAR': 'Morocco',           'QAT': 'Qatar',
@@ -42,7 +42,7 @@ TEAM_CODES = {
 
 # ── Match list: (team1, team2) → match number ─────────────────────────────────
 MATCH_LOOKUP = {
-    ('Mexico', 'South Africa'): 1,          ('South Korea', 'Czechia'): 2,
+    ('Mexico', 'South Africa'): 1,          ('South Korea', 'Czech Republic'): 2,
     ('Canada', 'Bosnia and Herzegovina'): 3, ('United States', 'Paraguay'): 4,
     ('Haiti', 'Scotland'): 5,               ('Australia', 'Turkey'): 6,
     ('Brazil', 'Morocco'): 7,              ('Qatar', 'Switzerland'): 8,
@@ -54,7 +54,7 @@ MATCH_LOOKUP = {
     ('Argentina', 'Algeria'): 19,           ('Austria', 'Jordan'): 20,
     ('Ghana', 'Panama'): 21,               ('England', 'Croatia'): 22,
     ('Portugal', 'DR Congo'): 23,           ('Uzbekistan', 'Colombia'): 24,
-    ('Czechia', 'South Africa'): 25,        ('Switzerland', 'Bosnia and Herzegovina'): 26,
+    ('Czech Republic', 'South Africa'): 25,        ('Switzerland', 'Bosnia and Herzegovina'): 26,
     ('Canada', 'Qatar'): 27,               ('Mexico', 'South Korea'): 28,
     ('Brazil', 'Haiti'): 29,               ('Scotland', 'Morocco'): 30,
     ('Turkey', 'Paraguay'): 31,             ('United States', 'Australia'): 32,
@@ -68,7 +68,7 @@ MATCH_LOOKUP = {
     ('Portugal', 'Uzbekistan'): 47,         ('Colombia', 'DR Congo'): 48,
     ('Scotland', 'Brazil'): 49,             ('Morocco', 'Haiti'): 50,
     ('Switzerland', 'Canada'): 51,          ('Bosnia and Herzegovina', 'Qatar'): 52,
-    ('Czechia', 'Mexico'): 53,              ('South Africa', 'South Korea'): 54,
+    ('Czech Republic', 'Mexico'): 53,              ('South Africa', 'South Korea'): 54,
     ('Curaçao', 'Ivory Coast'): 55,         ('Ecuador', 'Germany'): 56,
     ('Japan', 'Sweden'): 57,               ('Tunisia', 'Netherlands'): 58,
     ('Turkey', 'United States'): 59,        ('Paraguay', 'Australia'): 60,
