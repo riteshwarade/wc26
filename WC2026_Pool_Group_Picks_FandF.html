@@ -958,8 +958,10 @@ function renderPickGroupTables() {
     const rows = teams.map((t, i) => {
       const s = stats[t];
       const rowClass = i < 2 ? 'qualified' : i === 2 ? 'third-pending' : 'eliminated';
+      const rank = RANKINGS[t] ?? '–';
       return `<tr class="${rowClass}">
         <td class="td-team">${(FLAGS[t]||'')+' '+t}</td>
+        <td style="color:var(--neutral-medium)">${rank}</td>
         <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
         <td class="td-pts">${s.Pts}</td>
       </tr>`;
@@ -972,6 +974,7 @@ function renderPickGroupTables() {
           <table>
             <thead><tr>
               <th class="th-team">Team</th>
+              <th title="FIFA Rank">Rk</th>
               <th title="Played">P</th><th title="Won">W</th>
               <th title="Drawn">D</th><th title="Lost">L</th>
               <th title="Points">Pts</th>
