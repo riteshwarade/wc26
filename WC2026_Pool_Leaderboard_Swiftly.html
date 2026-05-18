@@ -1841,10 +1841,14 @@ async function init() {
     document.getElementById('updatedAt').textContent =
       `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
+    // One match per group as a proxy — if all 12 have a result, all groups have started
+    const GRP_SAMPLE = {A:1,B:3,C:5,D:4,E:9,F:11,G:15,H:13,I:17,J:19,K:23,L:21};
+    const allGrpsStarted = Object.values(GRP_SAMPLE).every(m => results[m]);
+
     renderStandings(standings, results);
     renderResults(results);
     renderGroupTables(results);
-    renderBracket(results, allGroupsStarted);
+    renderBracket(results, allGrpsStarted);
 
   } catch (err) {
     const msg = `<div class="state-msg"><span class="emoji">⚠️</span>${err.message}</div>`;
