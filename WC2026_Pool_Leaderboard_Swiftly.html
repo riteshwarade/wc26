@@ -1679,8 +1679,27 @@ function bkTeamRow(name, stateCls, score) {
   return `<div class="bk-team ${cls}"><span class="bk-fl">${flag}</span><span class="bk-tn">${name}</span>${sc}</div>`;
 }
 
+// ── Knockout match schedule (dates from FIFA/Wikipedia) ──
+const KO_SCHEDULE = {
+  // Round of 32 (Jun 28 – Jul 3)
+  73:'Jun 28', 74:'Jun 29', 75:'Jun 29', 76:'Jun 29',
+  77:'Jun 30', 78:'Jun 30', 79:'Jun 30', 80:'Jul 1',
+  81:'Jul 1',  82:'Jul 1',  83:'Jul 2',  84:'Jul 2',
+  85:'Jul 2',  86:'Jul 3',  87:'Jul 3',  88:'Jul 3',
+  // Round of 16 (Jul 4 – Jul 7)
+  89:'Jul 4',  90:'Jul 4',  91:'Jul 5',  92:'Jul 5',
+  93:'Jul 6',  94:'Jul 6',  95:'Jul 7',  96:'Jul 7',
+  // Quarterfinals (Jul 9 – Jul 11)
+  97:'Jul 9',  98:'Jul 10', 99:'Jul 11', 100:'Jul 11',
+  // Semifinals (Jul 14 – Jul 15)
+  101:'Jul 14', 102:'Jul 15',
+  // 3rd place & Final
+  103:'Jul 18', 104:'Jul 19',
+};
+
 function matchCard(num, home, away, label, homeScore, awayScore, homeCls, awayCls) {
-  const mnumText = `M${num}${label ? ' · ' + label : ''}`;
+  const date = KO_SCHEDULE[num] ? ` · ${KO_SCHEDULE[num]}` : '';
+  const mnumText = `M${num}${date}${label ? ' · ' + label : ''}`;
   return `<div class="bk-card" data-match="${num}">
     <div class="bk-mnum">${mnumText}</div>
     ${bkTeamRow(home, homeCls, homeScore)}
