@@ -101,6 +101,35 @@
     text-transform: uppercase;
     letter-spacing: 0.6px;
     margin-bottom: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+  }
+
+  .section-label:hover { color: var(--swiftly-blue); }
+
+  .section-chevron {
+    font-size: 0.65rem;
+    transition: transform 0.2s ease;
+    display: inline-block;
+  }
+
+  .section-collapsed .section-chevron { transform: rotate(-90deg); }
+
+  .section-body {
+    overflow: hidden;
+    transition: max-height 0.25s ease, opacity 0.2s ease;
+    max-height: 9999px;
+    opacity: 1;
+    margin-bottom: 32px;
+  }
+
+  .section-body.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-bottom: 0;
   }
 
   /* ── Card ── */
@@ -256,13 +285,18 @@
   .results-table td {
     padding: 5px 12px;
     vertical-align: middle;
+  }
+
+  /* Compact columns: shrink to content */
+  .td-match-num, .td-grp, .td-score, .td-date, .td-time, .td-result {
+    width: 1%;
     white-space: nowrap;
   }
 
-  .td-match-num { color: var(--neutral-medium); font-weight: 700; text-align: center; width: 36px; }
+  .td-match-num { color: var(--neutral-medium); font-weight: 700; text-align: center; }
   .td-grp       { color: var(--swiftly-blue); font-weight: 700; }
   .td-score     { font-weight: 700; color: var(--neutral-darkest); }
-  .td-teams     { font-weight: 700; color: var(--neutral-darkest); }
+  .td-teams     { font-weight: 700; color: var(--neutral-darkest); min-width: 160px; }
 
   .outcome-pill {
     display: inline-flex;
@@ -283,6 +317,102 @@
     background: var(--neutral-dark);
     color: #ffffff;
   }
+
+  /* ── Side-by-side layout ── */
+  .side-by-side-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .side-left {
+    width: 380px;
+    flex-shrink: 0;
+  }
+
+  .side-right {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* ── Group tables ── */
+  .group-tables-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .group-table-card {
+    background: #ffffff;
+    border: 1px solid var(--neutral-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.04);
+  }
+
+  .group-table-header {
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 7px 12px;
+  }
+
+  .group-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+
+  .group-table thead tr {
+    background: var(--neutral-lightest);
+    border-bottom: 1px solid var(--neutral-light);
+  }
+
+  .group-table th {
+    padding: 5px 8px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: center;
+  }
+
+  .group-table th.th-team { text-align: left; }
+  .group-table td.td-team { min-width: 130px; }
+  .group-table td:not(.td-team), .group-table th:not(.th-team) { white-space: nowrap; width: 1%; }
+
+  .group-table tbody tr {
+    border-bottom: 1px solid var(--neutral-light);
+  }
+
+  .group-table tbody tr:last-child { border-bottom: none; }
+  .group-table tbody tr:nth-child(even) { background: var(--neutral-lightest); }
+
+  .group-table td {
+    padding: 5px 8px;
+    text-align: center;
+    color: var(--neutral-darkest);
+  }
+
+  .group-table td.td-team {
+    text-align: left;
+    font-weight: 700;
+  }
+
+  .group-table td.td-pts {
+    font-weight: 700;
+    color: var(--swiftly-blue);
+  }
+
+  .group-table tr.qualified      td { background: var(--blue-lightest); }
+  .group-table tr.third-qual     td { background: #e6f9ef; }
+  .group-table tr.third-pending  td { background: #fff8e6; }
+  .group-table tr.eliminated     td { background: #fdf0f0; color: var(--neutral-medium); }
+  .group-table tr.eliminated td.td-team { color: var(--neutral-dark); }
 
   /* ── Loading / error states ── */
   .state-msg {
@@ -315,14 +445,36 @@
 
 <div class="container">
 
-  <p class="section-label">Standings</p>
-  <div class="card" id="standingsCard">
-    <div class="state-msg"><span class="emoji">⏳</span>Loading picks and results…</div>
+  <p class="section-label" onclick="toggleSection('standings')">
+    <span class="section-chevron">▼</span> Standings
+  </p>
+  <div class="section-body" id="standings-body">
+    <div class="card" id="standingsCard">
+      <div class="state-msg"><span class="emoji">⏳</span>Loading picks and results…</div>
+    </div>
   </div>
 
-  <p class="section-label">Match results</p>
-  <div class="card" id="resultsCard">
-    <div class="state-msg"><span class="emoji">⏳</span>Loading results…</div>
+  <div class="side-by-side-layout">
+    <div class="side-left">
+      <p class="section-label" onclick="toggleSection('groups')">
+        <span class="section-chevron">▼</span> Group tables
+      </p>
+      <div class="section-body" id="groups-body">
+        <div id="groupTablesCard">
+          <div class="state-msg"><span class="emoji">⏳</span>Loading…</div>
+        </div>
+      </div>
+    </div>
+    <div class="side-right">
+      <p class="section-label" onclick="toggleSection('results')">
+        <span class="section-chevron">▼</span> Match results
+      </p>
+      <div class="section-body" id="results-body">
+        <div class="card" id="resultsCard">
+          <div class="state-msg"><span class="emoji">⏳</span>Loading…</div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -601,12 +753,12 @@ function renderResults(results) {
     const pillClass = r.outcome === 'Draw' ? 'outcome-pill draw' : 'outcome-pill';
     return `<tr>
       <td class="td-match-num">${num}</td>
-      <td>${date}</td>
+      <td class="td-date">${date}</td>
       <td class="td-grp">${grp}</td>
-      <td>${time}</td>
+      <td class="td-time">${time}</td>
       <td class="td-teams">${t1} v ${t2}</td>
       <td class="td-score">${score}</td>
-      <td><span class="${pillClass}">${winnerLabel}</span></td>
+      <td class="td-result"><span class="${pillClass}">${winnerLabel}</span></td>
     </tr>`;
   }).join('');
 
@@ -625,6 +777,210 @@ function renderResults(results) {
       </thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+// ── Fixed group order (per Wikipedia) ────────────────────
+const GROUP_ORDER = {
+  A: ['Mexico','South Africa','South Korea','Czech Republic'],
+  B: ['Canada','Bosnia and Herzegovina','Qatar','Switzerland'],
+  C: ['Brazil','Morocco','Haiti','Scotland'],
+  D: ['United States','Paraguay','Australia','Turkey'],
+  E: ['Germany','Curaçao','Ivory Coast','Ecuador'],
+  F: ['Netherlands','Japan','Sweden','Tunisia'],
+  G: ['Belgium','Egypt','Iran','New Zealand'],
+  H: ['Spain','Cape Verde','Saudi Arabia','Uruguay'],
+  I: ['France','Senegal','Iraq','Norway'],
+  J: ['Argentina','Algeria','Austria','Jordan'],
+  K: ['Portugal','DR Congo','Uzbekistan','Colombia'],
+  L: ['England','Croatia','Ghana','Panama'],
+};
+
+// ── Group tables ─────────────────────────────────────────
+function renderGroupTables(results) {
+  // Build team stats from MATCHES + results
+  const groups = {};
+  const stats  = {};
+
+  MATCHES.forEach(([num, grp, , , t1, t2]) => {
+    if (!groups[grp]) groups[grp] = [];
+    if (!groups[grp].includes(t1)) groups[grp].push(t1);
+    if (!groups[grp].includes(t2)) groups[grp].push(t2);
+
+    [t1, t2].forEach(t => {
+      if (!stats[t]) stats[t] = { P:0, W:0, D:0, L:0, GF:0, GA:0, Pts:0 };
+    });
+
+    const r = results[num];
+    if (!r) return;
+
+    stats[t1].P++; stats[t2].P++;
+    stats[t1].GF += r.home; stats[t1].GA += r.away;
+    stats[t2].GF += r.away; stats[t2].GA += r.home;
+
+    if (r.outcome === 'W1') {
+      stats[t1].W++; stats[t1].Pts += 3;
+      stats[t2].L++;
+    } else if (r.outcome === 'W2') {
+      stats[t2].W++; stats[t2].Pts += 3;
+      stats[t1].L++;
+    } else {
+      stats[t1].D++; stats[t1].Pts++;
+      stats[t2].D++; stats[t2].Pts++;
+    }
+  });
+
+  const completedGroups = Object.keys(groups)
+    .filter(g => groups[g].some(t => stats[t] && stats[t].P > 0))
+    .sort();
+
+  if (!completedGroups.length) {
+    document.getElementById('groupTablesCard').innerHTML =
+      '<div class="state-msg"><span class="emoji">⚽</span>Group tables will appear once matches start on Jun 11.</div>';
+    return;
+  }
+
+  // H2H stats between two teams using actual results
+  function h2hStats(teamA, teamB, grpMatches) {
+    let Pts = 0, GF = 0, GA = 0;
+    grpMatches.forEach(([num, , , , t1, t2]) => {
+      const r = results[num];
+      if (!r) return;
+      if (t1===teamA && t2===teamB) {
+        GF += r.home; GA += r.away;
+        if (r.outcome==='W1') Pts += 3;
+        else if (r.outcome==='Draw') Pts += 1;
+      } else if (t1===teamB && t2===teamA) {
+        GF += r.away; GA += r.home;
+        if (r.outcome==='W2') Pts += 3;
+        else if (r.outcome==='Draw') Pts += 1;
+      }
+    });
+    return { Pts, GF, GA };
+  }
+
+  // FIFA rankings for tiebreaker g
+  const LB_RANKINGS = {
+    'Mexico':15,'South Africa':60,'South Korea':25,'Czech Republic':41,
+    'Canada':30,'Bosnia and Herzegovina':65,'Qatar':55,'Switzerland':19,
+    'Brazil':6,'Morocco':8,'Haiti':83,'Scotland':43,
+    'United States':16,'Paraguay':40,'Australia':27,'Turkey':22,
+    'Germany':10,'Curaçao':82,'Ivory Coast':34,'Ecuador':23,
+    'Netherlands':7,'Japan':18,'Sweden':38,'Tunisia':44,
+    'Belgium':9,'Egypt':29,'Iran':21,'New Zealand':85,
+    'Spain':2,'Cape Verde':69,'Saudi Arabia':61,'Uruguay':17,
+    'France':1,'Senegal':14,'Iraq':57,'Norway':31,
+    'Argentina':3,'Algeria':28,'Austria':24,'Jordan':63,
+    'Portugal':5,'DR Congo':46,'Uzbekistan':50,'Colombia':13,
+    'England':4,'Croatia':11,'Ghana':74,'Panama':33,
+  };
+
+  // ── Pass 1: compute sorted standings for all completed groups ──
+  function sortedStandings(grp) {
+    const order = GROUP_ORDER[grp] || groups[grp];
+    const grpMatches = MATCHES.filter(([, g]) => g === grp);
+    return [...order].sort((a, b) => {
+      const sa = stats[a] || {Pts:0,GF:0,GA:0};
+      const sb = stats[b] || {Pts:0,GF:0,GA:0};
+      if (sb.Pts !== sa.Pts) return sb.Pts - sa.Pts;
+      const ha = h2hStats(a, b, grpMatches), hb = h2hStats(b, a, grpMatches);
+      if (hb.Pts !== ha.Pts) return hb.Pts - ha.Pts;
+      if ((hb.GF-hb.GA) !== (ha.GF-ha.GA)) return (hb.GF-hb.GA) - (ha.GF-ha.GA);
+      if (hb.GF !== ha.GF) return hb.GF - ha.GF;
+      if ((sb.GF-sb.GA) !== (sa.GF-sa.GA)) return (sb.GF-sb.GA) - (sa.GF-sa.GA);
+      if (sb.GF !== sa.GF) return sb.GF - sa.GF;
+      const ra = LB_RANKINGS[a] ?? 999, rb = LB_RANKINGS[b] ?? 999;
+      if (ra !== rb) return ra - rb;
+      return (GROUP_ORDER[grp]||groups[grp]).indexOf(a) - (GROUP_ORDER[grp]||groups[grp]).indexOf(b);
+    });
+  }
+
+  // Is a group fully played? (all 6 matches have results)
+  const isGroupDone    = grp => MATCHES.filter(([, g]) => g === grp).every(([n]) => results[n]);
+  const isGroupStarted = grp => MATCHES.filter(([, g]) => g === grp).some(([n])  => results[n]);
+
+  // Collect 3rd-place teams from all completed groups
+  const thirdPlaceTeams = completedGroups.map(grp => {
+    const s = sortedStandings(grp);
+    return s[2] ? { team: s[2], grp, stats: stats[s[2]] || {Pts:0,GF:0,GA:0} } : null;
+  }).filter(Boolean);
+
+  // Sort 3rd-place teams (cross-group: overall stats only)
+  const sortedThirds = [...thirdPlaceTeams].sort((a, b) => {
+    const sa = a.stats, sb = b.stats;
+    if (sb.Pts !== sa.Pts) return sb.Pts - sa.Pts;
+    if ((sb.GF-sb.GA) !== (sa.GF-sa.GA)) return (sb.GF-sb.GA) - (sa.GF-sa.GA);
+    if (sb.GF !== sa.GF) return sb.GF - sa.GF;
+    return (LB_RANKINGS[a.team]??999) - (LB_RANKINGS[b.team]??999);
+  });
+
+  const allGroupsDone    = completedGroups.length === 12 && completedGroups.every(isGroupDone);
+  const allGroupsStarted = completedGroups.length === 12 && completedGroups.every(isGroupStarted);
+  const qualifiedThirds = new Set(sortedThirds.slice(0, 8).map(t => t.team));
+
+  // ── Pass 2: render each group ──────────────────────────────
+  const cards = completedGroups.map(grp => {
+    const teams = sortedStandings(grp);
+    const grpStarted = isGroupStarted(grp);
+
+    const rows = teams.map((t, i) => {
+      const s = stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0};
+      const gd = s.GF - s.GA;
+      let rowClass = '';
+      if (i < 2) {
+        rowClass = 'qualified';
+      } else if (i === 2) {
+        if (allGroupsStarted) rowClass = qualifiedThirds.has(t) ? 'third-qual' : 'eliminated';
+        else rowClass = 'third-pending';
+      } else {
+        rowClass = grpStarted ? 'eliminated' : '';
+      }
+      const qualClass = rowClass ? ` class="${rowClass}"` : '';
+      return `<tr${qualClass}>
+        <td class="td-team">${t}</td>
+        <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
+        <td>${s.GF}</td><td>${s.GA}</td>
+        <td>${gd >= 0 ? '+' : ''}${gd}</td>
+        <td class="td-pts">${s.Pts}</td>
+      </tr>`;
+    }).join('');
+
+    return `
+      <div class="group-table-card">
+        <div class="group-table-header">Group ${grp}</div>
+        <div class="group-table">
+          <table>
+            <thead><tr>
+              <th class="th-team">Team</th>
+              <th title="Played">P</th><th title="Won">W</th>
+              <th title="Drawn">D</th><th title="Lost">L</th>
+              <th title="Goals for">GF</th><th title="Goals against">GA</th>
+              <th title="Goal difference">GD</th><th title="Points">Pts</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }).join('');
+
+  const legend = `<div style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 0 4px;font-size:0.72rem;color:var(--neutral-dark)">
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:var(--blue-lightest);border:1px solid var(--swiftly-blue);display:inline-block"></span>Qualified (top 2)</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#e6f9ef;border:1px solid #22863a;display:inline-block"></span>3rd — qualified</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#fff8e6;border:1px solid #ff9e16;display:inline-block"></span>3rd — pending</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#fdf0f0;border:1px solid #e24b4a;display:inline-block"></span>Eliminated</span>
+  </div>`;
+
+  document.getElementById('groupTablesCard').innerHTML =
+    `<div class="group-tables-grid">${cards}</div>${legend}`;
+}
+
+// ── Collapsible sections ──────────────────────────────────
+function toggleSection(id) {
+  const body    = document.getElementById(`${id}-body`);
+  const label   = body.previousElementSibling;
+  const chevron = label.querySelector('.section-chevron');
+  const isOpen  = !body.classList.contains('collapsed');
+  body.classList.toggle('collapsed', isOpen);
+  chevron.style.transform = isOpen ? 'rotate(-90deg)' : '';
 }
 
 // ── Tooltip ───────────────────────────────────────────────
@@ -697,11 +1053,13 @@ async function init() {
 
     renderStandings(standings, results);
     renderResults(results);
+    renderGroupTables(results);
 
   } catch (err) {
     const msg = `<div class="state-msg"><span class="emoji">⚠️</span>${err.message}</div>`;
-    document.getElementById('standingsCard').innerHTML = msg;
-    document.getElementById('resultsCard').innerHTML   = msg;
+    document.getElementById('standingsCard').innerHTML  = msg;
+    document.getElementById('resultsCard').innerHTML    = msg;
+    document.getElementById('groupTablesCard').innerHTML = msg;
     document.getElementById('matchesPlayed').textContent = 'Could not load data';
   }
 }

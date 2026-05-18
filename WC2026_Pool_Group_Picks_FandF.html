@@ -39,13 +39,13 @@
   }
 
   .header-inner {
-    max-width: 880px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 0 16px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 14px;
+    gap: 6px;
   }
 
   .header-title {
@@ -53,15 +53,11 @@
     font-weight: 600;
     font-size: 1.5rem;
     color: #ffffff;
-    letter-spacing: -0.3px;
-    line-height: 1.2;
   }
 
   .header-subtitle {
-    font-family: 'Inter', sans-serif;
     font-size: 0.875rem;
     color: var(--blue-light);
-    margin-top: -8px;
   }
 
   /* ── Sticky progress bar ─────────────────────────────────── */
@@ -76,7 +72,7 @@
   }
 
   .sticky-bar-inner {
-    max-width: 880px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 0 16px;
     display: flex;
@@ -170,19 +166,19 @@
 
   /* ── Container ───────────────────────────────────────────── */
   .container {
-    max-width: 880px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 16px 16px 64px;
+    padding: 24px 16px 64px;
   }
 
   /* ── Name card ───────────────────────────────────────────── */
   .name-card {
     background: #ffffff;
     border-radius: var(--radius);
-    border: 2px solid var(--neutral-light);
+    border: 1px solid var(--neutral-light);
     padding: 12px 16px;
     margin-bottom: 16px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    box-shadow: 0 1px 5px rgba(0,0,0,0.04);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -579,6 +575,88 @@
     header { padding: 20px 18px 18px; }
     .header-title { font-size: 1.35rem; }
     .pick-btn { padding: 4px 5px; font-size: 0.72rem; }
+    .pick-layout { flex-direction: column; }
+    .pick-sidebar { width: 100%; position: static; }
+  }
+
+  /* ── Pick page two-column layout ── */
+  .pick-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .pick-sidebar {
+    width: 380px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 52px;
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+  }
+
+  .pick-main { flex: 1; min-width: 0; }
+
+  /* ── Pick group tables ── */
+  .pick-group-table-card {
+    background: #ffffff;
+    border: 1px solid var(--neutral-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.04);
+    margin-bottom: 8px;
+  }
+
+  .pick-group-header {
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 5px 10px;
+  }
+
+  .pick-group-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+  }
+
+  .pick-group-table th {
+    padding: 4px 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: center;
+    background: var(--neutral-lightest);
+    border-bottom: 1px solid var(--neutral-light);
+  }
+
+  .pick-group-table th.th-team { text-align: left; }
+  .pick-group-table td:not(.td-team), .pick-group-table th:not(.th-team) { white-space: nowrap; width: 1%; }
+
+  .pick-group-table tbody tr { border-bottom: 0.5px solid var(--neutral-light); }
+  .pick-group-table tbody tr:last-child { border-bottom: none; }
+  .pick-group-table tbody tr:nth-child(even) { background: var(--neutral-lightest); }
+  .pick-group-table tbody tr.q-zone { background: var(--blue-lightest); }
+
+  .pick-group-table td {
+    padding: 4px 6px;
+    text-align: center;
+    color: var(--neutral-darkest);
+    font-size: 0.78rem;
+  }
+
+  .pick-group-table td.td-team { text-align: left; font-weight: 700; min-width: 100px; }
+  .pick-group-table td.td-pts  { font-weight: 700; color: var(--swiftly-blue); }
+
+  .sidebar-note {
+    font-size: 0.68rem;
+    color: var(--neutral-medium);
+    text-align: center;
+    padding: 6px 0 10px;
   }
 </style>
 </head>
@@ -618,16 +696,27 @@
     <span class="name-required-msg" id="nameRequiredMsg">← Enter your name first</span>
   </div>
 
-  <form id="poolForm">
-    <!-- Match rows injected by JS -->
-  </form>
+  <div class="pick-layout">
 
-  <div class="submit-section">
-    <button class="submit-btn" onclick="handleSubmit()">Happy with your picks?</button>
-    <div class="validation-msg" id="validationMsg"></div>
-    <div class="confirm-row" id="confirmRow">
-      <button class="confirm-btn" onclick="confirmSubmit()">Submit</button>
+    <div class="pick-sidebar">
+      <p class="sidebar-note">Your predicted standings · updates as you pick</p>
+      <div id="pickGroupTables"></div>
     </div>
+
+    <div class="pick-main">
+      <form id="poolForm">
+        <!-- Match rows injected by JS -->
+      </form>
+
+      <div class="submit-section">
+        <button class="submit-btn" onclick="handleSubmit()">Happy with your picks?</button>
+        <div class="validation-msg" id="validationMsg"></div>
+        <div class="confirm-row" id="confirmRow">
+          <button class="confirm-btn" onclick="confirmSubmit()">Submit</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -646,8 +735,8 @@
 <script>
 // ── Pool config ───────────────────────────────────────────
 // Change these two values to configure each pool version
-const POOL_ID   = 'fandf';             // used in CSV filename and GitHub folder
-const POOL_NAME = 'Friends & Family';  // displayed in the page header
+const POOL_ID   = 'fandf';   // used in CSV filename and GitHub folder
+const POOL_NAME = 'Friends & Family';   // displayed in the page header
 // ──────────────────────────────────────────────────────────
 
 
@@ -790,6 +879,113 @@ function onPick(num) {
   }
   document.getElementById('confirmRow').classList.remove('visible');
   document.querySelector('.submit-btn').style.display = '';
+  renderPickGroupTables();
+}
+
+// ── Fixed group order (per Wikipedia) ────────────────────
+const GROUP_ORDER = {
+  A: ['Mexico','South Africa','South Korea','Czech Republic'],
+  B: ['Canada','Bosnia and Herzegovina','Qatar','Switzerland'],
+  C: ['Brazil','Morocco','Haiti','Scotland'],
+  D: ['United States','Paraguay','Australia','Turkey'],
+  E: ['Germany','Curaçao','Ivory Coast','Ecuador'],
+  F: ['Netherlands','Japan','Sweden','Tunisia'],
+  G: ['Belgium','Egypt','Iran','New Zealand'],
+  H: ['Spain','Cape Verde','Saudi Arabia','Uruguay'],
+  I: ['France','Senegal','Iraq','Norway'],
+  J: ['Argentina','Algeria','Austria','Jordan'],
+  K: ['Portugal','DR Congo','Uzbekistan','Colombia'],
+  L: ['England','Croatia','Ghana','Panama'],
+};
+
+// ── Live group tables ─────────────────────────────────────
+function renderPickGroupTables() {
+  const groups = {}, stats = {};
+
+  MATCHES.forEach(([num, grp, , , t1, t2]) => {
+    if (!groups[grp]) groups[grp] = [];
+    if (!groups[grp].includes(t1)) groups[grp].push(t1);
+    if (!groups[grp].includes(t2)) groups[grp].push(t2);
+    [t1, t2].forEach(t => {
+      if (!stats[t]) stats[t] = { P:0, W:0, D:0, L:0, Pts:0 };
+    });
+
+    const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
+    if (!val) return;
+
+    stats[t1].P++; stats[t2].P++;
+    if (val === 'w1') {
+      stats[t1].W++; stats[t1].Pts += 3; stats[t2].L++;
+    } else if (val === 'w2') {
+      stats[t2].W++; stats[t2].Pts += 3; stats[t1].L++;
+    } else {
+      stats[t1].D++; stats[t1].Pts++;
+      stats[t2].D++; stats[t2].Pts++;
+    }
+  });
+
+  // H2H points from user's picks between two teams
+  function h2hPts(teamA, teamB) {
+    let pa = 0, pb = 0;
+    MATCHES.forEach(([num, , , , t1, t2]) => {
+      if (!((t1===teamA&&t2===teamB)||(t1===teamB&&t2===teamA))) return;
+      const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
+      if (!val) return;
+      const aIsT1 = t1 === teamA;
+      if (val==='draw') { pa++; pb++; }
+      else if ((val==='w1'&&aIsT1)||(val==='w2'&&!aIsT1)) pa += 3;
+      else pb += 3;
+    });
+    return { a: pa, b: pb };
+  }
+
+  const html = Object.keys(groups).sort().map(grp => {
+    const order = GROUP_ORDER[grp] || groups[grp];
+    const teams = [...order].sort((a, b) => {
+      const sa = stats[a], sb = stats[b];
+      // 1. Points
+      if (sb.Pts !== sa.Pts) return sb.Pts - sa.Pts;
+      // 2. H2H points (criterion a)
+      const h2h = h2hPts(a, b);
+      if (h2h.b !== h2h.a) return h2h.b - h2h.a;
+      // 3. Overall wins (proxy for GD — no scores in picks)
+      if (sb.W !== sa.W) return sb.W - sa.W;
+      // 4. FIFA ranking (lower = better)
+      const ra = RANKINGS[a] ?? 999, rb = RANKINGS[b] ?? 999;
+      if (ra !== rb) return ra - rb;
+      // 5. Wikipedia order
+      return order.indexOf(a) - order.indexOf(b);
+    });
+
+    const rows = teams.map((t, i) => {
+      const s = stats[t];
+      const rank = RANKINGS[t] ?? '–';
+      const qClass = i < 2 ? ' class="q-zone"' : '';
+      return `<tr${qClass}>
+        <td class="td-team">${t}</td>
+        <td style="color:var(--neutral-medium);font-size:0.68rem">${rank}</td>
+        <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
+        <td class="td-pts">${s.Pts}</td>
+      </tr>`;
+    }).join('');
+
+    return `
+      <div class="pick-group-table-card">
+        <div class="pick-group-header">Group ${grp}</div>
+        <table class="pick-group-table">
+          <thead><tr>
+            <th class="th-team">Team</th>
+            <th title="FIFA Rank">Rk</th>
+            <th title="Played">P</th><th title="Won">W</th>
+            <th title="Drawn">D</th><th title="Lost">L</th>
+            <th title="Points">Pts</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }).join('');
+
+  document.getElementById('pickGroupTables').innerHTML = html;
 }
 
 function updateProgress() {
@@ -901,7 +1097,7 @@ const RANKINGS = {
   'Canada': 30, 'Bosnia and Herzegovina': 65, 'Qatar': 55, 'Switzerland': 19,
   'Brazil': 6, 'Morocco': 8, 'Haiti': 83, 'Scotland': 43,
   'United States': 16, 'Paraguay': 40, 'Australia': 27, 'Turkey': 22,
-  'Germany': 10, 'Curaçao': 82, 'Côte d\'Ivoire': 34, 'Ecuador': 23,
+  'Germany': 10, 'Curaçao': 82, 'Ivory Coast': 34, 'Ecuador': 23,
   'Netherlands': 7, 'Japan': 18, 'Sweden': 38, 'Tunisia': 44,
   'Belgium': 9, 'Egypt': 29, 'Iran': 21, 'New Zealand': 85,
   'Spain': 2, 'Cape Verde': 69, 'Saudi Arabia': 61, 'Uruguay': 17,
@@ -985,6 +1181,7 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
 document.getElementById('headerSubtitle').textContent =
   `${POOL_NAME} pool · Pick a result for all 72 group stage matches`;
 buildForm();
+renderPickGroupTables();
 </script>
 </body>
 </html>
