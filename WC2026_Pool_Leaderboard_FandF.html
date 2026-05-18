@@ -446,16 +446,11 @@
   .bk-col.qf  .bk-col-hdr { border-color: #378ADD; color: #185FA5; }
   .bk-col.sf  .bk-col-hdr { border-color: #185FA5; color: #0C447C; }
   .bk-col.fin .bk-col-hdr { border-color: #0C447C; color: #0C447C; }
-  .bk-matches {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .bk-pair {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
+  /* Bracket hierarchy: matches > half > quarter > pair > card */
+  .bk-matches  { display: flex; flex-direction: column; gap: 52px; } /* between top/bottom halves */
+  .bk-half     { display: flex; flex-direction: column; gap: 28px; } /* between QF groups */
+  .bk-quarter  { display: flex; flex-direction: column; gap: 14px; } /* between pairs */
+  .bk-pair     { display: flex; flex-direction: column; gap: 6px; }  /* between cards */
   .bk-card {
     background: #ffffff;
     border: 0.5px solid var(--neutral-light);
@@ -1823,32 +1818,44 @@ function renderBracket(results, allGroupsStarted) {
     return ['TBD','TBD'];
   }
 
-  // Bracket pair structure — order determined by bracket tree (adjacents feed same next-round match)
-  // R32 pairs: each [a,b] means W(a) and W(b) both feed the same R16 match
-  // R32 pair order maps to R16 order: [89,90,93,94,91,92,95,96]
-  // which maps to QF: [97,98,99,100] → SF: [101,102] → Final: [104]
-  const ROUND_PAIRS = [
-    { cls:'r32', label:'Round of 32',
-      pairs:[[74,77],[73,75],[83,84],[81,82],[76,78],[79,80],[86,88],[85,87]] },
-    { cls:'r16', label:'Round of 16',
-      pairs:[[89,90],[93,94],[91,92],[95,96]] },
-    { cls:'qf',  label:'Quarterfinals',
-      pairs:[[97,98],[99,100]] },
-    { cls:'sf',  label:'Semifinals',
-      pairs:[[101,102]] },
-  ];
+  // Bracket hierarchy matches Wikipedia visual layout exactly.
+  // Structure: col > matches(halves) > half(quarters) > quarter(pairs) > pair(cards)
+  // Each level's gap doubles relative to the level below.
+  //
+  // R32 (2 halves × 2 quarters × 2 pairs × 2 cards):
+  //   Top half:    (M74,M77)+(M73,M75) → M89,M90 → M97
+  //                (M83,M84)+(M81,M82) → M93,M94 → M98  → M101
+  //   Bottom half: (M76,M78)+(M79,M80) → M91,M92 → M99
+  //                (M86,M88)+(M85,M87) → M95,M96 → M100 → M102
 
-  function renderPairedCol(rnd) {
-    const pairsHtml = rnd.pairs.map(pair => {
-      const cards = pair.map(m => {
-        const [home, away] = slotTeams(m);
-        return matchCard(m, home, away, '');
-      }).join('');
-      return `<div class="bk-pair">${cards}</div>`;
-    }).join('');
-    return `<div class="bk-col ${rnd.cls}">
-      <div class="bk-col-hdr">${rnd.label}</div>
-      <div class="bk-matches">${pairsHtml}</div>
+  function card(m) {
+    const [home, away] = slotTeams(m);
+    return matchCard(m, home, away, '');
+  }
+  function pair(ms) {
+    return `<div class="bk-pair">${ms.map(card).join('')}</div>`;
+  }
+  function quarter(pairsArr) {
+    return `<div class="bk-quarter">${pairsArr.map(pair).join('')}</div>`;
+  }
+  function half(quartersArr) {
+    return `<div class="bk-half">${quartersArr.map(quarter).join('')}</div>`;
+  }
+  function col(cls, label, halvesArr) {
+    return `<div class="bk-col ${cls}">
+      <div class="bk-col-hdr">${label}</div>
+      <div class="bk-matches">${halvesArr.map(half).join('')}</div>
+    </div>`;
+  }
+
+  // Each single-match "half" for SF/Final so vertical centering aligns with QF halves
+  function singleCol(cls, label, topM, botM) {
+    return `<div class="bk-col ${cls}">
+      <div class="bk-col-hdr">${label}</div>
+      <div class="bk-matches">
+        <div class="bk-half"><div class="bk-quarter"><div class="bk-pair">${card(topM)}</div></div></div>
+        <div class="bk-half"><div class="bk-quarter"><div class="bk-pair">${card(botM)}</div></div></div>
+      </div>
     </div>`;
   }
 
@@ -1858,15 +1865,29 @@ function renderBracket(results, allGroupsStarted) {
     return `<div class="bk-col fin">
       <div class="bk-col-hdr">🏆 Final</div>
       <div class="bk-matches">
-        <div class="bk-pair">${matchCard(104, fh, fa, '')}</div>
-        <div class="bk-3rd-sep">3rd place · M103</div>
-        <div class="bk-3rd-card">${matchCard(103, th, ta, '')}</div>
+        <div class="bk-half"><div class="bk-quarter"><div class="bk-pair">${matchCard(104, fh, fa, '')}</div></div></div>
+        <div class="bk-half" style="gap:0">
+          <div class="bk-3rd-sep">3rd place · M103</div>
+          <div class="bk-3rd-card"><div class="bk-quarter"><div class="bk-pair">${matchCard(103, th, ta, '')}</div></div></div>
+        </div>
       </div>
     </div>`;
   }
 
   const html = `<div class="bk-wrap"><div class="bk-bracket">
-    ${ROUND_PAIRS.map(renderPairedCol).join('')}
+    ${col('r32','Round of 32',[
+        [[[74,77],[73,75]], [[83,84],[81,82]]],
+        [[[76,78],[79,80]], [[86,88],[85,87]]],
+      ])}
+    ${col('r16','Round of 16',[
+        [[[89,90]], [[93,94]]],
+        [[[91,92]], [[95,96]]],
+      ])}
+    ${col('qf','Quarterfinals',[
+        [[[97,98]]],
+        [[[99,100]]],
+      ])}
+    ${singleCol('sf','Semifinals', 101, 102)}
     ${renderFinalCol()}
   </div></div>`;
 
