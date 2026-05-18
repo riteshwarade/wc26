@@ -1,0 +1,54 @@
+name: Update results and aggregate picks
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # every 15 minutes
+  workflow_dispatch:           # allows manual trigger from GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write          # needed to commit back to the repo
+
+    steps:
+      - name: Check tournament dates (Jun 11 – Jul 19 2026)
+        id: check
+        run: |
+          python3 -c "
+          from datetime import date
+          today = date.today()
+          in_range = date(2026, 6, 11) <= today <= date(2026, 7, 19)
+          print(f'in_range={str(in_range).lower()}')
+          " >> $GITHUB_OUTPUT
+
+      - name: Check out repo
+        if: steps.check.outputs.in_range == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        if: steps.check.outputs.in_range == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        if: steps.check.outputs.in_range == 'true'
+        run: pip install requests
+
+      - name: Parse Wikipedia results
+        if: steps.check.outputs.in_range == 'true'
+        run: python .github/scripts/parse_results.py
+
+      - name: Aggregate picks
+        if: steps.check.outputs.in_range == 'true'
+        run: python .github/scripts/aggregate_picks.py
+
+      - name: Commit and push if changed
+        if: steps.check.outputs.in_range == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results/ data/
+          git diff --staged --quiet || git commit -m "auto: update results and picks [$(date -u '+%Y-%m-%d %H:%M UTC')]"
+          git push
