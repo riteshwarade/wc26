@@ -639,6 +639,7 @@
   }
 
   .pick-group-table th.th-team { text-align: left; }
+  .pick-group-table td:not(.td-team), .pick-group-table th:not(.th-team) { white-space: nowrap; width: 1%; }
 
   .pick-group-table tbody tr { border-bottom: 0.5px solid var(--neutral-light); }
   .pick-group-table tbody tr:last-child { border-bottom: none; }
@@ -652,7 +653,7 @@
     font-size: 0.78rem;
   }
 
-  .pick-group-table td.td-team { text-align: left; font-weight: 700; }
+  .pick-group-table td.td-team { text-align: left; font-weight: 700; min-width: 100px; }
   .pick-group-table td.td-pts  { font-weight: 700; color: var(--swiftly-blue); }
 
   .sidebar-note {
