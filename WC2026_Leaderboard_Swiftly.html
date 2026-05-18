@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WC2026 Leaderboard – Swiftly</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --swiftly-blue:    #009edf;
+    --swiftly-orange:  #ff9e16;
+    --neutral-lightest:#f7f7f7;
+    --neutral-light:   #ebebeb;
+    --neutral-medium:  #c4c4c4;
+    --neutral-dark:    #525f66;
+    --neutral-darkest: #131e27;
+    --blue-lightest:   #ebf9ff;
+    --blue-light:      #ccecf9;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--neutral-lightest);
+    color: var(--neutral-darkest);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--swiftly-blue);
+    padding: 28px 0 24px;
+  }
+
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .header-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #ffffff;
+  }
+
+  .header-subtitle {
+    font-size: 0.875rem;
+    color: var(--blue-light);
+  }
+
+  /* ── Sticky bar ── */
+  .sticky-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    padding: 10px 0;
+  }
+
+  .sticky-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .matches-played {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--swiftly-blue);
+  }
+
+  .updated-at {
+    font-size: 0.72rem;
+    color: var(--neutral-medium);
+    margin-left: auto;
+  }
+
+  /* ── Container ── */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 16px 64px;
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 10px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: #ffffff;
+    border: 1px solid var(--neutral-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.04);
+    margin-bottom: 32px;
+  }
+
+  /* ── Standings table ── */
+  .standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  .standings-table thead tr {
+    background: var(--neutral-lightest);
+    border-bottom: 2px solid var(--neutral-light);
+  }
+
+  .standings-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .standings-table th.th-squares { text-align: center; }
+
+  .standings-table tbody tr {
+    border-bottom: 1px solid var(--neutral-light);
+    transition: background 0.12s;
+  }
+
+  .standings-table tbody tr:last-child { border-bottom: none; }
+  .standings-table tbody tr:nth-child(even) { background: var(--neutral-lightest); }
+  .standings-table tbody tr:hover { background: var(--blue-lightest); }
+
+  .standings-table td {
+    padding: 8px 12px;
+    vertical-align: middle;
+  }
+
+  .td-rank {
+    font-weight: 700;
+    color: var(--neutral-medium);
+    font-size: 0.875rem;
+    width: 36px;
+    text-align: center;
+  }
+
+  .td-rank.top3 { color: var(--swiftly-blue); }
+
+  .td-name {
+    font-weight: 700;
+    color: var(--neutral-darkest);
+    min-width: 120px;
+  }
+
+  .td-points {
+    font-weight: 700;
+    color: var(--swiftly-blue);
+    font-size: 0.875rem;
+    width: 56px;
+    text-align: center;
+  }
+
+  .td-squares { width: 100%; }
+
+  /* ── Mini squares ── */
+  .squares-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 2px 0;
+  }
+
+  .sq {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .sq-correct { background: var(--swiftly-blue); }
+  .sq-wrong   { background: var(--neutral-light); }
+  .sq-pending { background: transparent; border: 1px solid var(--neutral-light); }
+  .sq-empty   { background: transparent; }
+
+  /* ── Results table ── */
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  .results-table thead tr {
+    background: var(--neutral-lightest);
+    border-bottom: 2px solid var(--neutral-light);
+  }
+
+  .results-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .results-table tbody tr {
+    border-bottom: 1px solid var(--neutral-light);
+  }
+
+  .results-table tbody tr:last-child { border-bottom: none; }
+  .results-table tbody tr:nth-child(even) { background: var(--neutral-lightest); }
+
+  .results-table td {
+    padding: 8px 12px;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  .td-match-num { color: var(--neutral-medium); font-weight: 700; text-align: center; width: 36px; }
+  .td-grp { color: var(--swiftly-blue); font-weight: 700; }
+  .td-score { font-weight: 700; }
+  .td-teams { color: var(--neutral-dark); }
+
+  .outcome-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: var(--swiftly-blue);
+    color: #ffffff;
+  }
+
+  .outcome-pill.draw {
+    background: var(--swiftly-orange);
+    color: var(--neutral-darkest);
+  }
+
+  /* ── Loading / error states ── */
+  .state-msg {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--neutral-dark);
+    font-size: 0.875rem;
+  }
+
+  .state-msg .emoji { font-size: 2rem; display: block; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-title">World Cup 2026 pool — leaderboard</div>
+    <div class="header-subtitle" id="headerSubtitle">Swiftly pool · group stage</div>
+  </div>
+</header>
+
+<div class="sticky-bar">
+  <div class="sticky-inner">
+    <span class="matches-played" id="matchesPlayed">Loading…</span>
+    <span class="updated-at" id="updatedAt"></span>
+  </div>
+</div>
+
+<div class="container">
+
+  <p class="section-label">Standings</p>
+  <div class="card" id="standingsCard">
+    <div class="state-msg"><span class="emoji">⏳</span>Loading picks and results…</div>
+  </div>
+
+  <p class="section-label">Match results</p>
+  <div class="card" id="resultsCard">
+    <div class="state-msg"><span class="emoji">⏳</span>Loading results…</div>
+  </div>
+
+</div>
+
+<script>
+// ── Pool config ───────────────────────────────────────────
+const POOL_ID   = 'swiftly';
+const POOL_NAME = 'Swiftly';
+// ──────────────────────────────────────────────────────────
+
+const PICKS_URL   = `https://raw.githubusercontent.com/riteshwarade/wc26/main/data/group_${POOL_ID}_picks.json`;
+const RESULTS_URL = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/results/group_results.csv';
+
+// ── Match data ────────────────────────────────────────────
+const MATCHES = [
+  [1,  'A', 'Thu, Jun 12', '3:00 PM',  'Mexico',                'South Africa'],
+  [2,  'A', 'Thu, Jun 12', '10:00 PM', 'South Korea',           'Czechia'],
+  [3,  'B', 'Fri, Jun 13', '3:00 PM',  'Canada',                'Bosnia and Herzegovina'],
+  [4,  'D', 'Fri, Jun 13', '9:00 PM',  'United States',         'Paraguay'],
+  [5,  'C', 'Sat, Jun 14', '9:00 PM',  'Haiti',                 'Scotland'],
+  [6,  'D', 'Sun, Jun 15', '12:00 AM', 'Australia',             'Turkey'],
+  [7,  'C', 'Sat, Jun 14', '6:00 PM',  'Brazil',                'Morocco'],
+  [8,  'B', 'Sat, Jun 14', '3:00 PM',  'Qatar',                 'Switzerland'],
+  [9,  'E', 'Sun, Jun 15', '7:00 PM',  'Ivory Coast',           'Ecuador'],
+  [10, 'E', 'Sun, Jun 15', '1:00 PM',  'Germany',               'Curaçao'],
+  [11, 'F', 'Sun, Jun 15', '4:00 PM',  'Netherlands',           'Japan'],
+  [12, 'F', 'Sun, Jun 15', '10:00 PM', 'Sweden',                'Tunisia'],
+  [13, 'H', 'Mon, Jun 16', '6:00 PM',  'Saudi Arabia',          'Uruguay'],
+  [14, 'H', 'Mon, Jun 16', '12:00 PM', 'Spain',                 'Cape Verde'],
+  [15, 'G', 'Mon, Jun 16', '9:00 PM',  'Iran',                  'New Zealand'],
+  [16, 'G', 'Mon, Jun 16', '3:00 PM',  'Belgium',               'Egypt'],
+  [17, 'I', 'Tue, Jun 17', '3:00 PM',  'France',                'Senegal'],
+  [18, 'I', 'Tue, Jun 17', '6:00 PM',  'Iraq',                  'Norway'],
+  [19, 'J', 'Tue, Jun 17', '9:00 PM',  'Argentina',             'Algeria'],
+  [20, 'J', 'Wed, Jun 18', '12:00 AM', 'Austria',               'Jordan'],
+  [21, 'L', 'Wed, Jun 18', '7:00 PM',  'Ghana',                 'Panama'],
+  [22, 'L', 'Wed, Jun 18', '4:00 PM',  'England',               'Croatia'],
+  [23, 'K', 'Wed, Jun 18', '1:00 PM',  'Portugal',              'DR Congo'],
+  [24, 'K', 'Wed, Jun 18', '10:00 PM', 'Uzbekistan',            'Colombia'],
+  [25, 'A', 'Thu, Jun 19', '12:00 PM', 'Czechia',               'South Africa'],
+  [26, 'B', 'Thu, Jun 19', '3:00 PM',  'Switzerland',           'Bosnia and Herzegovina'],
+  [27, 'B', 'Thu, Jun 19', '6:00 PM',  'Canada',                'Qatar'],
+  [28, 'A', 'Thu, Jun 19', '9:00 PM',  'Mexico',                'South Korea'],
+  [29, 'C', 'Fri, Jun 20', '8:30 PM',  'Brazil',                'Haiti'],
+  [30, 'C', 'Fri, Jun 20', '6:00 PM',  'Scotland',              'Morocco'],
+  [31, 'D', 'Fri, Jun 20', '11:00 PM', 'Turkey',                'Paraguay'],
+  [32, 'D', 'Fri, Jun 20', '3:00 PM',  'United States',         'Australia'],
+  [33, 'E', 'Sat, Jun 21', '4:00 PM',  'Germany',               'Ivory Coast'],
+  [34, 'E', 'Sat, Jun 21', '8:00 PM',  'Ecuador',               'Curaçao'],
+  [35, 'F', 'Sat, Jun 21', '1:00 PM',  'Netherlands',           'Sweden'],
+  [36, 'F', 'Sun, Jun 22', '12:00 AM', 'Tunisia',               'Japan'],
+  [37, 'H', 'Sun, Jun 22', '6:00 PM',  'Uruguay',               'Cape Verde'],
+  [38, 'H', 'Sun, Jun 22', '12:00 PM', 'Spain',                 'Saudi Arabia'],
+  [39, 'G', 'Sun, Jun 22', '3:00 PM',  'Belgium',               'Iran'],
+  [40, 'G', 'Sun, Jun 22', '9:00 PM',  'New Zealand',           'Egypt'],
+  [41, 'I', 'Mon, Jun 23', '8:00 PM',  'Norway',                'Senegal'],
+  [42, 'I', 'Mon, Jun 23', '5:00 PM',  'France',                'Iraq'],
+  [43, 'J', 'Mon, Jun 23', '1:00 PM',  'Argentina',             'Austria'],
+  [44, 'J', 'Mon, Jun 23', '11:00 PM', 'Jordan',                'Algeria'],
+  [45, 'L', 'Tue, Jun 24', '4:00 PM',  'England',               'Ghana'],
+  [46, 'L', 'Tue, Jun 24', '7:00 PM',  'Panama',                'Croatia'],
+  [47, 'K', 'Tue, Jun 24', '1:00 PM',  'Portugal',              'Uzbekistan'],
+  [48, 'K', 'Tue, Jun 24', '10:00 PM', 'Colombia',              'DR Congo'],
+  [49, 'C', 'Wed, Jun 25', '6:00 PM',  'Scotland',              'Brazil'],
+  [50, 'C', 'Wed, Jun 25', '6:00 PM',  'Morocco',               'Haiti'],
+  [51, 'B', 'Wed, Jun 25', '3:00 PM',  'Switzerland',           'Canada'],
+  [52, 'B', 'Wed, Jun 25', '3:00 PM',  'Bosnia and Herzegovina','Qatar'],
+  [53, 'A', 'Wed, Jun 25', '9:00 PM',  'Czechia',               'Mexico'],
+  [54, 'A', 'Wed, Jun 25', '9:00 PM',  'South Africa',          'South Korea'],
+  [55, 'E', 'Thu, Jun 26', '4:00 PM',  'Curaçao',               'Ivory Coast'],
+  [56, 'E', 'Thu, Jun 26', '4:00 PM',  'Ecuador',               'Germany'],
+  [57, 'F', 'Thu, Jun 26', '7:00 PM',  'Japan',                 'Sweden'],
+  [58, 'F', 'Thu, Jun 26', '7:00 PM',  'Tunisia',               'Netherlands'],
+  [59, 'D', 'Thu, Jun 26', '10:00 PM', 'Turkey',                'United States'],
+  [60, 'D', 'Thu, Jun 26', '10:00 PM', 'Paraguay',              'Australia'],
+  [61, 'I', 'Fri, Jun 27', '3:00 PM',  'Norway',                'France'],
+  [62, 'I', 'Fri, Jun 27', '3:00 PM',  'Senegal',               'Iraq'],
+  [63, 'G', 'Fri, Jun 27', '11:00 PM', 'Egypt',                 'Iran'],
+  [64, 'G', 'Fri, Jun 27', '11:00 PM', 'New Zealand',           'Belgium'],
+  [65, 'H', 'Fri, Jun 27', '8:00 PM',  'Cape Verde',            'Saudi Arabia'],
+  [66, 'H', 'Fri, Jun 27', '8:00 PM',  'Uruguay',               'Spain'],
+  [67, 'L', 'Sat, Jun 28', '5:00 PM',  'Panama',                'England'],
+  [68, 'L', 'Sat, Jun 28', '5:00 PM',  'Croatia',               'Ghana'],
+  [69, 'J', 'Sat, Jun 28', '10:00 PM', 'Algeria',               'Austria'],
+  [70, 'J', 'Sat, Jun 28', '10:00 PM', 'Jordan',                'Argentina'],
+  [71, 'K', 'Sat, Jun 28', '7:30 PM',  'Colombia',              'Portugal'],
+  [72, 'K', 'Sat, Jun 28', '7:30 PM',  'DR Congo',              'Uzbekistan'],
+];
+
+// ── Parse results CSV ─────────────────────────────────────
+function parseResults(csvText) {
+  const results = {};
+  csvText.trim().split('\n').slice(1).forEach(line => {
+    const [match, home, away, outcome] = line.split(',');
+    const num = parseInt(match);
+    if (num && outcome) {
+      results[num] = { home: parseInt(home), away: parseInt(away), outcome: outcome.trim() };
+    }
+  });
+  return results;
+}
+
+// ── Compute scores ────────────────────────────────────────
+function computeStandings(picksData, results) {
+  return Object.entries(picksData).map(([name, picks]) => {
+    let points = 0;
+    const pickResults = {};
+    MATCHES.forEach(([num]) => {
+      const result  = results[num];
+      const pick    = picks[String(num)];
+      if (result && pick) {
+        const correct = pick === result.outcome;
+        if (correct) points += 2;
+        pickResults[num] = correct ? 'correct' : 'wrong';
+      } else if (pick) {
+        pickResults[num] = 'pending';
+      } else {
+        pickResults[num] = 'empty';
+      }
+    });
+    return { name, points, pickResults };
+  }).sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
+}
+
+// ── Render standings ──────────────────────────────────────
+function renderStandings(standings, results) {
+  if (!standings.length) {
+    document.getElementById('standingsCard').innerHTML =
+      '<div class="state-msg"><span class="emoji">📭</span>No picks submitted yet.</div>';
+    return;
+  }
+
+  const completedNums = new Set(Object.keys(results).map(Number));
+
+  let rank = 1, prevPts = null, rows = '';
+  standings.forEach((p, i) => {
+    if (p.points !== prevPts) { rank = i + 1; prevPts = p.points; }
+    const topClass = rank <= 3 ? ' top3' : '';
+    const squares = MATCHES.map(([num]) => {
+      const s = p.pickResults[num] || 'empty';
+      const t1 = MATCHES[num - 1][4], t2 = MATCHES[num - 1][5];
+      return `<span class="sq sq-${s}" title="M${num}: ${t1} v ${t2}"></span>`;
+    }).join('');
+    rows += `<tr>
+      <td class="td-rank${topClass}">${rank}</td>
+      <td class="td-name">${p.name}</td>
+      <td class="td-points">${p.points}</td>
+      <td class="td-squares"><div class="squares-wrap">${squares}</div></td>
+    </tr>`;
+  });
+
+  document.getElementById('standingsCard').innerHTML = `
+    <table class="standings-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Pts</th>
+          <th class="th-squares">Picks (blue = correct · grey = wrong · empty = pending)</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── Render match results ──────────────────────────────────
+function renderResults(results) {
+  const completed = MATCHES.filter(([num]) => results[num]);
+  if (!completed.length) {
+    document.getElementById('resultsCard').innerHTML =
+      '<div class="state-msg"><span class="emoji">⚽</span>No matches completed yet. Check back after kick-off on Jun 12.</div>';
+    return;
+  }
+
+  const rows = completed.map(([num, grp, date, time, t1, t2]) => {
+    const r = results[num];
+    const score = `${r.home} – ${r.away}`;
+    const winnerLabel = r.outcome === 'W1' ? `${t1} win`
+                      : r.outcome === 'W2' ? `${t2} win`
+                      : 'Draw';
+    const pillClass = r.outcome === 'Draw' ? 'outcome-pill draw' : 'outcome-pill';
+    return `<tr>
+      <td class="td-match-num">${num}</td>
+      <td class="td-grp">${grp}</td>
+      <td>${date}</td>
+      <td>${time} ET</td>
+      <td class="td-teams">${t1} v ${t2}</td>
+      <td class="td-score">${score}</td>
+      <td><span class="${pillClass}">${winnerLabel}</span></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('resultsCard').innerHTML = `
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Grp</th>
+          <th>Date</th>
+          <th>Time (ET)</th>
+          <th>Match</th>
+          <th>Score</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── Main ──────────────────────────────────────────────────
+async function init() {
+  const ts = Date.now();
+  try {
+    const [picksResp, resultsResp] = await Promise.all([
+      fetch(`${PICKS_URL}?t=${ts}`),
+      fetch(`${RESULTS_URL}?t=${ts}`),
+    ]);
+
+    if (!picksResp.ok) throw new Error('Could not load picks');
+    if (!resultsResp.ok) throw new Error('Could not load results');
+
+    const picksData  = await picksResp.json();
+    const resultsCSV = await resultsResp.text();
+    const results    = parseResults(resultsCSV);
+    const standings  = computeStandings(picksData, results);
+    const played     = Object.keys(results).length;
+
+    document.getElementById('matchesPlayed').textContent =
+      `${played} / 72 matches played`;
+    document.getElementById('updatedAt').textContent =
+      `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+    renderStandings(standings, results);
+    renderResults(results);
+
+  } catch (err) {
+    const msg = `<div class="state-msg"><span class="emoji">⚠️</span>${err.message}</div>`;
+    document.getElementById('standingsCard').innerHTML = msg;
+    document.getElementById('resultsCard').innerHTML   = msg;
+    document.getElementById('matchesPlayed').textContent = 'Could not load data';
+  }
+}
+
+init();
+</script>
+</body>
+</html>
