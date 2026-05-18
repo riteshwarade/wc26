@@ -882,6 +882,22 @@ function onPick(num) {
   renderPickGroupTables();
 }
 
+// ── Fixed group order (per Wikipedia) ────────────────────
+const GROUP_ORDER = {
+  A: ['Mexico','South Africa','South Korea','Czech Republic'],
+  B: ['Canada','Bosnia and Herzegovina','Qatar','Switzerland'],
+  C: ['Brazil','Morocco','Haiti','Scotland'],
+  D: ['United States','Paraguay','Australia','Turkey'],
+  E: ['Germany','Curaçao','Ivory Coast','Ecuador'],
+  F: ['Netherlands','Japan','Sweden','Tunisia'],
+  G: ['Belgium','Egypt','Iran','New Zealand'],
+  H: ['Spain','Cape Verde','Saudi Arabia','Uruguay'],
+  I: ['France','Senegal','Iraq','Norway'],
+  J: ['Argentina','Algeria','Austria','Jordan'],
+  K: ['Portugal','DR Congo','Uzbekistan','Colombia'],
+  L: ['England','Croatia','Ghana','Panama'],
+};
+
 // ── Live group tables ─────────────────────────────────────
 function renderPickGroupTables() {
   const groups = {}, stats = {};
@@ -909,10 +925,7 @@ function renderPickGroupTables() {
   });
 
   const html = Object.keys(groups).sort().map(grp => {
-    const teams = [...groups[grp]].sort((a, b) => {
-      const sa = stats[a], sb = stats[b];
-      return (sb.Pts - sa.Pts) || (sb.W - sa.W) || a.localeCompare(b);
-    });
+    const teams = GROUP_ORDER[grp] || groups[grp];
 
     const rows = teams.map((t, i) => {
       const s = stats[t];

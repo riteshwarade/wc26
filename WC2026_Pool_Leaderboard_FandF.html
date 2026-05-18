@@ -775,6 +775,22 @@ function renderResults(results) {
     </table>`;
 }
 
+// ── Fixed group order (per Wikipedia) ────────────────────
+const GROUP_ORDER = {
+  A: ['Mexico','South Africa','South Korea','Czech Republic'],
+  B: ['Canada','Bosnia and Herzegovina','Qatar','Switzerland'],
+  C: ['Brazil','Morocco','Haiti','Scotland'],
+  D: ['United States','Paraguay','Australia','Turkey'],
+  E: ['Germany','Curaçao','Ivory Coast','Ecuador'],
+  F: ['Netherlands','Japan','Sweden','Tunisia'],
+  G: ['Belgium','Egypt','Iran','New Zealand'],
+  H: ['Spain','Cape Verde','Saudi Arabia','Uruguay'],
+  I: ['France','Senegal','Iraq','Norway'],
+  J: ['Argentina','Algeria','Austria','Jordan'],
+  K: ['Portugal','DR Congo','Uzbekistan','Colombia'],
+  L: ['England','Croatia','Ghana','Panama'],
+};
+
 // ── Group tables ─────────────────────────────────────────
 function renderGroupTables(results) {
   // Build team stats from MATCHES + results
@@ -820,11 +836,7 @@ function renderGroupTables(results) {
   }
 
   const cards = completedGroups.map(grp => {
-    const teams = [...groups[grp]].sort((a, b) => {
-      const sa = stats[a] || {Pts:0,GF:0,GA:0};
-      const sb = stats[b] || {Pts:0,GF:0,GA:0};
-      return (sb.Pts - sa.Pts) || ((sb.GF-sb.GA) - (sa.GF-sa.GA)) || (sb.GF - sa.GF);
-    });
+    const teams = GROUP_ORDER[grp] || groups[grp];
 
     const rows = teams.map((t, i) => {
       const s = stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0};
