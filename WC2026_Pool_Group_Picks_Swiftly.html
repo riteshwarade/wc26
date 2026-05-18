@@ -597,8 +597,8 @@
 
   .pick-main { flex: 1; min-width: 0; }
 
-  /* ── Pick group tables ── */
-  .pick-group-table-card {
+  /* ── Pick group tables (same as leaderboard) ── */
+  .group-table-card {
     background: #ffffff;
     border: 1px solid var(--neutral-light);
     border-radius: var(--radius);
@@ -606,51 +606,49 @@
     box-shadow: 0 1px 5px rgba(0,0,0,0.04);
     margin-bottom: 8px;
   }
-
-  .pick-group-header {
+  .group-table-header {
     background: var(--swiftly-blue);
     color: #ffffff;
     font-family: 'Poppins', sans-serif;
     font-weight: 600;
     font-size: 0.78rem;
-    padding: 5px 10px;
+    padding: 7px 12px;
   }
-
-  .pick-group-table {
+  .group-table table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.78rem;
   }
-
-  .pick-group-table th {
-    padding: 4px 6px;
-    font-size: 0.65rem;
+  .group-table thead tr {
+    background: var(--neutral-lightest);
+    border-bottom: 1px solid var(--neutral-light);
+  }
+  .group-table th {
+    padding: 5px 8px;
+    font-size: 0.68rem;
     font-weight: 700;
     color: var(--neutral-dark);
     text-transform: uppercase;
     letter-spacing: 0.4px;
     text-align: center;
-    background: var(--neutral-lightest);
-    border-bottom: 1px solid var(--neutral-light);
   }
-
-  .pick-group-table th.th-team { text-align: left; }
-  .pick-group-table td:not(.td-team), .pick-group-table th:not(.th-team) { white-space: nowrap; width: 1%; }
-
-  .pick-group-table tbody tr { border-bottom: 0.5px solid var(--neutral-light); }
-  .pick-group-table tbody tr:last-child { border-bottom: none; }
-  .pick-group-table tbody tr:nth-child(even) { background: var(--neutral-lightest); }
-  .pick-group-table tbody tr.q-zone { background: var(--blue-lightest); }
-
-  .pick-group-table td {
-    padding: 4px 6px;
+  .group-table th.th-team { text-align: left; }
+  .group-table td.td-team { min-width: 130px; }
+  .group-table td:not(.td-team), .group-table th:not(.th-team) { white-space: nowrap; width: 1%; }
+  .group-table tbody tr { border-bottom: 1px solid var(--neutral-light); }
+  .group-table tbody tr:last-child { border-bottom: none; }
+  .group-table tbody tr:nth-child(even) { background: var(--neutral-lightest); }
+  .group-table td {
+    padding: 5px 8px;
     text-align: center;
     color: var(--neutral-darkest);
-    font-size: 0.78rem;
   }
-
-  .pick-group-table td.td-team { text-align: left; font-weight: 700; min-width: 100px; }
-  .pick-group-table td.td-pts  { font-weight: 700; color: var(--swiftly-blue); }
+  .group-table td.td-team { text-align: left; font-weight: 700; }
+  .group-table td.td-pts  { font-weight: 700; color: var(--swiftly-blue); }
+  .group-table tr.qualified     td { background: var(--blue-lightest); }
+  .group-table tr.third-pending td { background: #fff8e6; }
+  .group-table tr.eliminated    td { background: #fdf0f0; color: var(--neutral-medium); }
+  .group-table tr.eliminated td.td-team { color: var(--neutral-dark); }
 
   .sidebar-note {
     font-size: 0.68rem;
@@ -959,29 +957,28 @@ function renderPickGroupTables() {
 
     const rows = teams.map((t, i) => {
       const s = stats[t];
-      const rank = RANKINGS[t] ?? '–';
-      const qClass = i < 2 ? ' class="q-zone"' : '';
-      return `<tr${qClass}>
+      const rowClass = i < 2 ? 'qualified' : i === 2 ? 'third-pending' : 'eliminated';
+      return `<tr class="${rowClass}">
         <td class="td-team">${(FLAGS[t]||'')+' '+t}</td>
-        <td style="color:var(--neutral-medium);font-size:0.68rem">${rank}</td>
         <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
         <td class="td-pts">${s.Pts}</td>
       </tr>`;
     }).join('');
 
     return `
-      <div class="pick-group-table-card">
-        <div class="pick-group-header">Group ${grp}</div>
-        <table class="pick-group-table">
-          <thead><tr>
-            <th class="th-team">Team</th>
-            <th title="FIFA Rank">Rk</th>
-            <th title="Played">P</th><th title="Won">W</th>
-            <th title="Drawn">D</th><th title="Lost">L</th>
-            <th title="Points">Pts</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
+      <div class="group-table-card">
+        <div class="group-table-header">Group ${grp}</div>
+        <div class="group-table">
+          <table>
+            <thead><tr>
+              <th class="th-team">Team</th>
+              <th title="Played">P</th><th title="Won">W</th>
+              <th title="Drawn">D</th><th title="Lost">L</th>
+              <th title="Points">Pts</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
       </div>`;
   }).join('');
 
