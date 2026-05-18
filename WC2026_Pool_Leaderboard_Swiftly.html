@@ -1951,15 +1951,26 @@ function positionAndConnectBracket() {
     });
   });
 
-  // Position M103 (3rd place) below M104 in the Final column
+  // Position M103 (3rd place) aligned with M99 in the QF column
   const m104el = bracket.querySelector('[data-match="104"]');
   const m103el = bracket.querySelector('[data-match="103"]');
+  const m99el  = bracket.querySelector('[data-match="99"]');
   const lbl    = document.getElementById('bk-3rd-lbl');
-  if (m104el && m103el) {
-    const ct    = m103el.parentElement.getBoundingClientRect().top - br.top;
-    const bot104 = m104el.getBoundingClientRect().bottom - br.top;
-    if (lbl) lbl.style.top = `${bot104 - ct + 10}px`;
-    m103el.style.top = `${bot104 - ct + 26}px`;
+  if (m103el) {
+    const ct = m103el.parentElement.getBoundingClientRect().top - br.top;
+    let targetY;
+    if (m99el) {
+      // Align team-dividing line of M103 with that of M99
+      targetY = teamMidY(m99el, br.top);
+    } else if (m104el) {
+      const bot104 = m104el.getBoundingClientRect().bottom - br.top;
+      targetY = bot104 + 80;
+    }
+    if (targetY !== undefined) {
+      const midOffset = teamMidY(m103el, m103el.getBoundingClientRect().top);
+      if (lbl) lbl.style.top = `${targetY - ct - midOffset - 18}px`;
+      m103el.style.top = `${targetY - ct - midOffset}px`;
+    }
     m103el.style.opacity = '0.65';
   }
 
