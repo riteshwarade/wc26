@@ -321,7 +321,7 @@
   }
 
   .side-left {
-    width: 320px;
+    width: 380px;
     flex-shrink: 0;
   }
 
@@ -376,9 +376,9 @@
     text-align: center;
   }
 
-  .group-table th.th-team { text-align: left; min-width: 160px; }
-  .group-table table { table-layout: fixed; width: 100%; }
-  .group-table td, .group-table th { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .group-table th.th-team { text-align: left; }
+  .group-table td.td-team { min-width: 130px; }
+  .group-table td:not(.td-team), .group-table th:not(.th-team) { white-space: nowrap; width: 1%; }
 
   .group-table tbody tr {
     border-bottom: 1px solid var(--neutral-light);

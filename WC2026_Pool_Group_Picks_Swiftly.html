@@ -922,8 +922,8 @@ function renderPickGroupTables() {
       const rank = RANKINGS[t] ?? '–';
       const qClass = i < 2 ? ' class="q-zone"' : '';
       return `<tr${qClass}>
-        <td style="color:var(--neutral-medium);font-size:0.68rem">${rank}</td>
         <td class="td-team">${t}</td>
+        <td style="color:var(--neutral-medium);font-size:0.68rem">${rank}</td>
         <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
         <td class="td-pts">${s.Pts}</td>
       </tr>`;
@@ -934,8 +934,8 @@ function renderPickGroupTables() {
         <div class="pick-group-header">Group ${grp}</div>
         <table class="pick-group-table">
           <thead><tr>
-            <th title="FIFA Rank">Rk</th>
             <th class="th-team">Team</th>
+            <th title="FIFA Rank">Rk</th>
             <th title="Played">P</th><th title="Won">W</th>
             <th title="Drawn">D</th><th title="Lost">L</th>
             <th title="Points">Pts</th>
