@@ -1907,11 +1907,22 @@ function positionAndConnectBracket() {
 
   const br = bracket.getBoundingClientRect();
 
+  // Returns the y-coord of the dividing line between the two team rows
+  function teamMidY(el, refTop) {
+    const rows = el.querySelectorAll('.bk-team');
+    if (rows.length >= 2) {
+      const a = rows[0].getBoundingClientRect();
+      const b = rows[1].getBoundingClientRect();
+      return (a.bottom + b.top) / 2 - refTop;
+    }
+    const r = el.getBoundingClientRect();
+    return (r.top + r.bottom) / 2 - refTop;
+  }
+
   function yc(m) {
     const el = bracket.querySelector(`[data-match="${m}"]`);
     if (!el) return null;
-    const r = el.getBoundingClientRect();
-    return (r.top + r.bottom) / 2 - br.top;
+    return teamMidY(el, br.top);
   }
 
   function setY(m, targetY) {
@@ -1919,8 +1930,9 @@ function positionAndConnectBracket() {
     if (!el) return;
     const container = el.parentElement;
     const ct = container.getBoundingClientRect().top - br.top;
-    const h  = el.getBoundingClientRect().height;
-    el.style.top = `${targetY - ct - h / 2}px`;
+    // Offset from card top to the team-dividing line
+    const midOffset = teamMidY(el, el.getBoundingClientRect().top);
+    el.style.top = `${targetY - ct - midOffset}px`;
   }
 
   // Position each non-R32 card at the midpoint of its two feeders, level by level
@@ -1987,9 +1999,20 @@ function drawBracketConnectors() {
     const r1 = e1.getBoundingClientRect();
     const r2 = e2.getBoundingClientRect();
 
+    // Connect at the dividing line between the two team rows
+    function tmY(el) {
+      const rows = el.querySelectorAll('.bk-team');
+      if (rows.length >= 2) {
+        const a = rows[0].getBoundingClientRect();
+        const b = rows[1].getBoundingClientRect();
+        return (a.bottom + b.top) / 2 - br.top;
+      }
+      return (el.getBoundingClientRect().top + el.getBoundingClientRect().bottom) / 2 - br.top;
+    }
+
     const x1 = r1.right - br.left;
-    const y1 = (r1.top + r1.bottom) / 2 - br.top;
-    const y2 = (r2.top + r2.bottom) / 2 - br.top;
+    const y1 = tmY(e1);
+    const y2 = tmY(e2);
     const ym = (y1 + y2) / 2;
 
     let xc = x1 + 14;
@@ -1998,9 +2021,10 @@ function drawBracketConnectors() {
       xc = (x1 + (rn.left - br.left)) / 2;
     }
 
-    // ] bracket shape + horizontal line to next card's left edge at midpoint y
+    // ] bracket shape + horizontal line to next card's team-dividing-line y
+    const xn = en ? en.getBoundingClientRect().left - br.left : xc;
     const d = `M${x1},${y1} H${xc} V${y2} M${x1},${y2} H${xc}` +
-              (en ? ` M${xc},${ym} H${en.getBoundingClientRect().left - br.left}` : '');
+              (en ? ` M${xc},${ym} H${xn}` : '');
 
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', d);
