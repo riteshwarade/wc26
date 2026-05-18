@@ -421,16 +421,27 @@
   }
   .bk-bracket {
     display: flex;
-    gap: 0;
     width: 100%;
     align-items: flex-start;
     position: relative;
   }
+  .bk-half-left, .bk-half-right {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    min-width: 0;
+  }
+  .bk-col-final {
+    flex-shrink: 0;
+    width: 148px;
+    padding: 0 8px;
+  }
   .bk-col {
     flex: 1;
-    min-width: 120px;
-    padding: 0 10px;
+    min-width: 72px;
+    padding: 0 8px;
   }
+  .bk-col.r32 { flex: 1.4; }
   .bk-col-hdr {
     font-size: 0.68rem;
     font-weight: 700;
@@ -1853,39 +1864,54 @@ function renderBracket(results, allGroupsStarted) {
   //   Bottom half: (M76,M78)+(M79,M80) → M91,M92 → M99
   //                (M86,M88)+(M85,M87) → M95,M96 → M100 → M102
 
-  // ── R32: anchor column — nested flex, determines heights for all other columns ──
+  // ── Split bracket: left half (R32→SF) | Final | right half (SF←R32) ──
   function mkCard(m) { const [h,a]=slotTeams(m); return matchCard(m,h,a,''); }
   function mkPair(ms){ return `<div class="bk-pair">${ms.map(mkCard).join('')}</div>`; }
   function mkQtr(ps) { return `<div class="bk-quarter">${ps.map(mkPair).join('')}</div>`; }
-  function mkHalf(qs){ return `<div class="bk-half">${qs.map(mkQtr).join('')}</div>`; }
 
-  const r32html = `<div class="bk-col r32">
-    <div class="bk-col-hdr">Round of 32</div>
-    <div class="bk-matches" id="bk-r32-matches">
-      ${mkHalf([[[74,77],[73,75]], [[83,84],[81,82]]])}
-      ${mkHalf([[[76,78],[79,80]], [[86,88],[85,87]]])}
-    </div>
-  </div>`;
+  function r32anchor(id, pairs) {
+    const qtrs = pairs.map(p => mkQtr(p)).join('');
+    return `<div class="bk-col r32">
+      <div class="bk-col-hdr">Round of 32</div>
+      <div class="bk-matches" id="${id}">${qtrs}</div>
+    </div>`;
+  }
 
-  // ── R16/QF/SF/Final: flat float columns — JS positions each card ──
-  function floatCol(cls, hdr, matches, extraHtml='') {
-    const cards = matches.map(mkCard).join('');
+  function floatCol(cls, hdr, matches, side) {
     return `<div class="bk-col ${cls}">
       <div class="bk-col-hdr">${hdr}</div>
-      <div class="bk-float" id="bk-float-${cls}">${cards}${extraHtml}</div>
+      <div class="bk-float" data-side="${side}" data-cls="${cls}">${matches.map(mkCard).join('')}</div>
     </div>`;
   }
 
   const [fh,fa] = slotTeams(104);
   const [th,ta] = slotTeams(103);
-  const finalExtra = `<div class="bk-3rd-lbl" id="bk-3rd-lbl"></div>${matchCard(103,th,ta,'')}`;
 
   const html = `<div class="bk-wrap"><div class="bk-bracket">
-    ${r32html}
-    ${floatCol('r16','Round of 16',[89,90,93,94,91,92,95,96])}
-    ${floatCol('qf','Quarterfinals',[97,98,99,100])}
-    ${floatCol('sf','Semifinals',[101,102])}
-    ${floatCol('fin','🏆 Final',[104],finalExtra)}
+
+    <div class="bk-half-left">
+      ${r32anchor('bk-r32-left', [[[74,77],[73,75]],[[83,84],[81,82]]])}
+      ${floatCol('r16','Round of 16',[89,90,93,94],'left')}
+      ${floatCol('qf','Quarterfinals',[97,98],'left')}
+      ${floatCol('sf','Semifinals',[101],'left')}
+    </div>
+
+    <div class="bk-col-final">
+      <div class="bk-col-hdr fin">🏆 Final</div>
+      <div class="bk-float" data-side="center">
+        ${matchCard(104,fh,fa,'')}
+        <div id="bk-3rd-lbl" class="bk-3rd-lbl"></div>
+        ${matchCard(103,th,ta,'')}
+      </div>
+    </div>
+
+    <div class="bk-half-right">
+      ${floatCol('sf','Semifinals',[102],'right')}
+      ${floatCol('qf','Quarterfinals',[99,100],'right')}
+      ${floatCol('r16','Round of 16',[91,92,95,96],'right')}
+      ${r32anchor('bk-r32-right', [[[76,78],[79,80]],[[86,88],[85,87]]])}
+    </div>
+
   </div></div>`;
 
   el.innerHTML = html;
@@ -1907,53 +1933,39 @@ function drawBracketConnectors() {
   bracket.appendChild(svg);
 
   const br = bracket.getBoundingClientRect();
-
-  const CONNS = [
-    [74,77,89],[73,75,90],[83,84,93],[81,82,94],
-    [76,78,91],[79,80,92],[86,88,95],[85,87,96],
-    [89,90,97],[93,94,98],[91,92,99],[95,96,100],
-    [97,98,101],[99,100,102],
-    [101,102,104],
-  ];
-
   const color = '#B5D4F4';
 
-  CONNS.forEach(([m1, m2, mn]) => {
+  function tmY(el) {
+    const rows = el.querySelectorAll('.bk-team');
+    if (rows.length >= 2) {
+      const a = rows[0].getBoundingClientRect();
+      const b = rows[1].getBoundingClientRect();
+      return (a.bottom + b.top) / 2 - br.top;
+    }
+    const r = el.getBoundingClientRect();
+    return (r.top + r.bottom) / 2 - br.top;
+  }
+
+  function drawConn(m1, m2, mn, mirrored) {
     const e1 = bracket.querySelector(`[data-match="${m1}"]`);
     const e2 = bracket.querySelector(`[data-match="${m2}"]`);
     const en = mn ? bracket.querySelector(`[data-match="${mn}"]`) : null;
     if (!e1 || !e2) return;
 
-    const r1 = e1.getBoundingClientRect();
-    const r2 = e2.getBoundingClientRect();
-
-    // Connect at the dividing line between the two team rows
-    function tmY(el) {
-      const rows = el.querySelectorAll('.bk-team');
-      if (rows.length >= 2) {
-        const a = rows[0].getBoundingClientRect();
-        const b = rows[1].getBoundingClientRect();
-        return (a.bottom + b.top) / 2 - br.top;
-      }
-      return (el.getBoundingClientRect().top + el.getBoundingClientRect().bottom) / 2 - br.top;
-    }
-
-    const x1 = r1.right - br.left;
-    const y1 = tmY(e1);
-    const y2 = tmY(e2);
-    const ym = (y1 + y2) / 2;
-
-    let xc = x1 + 14;
+    const y1 = tmY(e1), y2 = tmY(e2), ym = (y1 + y2) / 2;
+    // mirrored = right half: connector exits from LEFT edge of card
+    const x1 = mirrored
+      ? e1.getBoundingClientRect().left - br.left
+      : e1.getBoundingClientRect().right - br.left;
+    let xc = mirrored ? x1 - 10 : x1 + 10;
+    let xn = xc;
     if (en) {
       const rn = en.getBoundingClientRect();
-      xc = (x1 + (rn.left - br.left)) / 2;
+      xn = mirrored ? rn.right - br.left : rn.left - br.left;
+      xc = (x1 + xn) / 2;
     }
-
-    // ] bracket shape + horizontal line to next card's team-dividing-line y
-    const xn = en ? en.getBoundingClientRect().left - br.left : xc;
     const d = `M${x1},${y1} H${xc} V${y2} M${x1},${y2} H${xc}` +
               (en ? ` M${xc},${ym} H${xn}` : '');
-
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', d);
     path.setAttribute('stroke', color);
@@ -1961,7 +1973,42 @@ function drawBracketConnectors() {
     path.setAttribute('fill', 'none');
     path.setAttribute('stroke-linecap', 'round');
     svg.appendChild(path);
-  });
+  }
+
+  // Left half: normal ] connectors (exit card RIGHT, connect to next card LEFT)
+  [[74,77,89],[73,75,90],[83,84,93],[81,82,94]].forEach(c => drawConn(...c, false));
+  [[89,90,97],[93,94,98]].forEach(c => drawConn(...c, false));
+  drawConn(97,98,101, false);
+
+  // Right half: mirrored [ connectors (exit card LEFT, connect to next card RIGHT)
+  [[76,78,91],[79,80,92],[86,88,95],[85,87,96]].forEach(c => drawConn(...c, true));
+  [[91,92,99],[95,96,100]].forEach(c => drawConn(...c, true));
+  drawConn(99,100,102, true);
+
+  // SF → Final: simple horizontal stubs from each SF directly into Final
+  const e101 = bracket.querySelector('[data-match="101"]');
+  const e102 = bracket.querySelector('[data-match="102"]');
+  const e104 = bracket.querySelector('[data-match="104"]');
+  if (e101 && e104) {
+    const y = tmY(e101);
+    const x1 = e101.getBoundingClientRect().right - br.left;
+    const xn = e104.getBoundingClientRect().left - br.left;
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', `M${x1},${y} H${xn}`);
+    p.setAttribute('stroke', color); p.setAttribute('stroke-width','1.5');
+    p.setAttribute('fill','none'); p.setAttribute('stroke-linecap','round');
+    svg.appendChild(p);
+  }
+  if (e102 && e104) {
+    const y = tmY(e102);
+    const x1 = e102.getBoundingClientRect().left - br.left;
+    const xn = e104.getBoundingClientRect().right - br.left;
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', `M${x1},${y} H${xn}`);
+    p.setAttribute('stroke', color); p.setAttribute('stroke-width','1.5');
+    p.setAttribute('fill','none'); p.setAttribute('stroke-linecap','round');
+    svg.appendChild(p);
+  }
 }
 
 // ── Tooltip ───────────────────────────────────────────────
