@@ -531,6 +531,16 @@ A B C D F H J K: H J B C A F D K
 A B C D F H I L: H F B C A D L I
 A B C D F H I K: H F B C A D I K
 A B C D F H I J: H J B C A F D I
+A B C D F G K L: C G B D A F L K
+A B C D F G J L: C G B D A F L J
+A B C D F G J K: C G B D A F J K
+A B C D F G I L: C G B D A F L I
+A B C D F G I K: C G B D A F I K
+A B C D F G I J: C G B D A F I J
+A B C D F G H L: C G B D A F L H
+A B C D F G H K: H G B C A F D K
+A B C D F G H J: H G B C A F D J
+A B C D F G H I: H G B C A F D I
 A B C D E J K L: E J B C A D L K
 A B C D E I K L: E I B C A D L K
 A B C D E I J L: E J B C A D L I
