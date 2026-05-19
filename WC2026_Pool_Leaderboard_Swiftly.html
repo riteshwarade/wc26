@@ -72,18 +72,47 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
   }
 
-  .matches-played {
-    font-size: 0.875rem;
+  .progress-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+  }
+
+  .progress-bar-wrap {
+    flex: 1;
+    min-width: 80px;
+    height: 6px;
+    background: var(--neutral-light);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--swiftly-blue);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+
+  .progress-count {
+    font-size: 0.78rem;
     font-weight: 700;
     color: var(--swiftly-blue);
+    white-space: nowrap;
   }
 
   .updated-at {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     color: var(--neutral-medium);
     margin-left: auto;
+    white-space: nowrap;
   }
 
   /* ── Container ── */
@@ -95,7 +124,7 @@
 
   /* ── Section label ── */
   .section-label {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 700;
     color: var(--neutral-dark);
     text-transform: uppercase;
@@ -541,7 +570,11 @@
 
 <div class="sticky-bar">
   <div class="sticky-inner">
-    <span class="matches-played" id="matchesPlayed">Loading…</span>
+    <span class="progress-label">Group stage</span>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <span class="progress-count" id="matchesPlayed">Loading…</span>
     <span class="updated-at" id="updatedAt"></span>
   </div>
 </div>
@@ -2112,6 +2145,8 @@ async function init() {
 
     document.getElementById('matchesPlayed').textContent =
       `${played} / 72 matches played`;
+    document.getElementById('progressFill').style.width =
+      `${(played / 72) * 100}%`;
     document.getElementById('updatedAt').textContent =
       `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
