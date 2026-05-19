@@ -354,18 +354,10 @@
     letter-spacing: 0.2px;
   }
 
-  .submit-btn:hover:not(:disabled) {
+  .submit-btn:hover {
     background: #0089c3;
     transform: translateY(-1px);
     box-shadow: 0 6px 18px rgba(0,158,223,0.38);
-  }
-
-  .submit-btn:disabled {
-    background: var(--neutral-light);
-    color: var(--neutral-medium);
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
   }
 
   .submit-note {
@@ -705,7 +697,7 @@
       </form>
 
       <div class="submit-section">
-        <button class="submit-btn" id="submitBtn" onclick="handleSubmit()" disabled>Happy with your picks?</button>
+        <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">Happy with your picks?</button>
         <div class="validation-msg" id="validationMsg"></div>
         <div class="confirm-row" id="confirmRow">
           <button class="confirm-btn" onclick="confirmSubmit()">Submit</button>
@@ -1185,11 +1177,6 @@ function downloadCSV(name) {
 // Close modal when clicking the overlay
 document.getElementById('modalOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
-});
-
-// Enable submit button only when name is entered
-document.getElementById('entrantName').addEventListener('input', function() {
-  document.getElementById('submitBtn').disabled = !this.value.trim();
 });
 
 // Init
