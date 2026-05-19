@@ -956,7 +956,7 @@ function renderPickGroupTables() {
 
     const rows = teams.map((t, i) => {
       const s = stats[t];
-      const grpStarted = teams.some(t => stats[t].P > 0);
+      const grpStarted = teams.every(t => stats[t].P > 0);
       const rowClass = grpStarted ? (i < 2 ? 'qualified' : i === 2 ? 'third-pending' : 'eliminated') : '';
       const rank = RANKINGS[t] ?? '–';
       return `<tr class="${rowClass}">
