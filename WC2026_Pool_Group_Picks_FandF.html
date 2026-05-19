@@ -119,14 +119,6 @@
     background: var(--blue-lightest);
   }
 
-  .name-required-msg {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.68rem;
-    color: var(--swiftly-orange);
-    font-weight: 700;
-    display: none;
-    margin-left: 4px;
-  }
 
   .progress-label {
     font-family: 'Inter', sans-serif;
@@ -362,10 +354,18 @@
     letter-spacing: 0.2px;
   }
 
-  .submit-btn:hover {
+  .submit-btn:hover:not(:disabled) {
     background: #0089c3;
     transform: translateY(-1px);
     box-shadow: 0 6px 18px rgba(0,158,223,0.38);
+  }
+
+  .submit-btn:disabled {
+    background: var(--neutral-light);
+    color: var(--neutral-medium);
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
   }
 
   .submit-note {
@@ -698,7 +698,6 @@
         <button class="shortcut-btn" onclick="runShortcut('ranked')">💪&nbsp;&nbsp;Pick higher-ranked team to win</button>
         <button class="shortcut-btn" onclick="runShortcut('draw')">🤝&nbsp;&nbsp;Pick all draws</button>
         <button class="shortcut-btn" onclick="runShortcut('reset')">✕&nbsp;&nbsp;Reset all picks</button>
-        <span class="name-required-msg" id="nameRequiredMsg">← Enter your name first</span>
       </div>
 
       <form id="poolForm">
@@ -706,7 +705,7 @@
       </form>
 
       <div class="submit-section">
-        <button class="submit-btn" onclick="handleSubmit()">Happy with your picks?</button>
+        <button class="submit-btn" id="submitBtn" onclick="handleSubmit()" disabled>Happy with your picks?</button>
         <div class="validation-msg" id="validationMsg"></div>
         <div class="confirm-row" id="confirmRow">
           <button class="confirm-btn" onclick="confirmSubmit()">Submit</button>
@@ -1122,17 +1121,6 @@ const RANKINGS = {
   'England': 4, 'Croatia': 11, 'Ghana': 74, 'Panama': 33,
 };
 
-function requireName() {
-  const name = document.getElementById('entrantName').value.trim();
-  if (!name) {
-    const msg = document.getElementById('nameRequiredMsg');
-    msg.style.display = 'inline';
-    document.getElementById('entrantName').focus();
-    setTimeout(() => msg.style.display = 'none', 3000);
-    return false;
-  }
-  return true;
-}
 
 function confirmSubmit() {
   const name = document.getElementById('entrantName').value.trim();
@@ -1147,7 +1135,7 @@ function confirmSubmit() {
 }
 
 function runShortcut(mode) {
-  if (mode === 'reset') {
+  if (mode === 'reset') {  // reset doesn't need a name
     MATCHES.forEach(m => {
       const [num] = m;
       document.querySelectorAll(`input[name="m${num}"]`).forEach(r => r.checked = false);
@@ -1155,7 +1143,6 @@ function runShortcut(mode) {
     });
     return;
   }
-  if (!requireName()) return;
   const options = ['w1', 'draw', 'w2'];
   MATCHES.forEach(m => {
     const [num, , , , t1, t2] = m;
@@ -1198,6 +1185,11 @@ function downloadCSV(name) {
 // Close modal when clicking the overlay
 document.getElementById('modalOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
+});
+
+// Enable submit button only when name is entered
+document.getElementById('entrantName').addEventListener('input', function() {
+  document.getElementById('submitBtn').disabled = !this.value.trim();
 });
 
 // Init
