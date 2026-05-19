@@ -9,6 +9,8 @@
   :root {
     --swiftly-blue:    #009edf;
     --swiftly-orange:  #ff9e16;
+    --correct-green:   #5ce65c;
+    --wrong-red:       #ff6b6b;
     --neutral-lightest:#f7f7f7;
     --neutral-light:   #ebebeb;
     --neutral-medium:  #c4c4c4;
@@ -277,8 +279,8 @@
   #sq-tooltip .tt-pick   { margin-bottom: 2px; }
   #sq-tooltip .tt-result { margin-bottom: 4px; color: var(--neutral-medium); }
   #sq-tooltip .tt-status { font-weight: 700; }
-  #sq-tooltip .tt-status.correct { color: #5ce65c; }
-  #sq-tooltip .tt-status.wrong   { color: #ff6b6b; }
+  #sq-tooltip .tt-status.correct { color: var(--correct-green); }
+  #sq-tooltip .tt-status.wrong   { color: var(--wrong-red); }
   #sq-tooltip .tt-status.pending { color: var(--neutral-medium); }
 
   /* ── Results table ── */
@@ -518,7 +520,7 @@
   .bk-team.w .bk-sc { color: #185FA5; }
   .bk-team.l .bk-fl { opacity: 0.35; }
   .bk-team.l .bk-tn { color: var(--neutral-medium); font-weight: 400; }
-  .bk-team.l .bk-sc { color: var(--neutral-light2); }
+  .bk-team.l .bk-sc { color: var(--neutral-medium); }
   .bk-pens {
     font-size: 0.65rem;
     color: var(--neutral-medium);
@@ -541,7 +543,7 @@
   }
   .bk-3rd-card { opacity: 0.65; }
   .bracket-pending {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     color: var(--neutral-dark);
     text-align: center;
     padding: 32px 16px;
