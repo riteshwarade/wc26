@@ -685,14 +685,6 @@
     <input type="text" id="entrantName" placeholder="Enter your full name…" autocomplete="name">
   </div>
 
-  <div class="shortcuts-bar">
-    <span class="shortcuts-label">Shortcuts</span>
-    <button class="shortcut-btn" onclick="runShortcut('random')">🎲&nbsp;&nbsp;Pick randomly</button>
-    <button class="shortcut-btn" onclick="runShortcut('ranked')">💪&nbsp;&nbsp;Pick higher-ranked team to win</button>
-    <button class="shortcut-btn" onclick="runShortcut('draw')">🤝&nbsp;&nbsp;Pick all draws</button>
-    <span class="name-required-msg" id="nameRequiredMsg">← Enter your name first</span>
-  </div>
-
   <div class="pick-layout">
 
     <div class="pick-sidebar">
@@ -701,6 +693,15 @@
     </div>
 
     <div class="pick-main">
+
+      <div class="shortcuts-bar">
+        <span class="shortcuts-label">Shortcuts</span>
+        <button class="shortcut-btn" onclick="runShortcut('random')">🎲&nbsp;&nbsp;Pick randomly</button>
+        <button class="shortcut-btn" onclick="runShortcut('ranked')">💪&nbsp;&nbsp;Pick higher-ranked team to win</button>
+        <button class="shortcut-btn" onclick="runShortcut('draw')">🤝&nbsp;&nbsp;Pick all draws</button>
+        <span class="name-required-msg" id="nameRequiredMsg">← Enter your name first</span>
+      </div>
+
       <form id="poolForm">
         <!-- Match rows injected by JS -->
       </form>
