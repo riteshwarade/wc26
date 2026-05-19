@@ -697,6 +697,7 @@
         <button class="shortcut-btn" onclick="runShortcut('random')">🎲&nbsp;&nbsp;Pick randomly</button>
         <button class="shortcut-btn" onclick="runShortcut('ranked')">💪&nbsp;&nbsp;Pick higher-ranked team to win</button>
         <button class="shortcut-btn" onclick="runShortcut('draw')">🤝&nbsp;&nbsp;Pick all draws</button>
+        <button class="shortcut-btn" onclick="runShortcut('reset')" style="color:var(--neutral-medium)">✕&nbsp;&nbsp;Reset all picks</button>
         <span class="name-required-msg" id="nameRequiredMsg">← Enter your name first</span>
       </div>
 
@@ -1145,6 +1146,14 @@ function confirmSubmit() {
 }
 
 function runShortcut(mode) {
+  if (mode === 'reset') {
+    MATCHES.forEach(m => {
+      const [num] = m;
+      document.querySelectorAll(`input[name="m${num}"]`).forEach(r => r.checked = false);
+      onPick(num);
+    });
+    return;
+  }
   if (!requireName()) return;
   const options = ['w1', 'draw', 'w2'];
   MATCHES.forEach(m => {
