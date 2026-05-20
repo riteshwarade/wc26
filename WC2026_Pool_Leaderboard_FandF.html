@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WC2026 Leaderboard – Swiftly</title>
+<title>World Cup 2026 Pool · Leaderboard – Friends & Family</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Inter:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -150,7 +150,7 @@
   .section-collapsed .section-chevron { transform: rotate(-90deg); }
 
   .section-body {
-    overflow: hidden;
+    overflow: clip; /* clip (not hidden) so position:sticky works inside */
     transition: max-height 0.25s ease, opacity 0.2s ease;
     max-height: 9999px;
     opacity: 1;
@@ -583,7 +583,7 @@
 
 <header>
   <div class="header-inner">
-    <div class="header-title">World Cup 2026 pool — Leaderboard</div>
+    <div class="header-title">World Cup 2026 Pool · Leaderboard</div>
     <div class="header-subtitle" id="headerSubtitle">Swiftly pool · group stage</div>
   </div>
 </header>
@@ -659,7 +659,8 @@ const USE_LOCAL_DATA = false;
 // ──────────────────────────────────────────────────────────
 
 const PICKS_URL   = `https://raw.githubusercontent.com/riteshwarade/wc26/main/data/group_${POOL_ID}_picks.json`;
-const RESULTS_URL = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/results/group_results.csv';
+const RESULTS_URL   = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/results/group_results.csv';
+const BRACKET_URL   = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/data/knockout_bracket.json';
 
 // ── Embedded simulation data (used when USE_LOCAL_DATA = true) ────────────────
 const LOCAL_PICKS = {"Simulation 1":{"1":"Draw","2":"Draw","3":"Draw","4":"W2","5":"W1","6":"W1","7":"Draw","8":"W2","9":"W1","10":"W1","11":"Draw","12":"W1","13":"Draw","14":"W1","15":"W1","16":"Draw","17":"W1","18":"W1","19":"Draw","20":"Draw","21":"W2","22":"W2","23":"Draw","24":"Draw","25":"W1","26":"W2","27":"W1","28":"Draw","29":"Draw","30":"Draw","31":"W2","32":"Draw","33":"W1","34":"Draw","35":"W1","36":"Draw","37":"W2","38":"W1","39":"Draw","40":"W2","41":"Draw","42":"W1","43":"W2","44":"W2","45":"W2","46":"W2","47":"Draw","48":"Draw","49":"W2","50":"W2","51":"W2","52":"W2","53":"W1","54":"W1","55":"W1","56":"W1","57":"W1","58":"W2","59":"W1","60":"W1","61":"W1","62":"Draw","63":"Draw","64":"W1","65":"Draw","66":"W2","67":"W2","68":"W1","69":"Draw","70":"W1","71":"W1","72":"W1"},"Simulation 2":{"1":"Draw","2":"W1","3":"W2","4":"W1","5":"W1","6":"W2","7":"Draw","8":"W1","9":"Draw","10":"W1","11":"W1","12":"Draw","13":"W2","14":"W1","15":"W1","16":"W2","17":"W1","18":"W2","19":"W1","20":"W1","21":"W1","22":"Draw","23":"Draw","24":"W2","25":"W1","26":"Draw","27":"Draw","28":"W2","29":"W2","30":"Draw","31":"W1","32":"W2","33":"Draw","34":"W1","35":"W1","36":"W1","37":"Draw","38":"W1","39":"W1","40":"W1","41":"Draw","42":"W1","43":"Draw","44":"Draw","45":"W2","46":"W1","47":"W1","48":"W1","49":"Draw","50":"W2","51":"W2","52":"W1","53":"Draw","54":"W2","55":"Draw","56":"Draw","57":"Draw","58":"W1","59":"W1","60":"W1","61":"W2","62":"W1","63":"W2","64":"W1","65":"Draw","66":"W2","67":"Draw","68":"Draw","69":"Draw","70":"Draw","71":"Draw","72":"Draw"},"Simulation 3":{"1":"W1","2":"W1","3":"W2","4":"W1","5":"W2","6":"W1","7":"W2","8":"W2","9":"Draw","10":"Draw","11":"Draw","12":"W2","13":"Draw","14":"Draw","15":"Draw","16":"W2","17":"W1","18":"W1","19":"W2","20":"Draw","21":"W2","22":"W2","23":"Draw","24":"Draw","25":"Draw","26":"W1","27":"W2","28":"W1","29":"Draw","30":"Draw","31":"Draw","32":"Draw","33":"W2","34":"W2","35":"W2","36":"Draw","37":"Draw","38":"Draw","39":"Draw","40":"W2","41":"W2","42":"W2","43":"W2","44":"W1","45":"W2","46":"W1","47":"Draw","48":"W1","49":"W1","50":"Draw","51":"W1","52":"Draw","53":"Draw","54":"W1","55":"Draw","56":"W2","57":"Draw","58":"Draw","59":"Draw","60":"Draw","61":"Draw","62":"W2","63":"Draw","64":"Draw","65":"W1","66":"W1","67":"W2","68":"Draw","69":"Draw","70":"W2","71":"W1","72":"W2"},"Simulation 4":{"1":"Draw","2":"Draw","3":"W1","4":"W2","5":"W2","6":"W2","7":"W2","8":"W1","9":"W2","10":"W2","11":"W1","12":"W1","13":"Draw","14":"W1","15":"W2","16":"W1","17":"Draw","18":"Draw","19":"W2","20":"Draw","21":"Draw","22":"W2","23":"Draw","24":"W1","25":"Draw","26":"W2","27":"W2","28":"W2","29":"Draw","30":"W1","31":"W1","32":"Draw","33":"Draw","34":"W2","35":"Draw","36":"Draw","37":"W1","38":"W2","39":"W2","40":"W1","41":"W2","42":"Draw","43":"W2","44":"W1","45":"W2","46":"W1","47":"Draw","48":"W1","49":"W2","50":"Draw","51":"W2","52":"W1","53":"W1","54":"W2","55":"W2","56":"W2","57":"Draw","58":"W1","59":"W1","60":"W1","61":"W1","62":"W2","63":"Draw","64":"W1","65":"W1","66":"W2","67":"W2","68":"W1","69":"W2","70":"W1","71":"W2","72":"Draw"},"Simulation 5":{"1":"Draw","2":"W1","3":"Draw","4":"W2","5":"W2","6":"W2","7":"W2","8":"W2","9":"W2","10":"W2","11":"Draw","12":"W1","13":"Draw","14":"W1","15":"Draw","16":"Draw","17":"Draw","18":"Draw","19":"W2","20":"W1","21":"Draw","22":"Draw","23":"Draw","24":"Draw","25":"W2","26":"W1","27":"W1","28":"W2","29":"W2","30":"W1","31":"W2","32":"W2","33":"W1","34":"W2","35":"W1","36":"W1","37":"W2","38":"W1","39":"W2","40":"Draw","41":"W1","42":"Draw","43":"W1","44":"Draw","45":"W1","46":"W2","47":"W2","48":"Draw","49":"Draw","50":"W1","51":"W2","52":"W1","53":"W1","54":"Draw","55":"Draw","56":"W2","57":"Draw","58":"W2","59":"W1","60":"W1","61":"W1","62":"W1","63":"W1","64":"W2","65":"W2","66":"W2","67":"Draw","68":"W2","69":"Draw","70":"W1","71":"Draw","72":"W1"}};
@@ -1636,18 +1637,7 @@ EFGHIJKL:E J I F H G L K
   return t;
 })();
 
-// Round of 32 structure — match → [home slot, away slot]
-// Slots: 1X = winner group X, 2X = runner-up, 3rd = best third
-const R32_SLOTS = {
-  73: ['2A','2B'], 74: ['1E','3M74'], 75: ['1F','2C'], 76: ['1C','2F'],
-  77: ['1I','3M77'], 78: ['2E','2I'], 79: ['1A','3M79'], 80: ['1L','3M80'],
-  81: ['1D','3M81'], 82: ['1G','3M82'], 83: ['2K','2L'], 84: ['1H','2J'],
-  85: ['1B','3M85'], 86: ['1J','2H'], 87: ['1K','3M87'], 88: ['2D','2G'],
-};
-// 3rd place slots: match → column index in combination [M79,M85,M81,M74,M82,M77,M87,M80]
-const THIRD_MATCH_COL = {79:0, 85:1, 81:2, 74:3, 82:4, 77:5, 87:6, 80:7};
-
-// R16/QF/SF bracket topology comes from bracket.js
+// R32_SLOTS, THIRD_MATCH_COL, R16/QF/SF bracket topology come from bracket.js
 
 function computeBracket(grpStandings, qualifiedThirds, results) {
   // Build position lookup
@@ -1779,7 +1769,7 @@ function computeGroupStandings(results) {
 
 // ── Bracket rendering (Variant 1 — read-only, group-results-derived) ──────────
 // buildBracketHtml, positionAndConnectBracket, drawBracketConnectors → bracket.js
-function renderBracket(results, allGroupsStarted) {
+function renderBracket(results, allGroupsStarted, bracketConfirmed) {
   const el = document.getElementById('bracketCard');
 
   if (!allGroupsStarted) {
@@ -1787,7 +1777,8 @@ function renderBracket(results, allGroupsStarted) {
     return;
   }
 
-  const isConfirmed = Object.keys(results).length >= 72;
+  // confirmed=true only when parse_results.py has cross-checked R32 against Wikipedia
+  const isConfirmed = bracketConfirmed === true;
   const statusBadge = isConfirmed
     ? '<span style="margin-left:8px;font-size:0.6rem;background:#22863a;color:#fff;padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:0">Confirmed ✓</span>'
     : '<span style="margin-left:8px;font-size:0.6rem;background:#ff9e16;color:#131e27;padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:0">Provisional</span>';
@@ -1872,19 +1863,23 @@ async function init() {
   try {
     let picksData, resultsCSV;
 
+    let bracketData = null;
+
     if (USE_LOCAL_DATA) {
       picksData  = LOCAL_PICKS;
       resultsCSV = LOCAL_RESULTS_CSV;
     } else {
       const ts = Date.now();
-      const [picksResp, resultsResp] = await Promise.all([
+      const [picksResp, resultsResp, bracketResp] = await Promise.all([
         fetch(`${PICKS_URL}?t=${ts}`),
         fetch(`${RESULTS_URL}?t=${ts}`),
+        fetch(`${BRACKET_URL}?t=${ts}`).catch(() => null),
       ]);
       if (!picksResp.ok) throw new Error('Could not load picks');
       if (!resultsResp.ok) throw new Error('Could not load results');
       picksData  = await picksResp.json();
       resultsCSV = await resultsResp.text();
+      if (bracketResp && bracketResp.ok) bracketData = await bracketResp.json();
     }
 
     const results = parseResults(resultsCSV);
@@ -1902,10 +1897,13 @@ async function init() {
     const GRP_SAMPLE = {A:1,B:3,C:5,D:4,E:9,F:11,G:15,H:13,I:17,J:19,K:23,L:21};
     const allGrpsStarted = Object.values(GRP_SAMPLE).every(m => results[m]);
 
+    // confirmed=true only when parse_results.py has cross-checked R32 against Wikipedia
+    const bracketConfirmed = bracketData ? bracketData.confirmed === true : false;
+
     renderStandings(standings, results);
     renderResults(results);
     renderGroupTables(results);
-    renderBracket(results, allGrpsStarted);
+    renderBracket(results, allGrpsStarted, bracketConfirmed);
 
   } catch (err) {
     const msg = `<div class="state-msg"><span class="emoji">⚠️</span>${err.message}</div>`;

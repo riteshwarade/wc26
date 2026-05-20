@@ -6,6 +6,28 @@
 // Each page includes this file, then defines its own renderBracket()
 // that calls buildBracketHtml(mkCard) with a page-specific card builder.
 
+// ── Inject shared bracket CSS once ───────────────────────
+// Handles .bk-header-strip (sticky round headers). Injected here so all
+// three variants get it automatically without per-page style changes.
+(function injectBracketCss() {
+  if (document.getElementById('bk-shared-css')) return;
+  const s = document.createElement('style');
+  s.id = 'bk-shared-css';
+  s.textContent = `
+    .bk-outer { position: relative; }
+    .bk-header-strip {
+      position: sticky;
+      z-index: 50;
+      background: var(--neutral-lightest, #f7f7f7);
+      display: flex;
+      width: 100%;
+      padding: 0 4px;
+    }
+    .bk-header-strip .bk-col-hdr { margin-bottom: 0; padding-top: 6px; padding-bottom: 7px; }
+  `;
+  document.head.appendChild(s);
+})();
+
 // ── Flag emoji lookup ─────────────────────────────────────
 const FLAGS = {
   'Mexico':'🇲🇽','South Africa':'🇿🇦','South Korea':'🇰🇷','Czech Republic':'🇨🇿',
@@ -70,6 +92,19 @@ const SF = {
   101:[97,98], 102:[99,100],
 };
 
+// ── Round of 32 slot assignments ──────────────────────────
+// match → [home slot, away slot]
+// Slots: 1X = group X winner, 2X = group X runner-up, 3MNN = best 3rd (from match NN's group pool)
+// Validated against FIFA/Wikipedia WC2026 bracket.
+const R32_SLOTS = {
+  73: ['2A','2B'], 74: ['1E','3M74'], 75: ['1F','2C'], 76: ['1C','2F'],
+  77: ['1I','3M77'], 78: ['2E','2I'], 79: ['1A','3M79'], 80: ['1L','3M80'],
+  81: ['1D','3M81'], 82: ['1G','3M82'], 83: ['2K','2L'], 84: ['1H','2J'],
+  85: ['1B','3M85'], 86: ['1J','2H'], 87: ['1K','3M87'], 88: ['2D','2G'],
+};
+// Column index in the best-3rd combination array [M79,M85,M81,M74,M82,M77,M87,M80]
+const THIRD_MATCH_COL = { 79:0, 85:1, 81:2, 74:3, 82:4, 77:5, 87:6, 80:7 };
+
 // ── Reusable team display: flag + name + rank ─────────────
 // showRank=false when rank is shown separately (e.g. pick form rank column)
 function teamHtml(name, showRank=true) {
@@ -101,11 +136,23 @@ function bkTeamRow(name, stateCls, score, extraAttrs='') {
   return `<div class="bk-team ${cls}"${extraAttrs ? ' ' + extraAttrs : ''}><span class="bk-fl">${flag}</span><span class="bk-tn">${label}</span>${sc}</div>`;
 }
 
+// ── Round label for a given match number ─────────────────
+function roundLabel(num) {
+  if (num >= 73 && num <= 88) return 'R32';
+  if (num >= 89 && num <= 96) return 'R16';
+  if (num >= 97 && num <= 100) return 'QF';
+  if (num === 101 || num === 102) return 'SF';
+  if (num === 103) return '3rd Place';
+  if (num === 104) return 'Final';
+  return '';
+}
+
 // ── Bracket match card ────────────────────────────────────
 // homeAttrs / awayAttrs: optional extra HTML attributes for each team row.
 function matchCard(num, home, away, label, homeScore, awayScore, homeCls, awayCls, homeAttrs='', awayAttrs='') {
+  const round = roundLabel(num);
   const date = KO_SCHEDULE[num] ? ` · ${KO_SCHEDULE[num]}` : '';
-  const mnumText = `M${num}${date}${label ? ' · ' + label : ''}`;
+  const mnumText = `${round} · M${num}${date}${label ? ' · ' + label : ''}`;
   return `<div class="bk-card" data-match="${num}">
     <div class="bk-mnum">${mnumText}</div>
     ${bkTeamRow(home, homeCls, homeScore, homeAttrs)}
@@ -163,7 +210,6 @@ function buildBracketHtml(mkCard, opts={}) {
   function mkHalf(qs)  { return `<div class="bk-half">${qs.map(mkQtr).join('')}</div>`; }
 
   const r32Html = `<div class="bk-col r32">
-    <div class="bk-col-hdr">Round of 32</div>
     <div class="bk-matches" id="bk-r32-matches">
       ${mkHalf([[[74,77],[73,75]], [[83,84],[81,82]]])}
       ${mkHalf([[[76,78],[79,80]], [[86,88],[85,87]]])}
@@ -171,10 +217,10 @@ function buildBracketHtml(mkCard, opts={}) {
   </div>`;
 
   // All non-R32 cards (including podium) are absolutely positioned by JS.
-  function floatCol(cls, hdr, matches, floatExtra='') {
+  // Headers are no longer inside the columns — they live in the sticky strip above.
+  function floatCol(cls, matches, floatExtra='') {
     const cards = matches.map(mkCard).join('');
     return `<div class="bk-col ${cls}">
-      <div class="bk-col-hdr">${hdr}</div>
       <div class="bk-float" id="bk-float-${cls}">${cards}${floatExtra}</div>
     </div>`;
   }
@@ -184,13 +230,26 @@ function buildBracketHtml(mkCard, opts={}) {
   const thirdPlaceHtml = mkCard(103);
   const podiumSection  = opts.podiumHtml || '';
 
-  return `<div class="bk-wrap"><div class="bk-bracket">
-    ${r32Html}
-    ${floatCol('r16', 'Round of 16',   [89,90,93,94,91,92,95,96])}
-    ${floatCol('qf',  'Quarterfinals', [97,98,99,100])}
-    ${floatCol('sf',  'Semifinals',    [101,102])}
-    ${floatCol('fin', '🏆 Final',      [104], thirdPlaceHtml + podiumSection)}
-  </div></div>`;
+  // Sticky round header strip — top is set dynamically by positionAndConnectBracket
+  // to sit flush below whatever .sticky-bar is on the page.
+  const headerStrip = `<div class="bk-header-strip">
+    <div class="bk-col r32"><div class="bk-col-hdr">Round of 32</div></div>
+    <div class="bk-col r16"><div class="bk-col-hdr">Round of 16</div></div>
+    <div class="bk-col qf"><div class="bk-col-hdr">Quarterfinals</div></div>
+    <div class="bk-col sf"><div class="bk-col-hdr">Semifinals</div></div>
+    <div class="bk-col fin"><div class="bk-col-hdr">🏆 Final (and 3rd place)</div></div>
+  </div>`;
+
+  return `<div class="bk-outer">
+    ${headerStrip}
+    <div class="bk-wrap"><div class="bk-bracket">
+      ${r32Html}
+      ${floatCol('r16', [89,90,93,94,91,92,95,96])}
+      ${floatCol('qf',  [97,98,99,100])}
+      ${floatCol('sf',  [101,102])}
+      ${floatCol('fin', [104], thirdPlaceHtml + podiumSection)}
+    </div></div>
+  </div>`;
 }
 
 // ── Position float columns then draw connectors ───────────
@@ -199,6 +258,13 @@ function buildBracketHtml(mkCard, opts={}) {
 function positionAndConnectBracket() {
   const bracket = document.querySelector('.bk-bracket');
   if (!bracket) return;
+
+  // Pin the sticky header strip flush below the page's .sticky-bar
+  const headerStrip = bracket.closest('.bk-outer')?.querySelector('.bk-header-strip');
+  if (headerStrip) {
+    const stickyBar = document.querySelector('.sticky-bar');
+    headerStrip.style.top = (stickyBar ? stickyBar.getBoundingClientRect().height : 0) + 'px';
+  }
 
   // Size all float containers to match R32 matches height
   const r32m = document.getElementById('bk-r32-matches');

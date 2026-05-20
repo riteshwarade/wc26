@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>World Cup 2026 pool – knockout picks</title>
+<title>World Cup 2026 Pool · Knockout Stage</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<script src="bracket.js"></script>
 <style>
   :root {
     --swiftly-blue:    #009edf;
@@ -30,18 +31,43 @@
 
   .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px 64px; }
 
+  /* ── Name card ───────────────────────────────────────────── */
   .name-card {
-    background: #ffffff; border-radius: var(--radius); border: 2px solid var(--swiftly-blue);
-    padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,158,223,0.12);
-    display: flex; align-items: center; gap: 14px;
+    background: #ffffff;
+    border-radius: var(--radius);
+    border: 2px solid var(--swiftly-blue);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 10px rgba(0,158,223,0.12);
+    display: flex;
+    align-items: center;
+    gap: 14px;
   }
-  .name-card label { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 0.78rem; color: var(--swiftly-blue); white-space: nowrap; }
+
+  .name-card label {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: var(--swiftly-blue);
+    white-space: nowrap;
+  }
+
   .name-card input {
-    flex: 1; padding: 10px 14px; font-family: 'Inter', sans-serif;
-    font-size: 1.1rem; font-weight: 700; border: 1.5px solid var(--neutral-light);
-    border-radius: 7px; outline: none; color: var(--neutral-darkest); background: var(--neutral-lightest);
+    flex: 1;
+    padding: 10px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: 1.5px solid var(--neutral-light);
+    border-radius: 7px;
+    outline: none;
+    color: var(--neutral-darkest);
+    transition: border-color 0.2s;
+    background: var(--neutral-lightest);
   }
+
   .name-card input:focus { background: #ffffff; }
+
   .name-card input::placeholder { color: var(--neutral-medium); }
 
   .shortcuts-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -52,6 +78,56 @@
     border-radius: 5px; padding: 4px 12px; cursor: pointer; transition: all 0.14s; white-space: nowrap;
   }
   .shortcut-btn:hover { border-color: var(--swiftly-blue); color: var(--swiftly-blue); background: var(--blue-lightest); }
+
+  /* ── Sticky progress bar ─────────────────────────────────── */
+  .sticky-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffffff;
+    padding: 10px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+  .sticky-bar-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .progress-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+  }
+  .progress-bar-wrap {
+    flex: 1;
+    min-width: 80px;
+    height: 6px;
+    background: var(--neutral-light);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--swiftly-blue);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+  .progress-count {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--swiftly-blue);
+    white-space: nowrap;
+  }
 
   /* ── Bracket (copied from leaderboard Variant 1) ── */
   .bk-wrap { overflow-x: auto; padding: 14px 4px 18px; }
@@ -80,21 +156,60 @@
   .bk-team.tbd .bk-tn { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
   .bk-3rd-lbl { position: absolute; left: 0; right: 0; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.6px; color: var(--neutral-medium); text-align: center; font-weight: 500; }
   .bk-3rd-card { opacity: 0.65; }
+  .bk-rank, .team-rank { font-weight: 400; color: var(--neutral-dark); font-size: 0.68rem; }
+  .bk-sc { font-size: 0.78rem; font-weight: 700; color: var(--neutral-medium); min-width: 12px; text-align: right; flex-shrink: 0; }
+  .bk-team.w { background: var(--blue-lightest); }
+  .bk-team.w .bk-tn { color: #042C53; font-weight: 700; }
+  .bk-team.w .bk-sc { color: #185FA5; }
+  .bk-team.l .bk-fl { opacity: 0.35; }
+  .bk-team.l .bk-tn { color: var(--neutral-medium); font-weight: 400; }
+  .bk-team.l .bk-sc { color: var(--neutral-medium); }
+
+  /* ── Clickable team rows (Variant 2) ── */
+  .bk-team[data-match] { cursor: pointer; }
+  .bk-team[data-match]:hover { background: var(--blue-lightest); }
+  .bk-team[data-match].w:hover { filter: brightness(0.96); }
+  .bk-team[data-match].l:hover { background: var(--blue-lightest); opacity: 1; }
+  .bk-team[data-match].l:hover .bk-fl { opacity: 1; }
+  .bk-team[data-match].l:hover .bk-tn { color: var(--neutral-darkest); font-weight: 600; }
+
+  /* ── Podium (Variant 2 & 3) ── */
+  .bk-float .bk-podium { position: absolute; left: 0; right: 0; }
+  .bk-podium { border-radius: 8px; overflow: hidden; border: 0.5px solid var(--neutral-light); background: #ffffff; }
+  .bk-podium-hdr { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; text-align: center; padding: 5px 8px; background: var(--neutral-lightest); border-bottom: 1px solid var(--neutral-light); color: var(--neutral-dark); }
+  .bk-podium-row { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 0.78rem; border-bottom: 0.5px solid var(--neutral-light); }
+  .bk-podium-row:last-child { border-bottom: none; }
+  .bk-podium-medal { font-size: 1rem; flex-shrink: 0; line-height: 1; }
+  .bk-podium-team { flex: 1; font-weight: 600; color: var(--neutral-darkest); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk-podium-team.tbd { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
+  .bk-podium-row.gold   { background: #fffbeb; }
+  .bk-podium-row.silver { background: var(--neutral-lightest); }
+  .bk-podium-row.bronze { background: #fff6f0; }
 </style>
 </head>
 <body>
 
 <header>
   <div class="header-inner">
-    <div class="header-title">World Cup 2026 pool – knockout picks</div>
-    <div class="header-subtitle">World Cup 2026 pool · pick all 32 knockout matches</div>
+    <div class="header-title">World Cup 2026 Pool · Knockout Stage</div>
+    <div class="header-subtitle">Pick a result for all 32 knockout matches</div>
   </div>
 </header>
+
+<!-- ── Sticky progress bar ────────────────────────────── -->
+<div class="sticky-bar">
+  <div class="sticky-bar-inner">
+    <span class="progress-label">Progress</span>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <span class="progress-count" id="progressCount">0 / 32 matches picked</span>
+  </div>
+</div>
 
 <div class="container">
 
   <div class="name-card">
-    <label for="entrantName">Your name</label>
     <input type="text" id="entrantName" placeholder="Enter your full name…" autocomplete="name">
   </div>
 
@@ -110,7 +225,207 @@
 </div>
 
 <script>
-// Bracket coming soon
+// FLAGS, RANKINGS, KO_SCHEDULE, R16, QF, SF, isTbd, matchCard,
+// buildBracketHtml, buildPodiumHtml, positionAndConnectBracket → bracket.js
+
+const BRACKET_URL = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/data/knockout_bracket.json';
+
+let r32Teams = {}; // { matchNum: [home, away] } — from knockout_bracket.json
+let picks    = {}; // { matchNum: winnerName }   — user's current picks
+
+// ── feedsInto[m] = the match that the winner of m feeds into ──
+// Built at runtime from R16/QF/SF topology in bracket.js.
+const feedsInto = {};
+function buildFeedsInto() {
+  for (const [next, feeders] of Object.entries({...R16, ...QF, ...SF}))
+    for (const f of feeders) feedsInto[f] = +next;
+  feedsInto[101] = 104; // SF1 winner → Final
+  feedsInto[102] = 104; // SF2 winner → Final
+  // Note: SF losers → M103 (3rd place) is handled separately in clearInvalidDownstream
+}
+
+// ── Process matches in round order so each shortcut cascades correctly ──
+const MATCH_ORDER = [
+  73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88, // R32
+  89,90,91,92,93,94,95,96,                          // R16
+  97,98,99,100,                                      // QF
+  101,102,                                           // SF
+  103,104,                                           // 3rd place & Final
+];
+
+// ── Resolve teams for any match based on current picks ──
+function getTeams(m) {
+  if (r32Teams[m]) return r32Teams[m];
+  if (R16[m]) return [picks[R16[m][0]] || `W${R16[m][0]}`, picks[R16[m][1]] || `W${R16[m][1]}`];
+  if (QF[m])  return [picks[QF[m][0]]  || `W${QF[m][0]}`,  picks[QF[m][1]]  || `W${QF[m][1]}`];
+  if (SF[m])  return [picks[SF[m][0]]  || `W${SF[m][0]}`,  picks[SF[m][1]]  || `W${SF[m][1]}`];
+  if (m === 104) return [picks[101] || 'W101', picks[102] || 'W102'];
+  if (m === 103) {
+    // Teams are the losers of each SF match
+    const [h1, a1] = getTeams(101);
+    const [h2, a2] = getTeams(102);
+    const loser101 = picks[101] ? (picks[101] === h1 ? a1 : h1) : 'L101';
+    const loser102 = picks[102] ? (picks[102] === h2 ? a2 : h2) : 'L102';
+    return [loser101, loser102];
+  }
+  return ['TBD', 'TBD'];
+}
+
+// ── Clear any picks that became invalid after picks[m] changed ──
+function clearInvalidDownstream(m) {
+  // Winner path: feedsInto[m] is the next match this winner populates
+  const nextM = feedsInto[m];
+  if (nextM !== undefined) {
+    const [h, a] = getTeams(nextM);
+    if (picks[nextM] && picks[nextM] !== h && picks[nextM] !== a) {
+      delete picks[nextM];
+      clearInvalidDownstream(nextM);
+    }
+  }
+  // Loser path: SF losers feed M103 (3rd place match)
+  if (m === 101 || m === 102) {
+    const [h3, a3] = getTeams(103);
+    if (picks[103] && picks[103] !== h3 && picks[103] !== a3) {
+      delete picks[103];
+    }
+  }
+}
+
+// ── Build one card's HTML (shared by full render and surgical update) ──
+function mkCard(m) {
+  const [h, a] = getTeams(m);
+  const picked  = picks[m];
+  const homeCls = picked ? (picked === h ? 'w' : 'l') : '';
+  const awayCls = picked ? (picked === a ? 'w' : 'l') : '';
+  // Both teams must be known before either row is clickable
+  const bothKnown = !isTbd(h) && !isTbd(a);
+  const homeAttrs = bothKnown ? `data-match="${m}" data-team="${h.replace(/"/g,'&quot;')}"` : '';
+  const awayAttrs = bothKnown ? `data-match="${m}" data-team="${a.replace(/"/g,'&quot;')}"` : '';
+  return matchCard(m, h, a, '', '', '', homeCls, awayCls, homeAttrs, awayAttrs);
+}
+
+// ── Surgical card update — no re-render, no repositioning, no flash ──
+// Replaces only the card HTML for each match in place, preserving style.top
+// on absolutely-positioned cards (R16+). Connectors don't change because
+// card heights are fixed (always 2 team rows).
+function updateCards() {
+  const container = document.getElementById('bracketContainer');
+  for (const m of MATCH_ORDER) {
+    const cardEl = container.querySelector(`.bk-card[data-match="${m}"]`);
+    if (!cardEl) continue;
+    const savedTop = cardEl.style.top; // preserve absolute position of R16+ cards
+    cardEl.outerHTML = mkCard(m);
+    if (savedTop) {
+      // Re-query since outerHTML replaced the element
+      const newEl = container.querySelector(`.bk-card[data-match="${m}"]`);
+      if (newEl) newEl.style.top = savedTop;
+    }
+  }
+
+  // Update podium in-place
+  const [h104, a104] = getTeams(104);
+  const champion   = picks[104] || null;
+  const runnerUp   = champion ? (champion === h104 ? a104 : h104) : null;
+  const podiumEl   = document.getElementById('bk-podium-results');
+  if (podiumEl) podiumEl.outerHTML = buildPodiumHtml(champion, runnerUp, picks[103] || null);
+
+  // Update progress bar
+  const done = Object.keys(picks).length;
+  document.getElementById('progressFill').style.width = `${(done / 32) * 100}%`;
+  document.getElementById('progressCount').textContent = `${done} / 32 matches picked`;
+}
+
+// ── Pick a winner for match m, cascade downstream ──
+function pickTeam(m, team) {
+  picks[m] = team;
+  clearInvalidDownstream(m);
+  updateCards(); // surgical — no re-render
+}
+
+// ── Full render (initial load only) ──
+function renderBracket() {
+  const el = document.getElementById('bracketContainer');
+
+  // Derive podium from current picks
+  const [h104, a104] = getTeams(104);
+  const champion   = picks[104] || null;
+  const runnerUp   = champion ? (champion === h104 ? a104 : h104) : null;
+  const thirdPlace = picks[103] || null;
+
+  el.innerHTML = buildBracketHtml(mkCard, { podiumHtml: buildPodiumHtml(champion, runnerUp, thirdPlace) });
+  requestAnimationFrame(() => requestAnimationFrame(positionAndConnectBracket));
+
+  // Update progress bar
+  const done = Object.keys(picks).length;
+  document.getElementById('progressFill').style.width = `${(done / 32) * 100}%`;
+  document.getElementById('progressCount').textContent = `${done} / 32 matches picked`;
+}
+
+// ── Shortcuts ──
+function pickRandom() {
+  picks = {};
+  for (const m of MATCH_ORDER) {
+    const [h, a] = getTeams(m);
+    if (!isTbd(h) && !isTbd(a)) picks[m] = Math.random() < 0.5 ? h : a;
+  }
+  updateCards();
+}
+
+function pickFavourites() {
+  picks = {};
+  for (const m of MATCH_ORDER) {
+    const [h, a] = getTeams(m);
+    if (!isTbd(h) && !isTbd(a))
+      picks[m] = (RANKINGS[h] || 999) <= (RANKINGS[a] || 999) ? h : a;
+  }
+  updateCards();
+}
+
+function resetPicks() {
+  picks = {};
+  updateCards();
+}
+
+// Wire up shortcut buttons (buttons are in HTML above this script, DOM is ready)
+const _btns = document.querySelectorAll('.shortcut-btn');
+_btns[0].addEventListener('click', pickRandom);
+_btns[1].addEventListener('click', pickFavourites);
+_btns[2].addEventListener('click', resetPicks);
+
+// Click delegation: any .bk-team[data-match] row in the bracket
+document.getElementById('bracketContainer').addEventListener('click', e => {
+  const row = e.target.closest('[data-match]');
+  if (!row) return;
+  pickTeam(+row.dataset.match, row.dataset.team);
+});
+
+// ── Load bracket JSON, then render ──
+async function init() {
+  const el = document.getElementById('bracketContainer');
+
+  let bracketData = null;
+  try {
+    const resp = await fetch(`${BRACKET_URL}?t=${Date.now()}`);
+    if (resp.ok) bracketData = await resp.json();
+  } catch (e) { /* offline or file not yet generated */ }
+
+  if (!bracketData) {
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--neutral-dark);font-size:0.875rem;">Bracket not yet available — check back after all group matches are complete (around Jun 27).</div>';
+    return;
+  }
+
+  // Populate r32Teams: { 73: ['Spain','Morocco'], 74: [...], ... }
+  const r32Data = bracketData.round_of_32 || {};
+  for (let m = 73; m <= 88; m++) {
+    const slot = r32Data[String(m)];
+    if (slot && slot.home && slot.away) r32Teams[m] = [slot.home, slot.away];
+  }
+
+  buildFeedsInto();
+  renderBracket();
+}
+
+init();
 </script>
 </body>
 </html>

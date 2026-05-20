@@ -787,12 +787,88 @@ def compute_group_standings(results):
     return grp_standings, stats
 
 
+def verify_r32_against_wikipedia(computed_r32):
+    """
+    Fetch the WC2026 knockout stage Wikipedia page and compare R32 matchups
+    against our computed bracket.
+
+    Returns a dict:
+      {
+        'verified':    bool,      # True only if all 16 matches match
+        'wiki_parsed': int,       # number of R32 matches successfully parsed
+        'mismatches':  list,      # [{match, wikipedia, computed}]
+        'error':       str|None,  # non-None if fetch/parse failed
+      }
+    """
+    try:
+        resp = requests.get(
+            'https://en.wikipedia.org/w/api.php',
+            params={
+                'action':  'parse',
+                'page':    '2026_FIFA_World_Cup_knockout_stage',
+                'prop':    'wikitext',
+                'format':  'json',
+            },
+            timeout=30,
+            headers={'User-Agent': 'wc26-pool-bot/1.0 (github.com/riteshwarade/wc26)'},
+        )
+        resp.raise_for_status()
+        wikitext = resp.json()['parse']['wikitext']['*']
+    except Exception as e:
+        return {'verified': False, 'wiki_parsed': 0, 'mismatches': [], 'error': str(e)}
+
+    wiki_r32 = {}
+    for m in range(73, 89):
+        # Wikipedia bracket wikitext has patterns like:
+        #   {{fb|MEX}}\n...\nMatch 73\n...\n{{fb|SUI}}
+        # The fb template may be fbr, fbl, fbx etc.
+        pattern = (
+            r'\{\{fb[a-z]*\|([A-Z]{2,3})\}[^\n]*\n'   # team 1 line
+            r'(?:[^\n]*\n){0,4}'                        # 0–4 lines between
+            r'[^\n]*Match\s+' + str(m) + r'[^\n]*\n'   # match number line
+            r'(?:[^\n]*\n){0,4}'                        # 0–4 lines between
+            r'[^\n]*\{\{fb[a-z]*\|([A-Z]{2,3})\}'      # team 2
+        )
+        match = re.search(pattern, wikitext, re.IGNORECASE)
+        if match:
+            home = TEAM_CODES.get(match.group(1).upper())
+            away = TEAM_CODES.get(match.group(2).upper())
+            if home and away:
+                wiki_r32[m] = (home, away)
+
+    if len(wiki_r32) < 16:
+        return {
+            'verified':    False,
+            'wiki_parsed': len(wiki_r32),
+            'mismatches':  [],
+            'error':       f'Wikipedia bracket not yet fully populated ({len(wiki_r32)}/16 R32 matches parsed)',
+        }
+
+    mismatches = []
+    for m in range(73, 89):
+        wiki_home, wiki_away   = wiki_r32[m]
+        comp_home, comp_away   = computed_r32.get(m, (None, None))
+        if {wiki_home, wiki_away} != {comp_home, comp_away}:
+            mismatches.append({
+                'match':     m,
+                'wikipedia': f'{wiki_home} vs {wiki_away}',
+                'computed':  f'{comp_home} vs {comp_away}',
+            })
+
+    return {
+        'verified':    len(mismatches) == 0,
+        'wiki_parsed': len(wiki_r32),
+        'mismatches':  mismatches,
+        'error':       None,
+    }
+
+
 def write_bracket_json(results):
     """
     Write knockout_bracket.json:
     - Provisional (confirmed=false): once all 12 groups have ≥1 result (after round 1)
-    - Confirmed   (confirmed=true):  once all 72 group matches have results
-    Wikipedia is always the canonical source — confirmed=true means crosscheck is done.
+    - Confirmed   (confirmed=true):  all 72 group results present AND
+                                     Wikipedia knockout bracket matches our computed R32
     """
     # Check which groups have started
     groups_started = set()
@@ -804,9 +880,12 @@ def write_bracket_json(results):
         print(f'Only {len(groups_started)}/12 groups have started — bracket not yet generated')
         return
 
-    confirmed = len(results) >= 72
-    status    = 'confirmed' if confirmed else 'provisional'
-    print(f'Generating {status} bracket ({len(results)}/72 matches played)...')
+    all_played = len(results) >= 72
+    status     = 'provisional'
+    wiki_check = None
+
+    if all_played:
+        print('All 72 group matches played — cross-checking R32 against Wikipedia...')
 
     grp_standings, _ = compute_group_standings(results)
 
@@ -856,6 +935,23 @@ def write_bracket_json(results):
         87: (pos.get('1K'), third_slot.get(87)),
         88: (pos.get('2D'), pos.get('2G')),
     }
+
+    # Cross-check R32 against Wikipedia once all 72 matches are played
+    if all_played:
+        wiki_check = verify_r32_against_wikipedia(r32)
+        if wiki_check['error']:
+            print(f'  Wikipedia check failed: {wiki_check["error"]}')
+        elif wiki_check['verified']:
+            status = 'confirmed'
+            print(f'  ✓ Wikipedia verified — all {wiki_check["wiki_parsed"]} R32 matches match')
+        else:
+            print(f'  ✗ Wikipedia mismatch — {len(wiki_check["mismatches"])} discrepancies:')
+            for mm in wiki_check['mismatches']:
+                print(f'    M{mm["match"]}: computed={mm["computed"]} | wikipedia={mm["wikipedia"]}')
+    else:
+        print(f'Generating provisional bracket ({len(results)}/72 matches played)...')
+
+    confirmed = (status == 'confirmed')
 
     import json, datetime
     bracket = {
