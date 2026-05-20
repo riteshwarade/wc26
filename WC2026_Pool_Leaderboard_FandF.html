@@ -507,7 +507,7 @@
   .bk-team + .bk-team { border-top: 0.5px solid var(--neutral-light); }
   .bk-fl { font-size: 0.85rem; line-height: 1; flex-shrink: 0; width: 16px; text-align: center; }
   .bk-tn { flex: 1; font-weight: 600; color: var(--neutral-darkest); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bk-rank { font-weight: 400; color: var(--neutral-dark); font-size: 0.68rem; }
+  .bk-rank, .team-rank { font-weight: 400; color: var(--neutral-dark); font-size: 0.68rem; }
   .bk-sc { font-size: 0.78rem; font-weight: 700; color: var(--neutral-medium); min-width: 12px; text-align: right; flex-shrink: 0; }
   .bk-team.tbd .bk-fl { opacity: 0.25; }
   .bk-team.tbd .bk-tn { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
@@ -1045,7 +1045,7 @@ function renderGroupTables(results) {
       }
       const qualClass = rowClass ? ` class="${rowClass}"` : '';
       return `<tr${qualClass}>
-        <td class="td-team">${(FLAGS[t]||'')+' '+t}</td>
+        <td class="td-team">${teamHtml(t)}</td>
         <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
         <td>${s.GF}</td><td>${s.GA}</td>
         <td>${gd >= 0 ? '+' : ''}${gd}</td>
@@ -1676,6 +1676,16 @@ const FLAGS = {
   'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Croatia':'🇭🇷','Ghana':'🇬🇭','Panama':'🇵🇦',
 };
 
+// ── Reusable team display: flag + name + rank ─────────────
+// showRank=false in contexts where rank is shown separately (e.g. pick form rank column)
+function teamHtml(name, showRank=true) {
+  if (!name) return '';
+  const flag = FLAGS[name] || '';
+  const rank = showRank ? (LB_RANKINGS[name] || null) : null;
+  const rankHtml = rank ? ` <span class="team-rank">(${rank})</span>` : '';
+  return `${flag ? flag + ' ' : ''}${name}${rankHtml}`;
+}
+
 function isTbd(name) {
   return !name || name === 'TBD' || /^[WL]\d+$/.test(name) || /^[12][A-L]$/.test(name) || /^3M\d+$/.test(name);
 }
@@ -1684,9 +1694,9 @@ function bkTeamRow(name, stateCls, score) {
   const tbd = isTbd(name);
   const cls = tbd ? 'tbd' : (stateCls || '');
   const flag = tbd ? '—' : (FLAGS[name] || '🏳');
-  const rank = (!tbd && LB_RANKINGS[name]) ? ` <span class="bk-rank">(${LB_RANKINGS[name]})</span>` : '';
+  const label = tbd ? name : teamHtml(name);
   const sc = (score !== undefined && score !== null && score !== '') ? `<span class="bk-sc">${score}</span>` : '';
-  return `<div class="bk-team ${cls}"><span class="bk-fl">${flag}</span><span class="bk-tn">${name}${rank}</span>${sc}</div>`;
+  return `<div class="bk-team ${cls}"><span class="bk-fl">${flag}</span><span class="bk-tn">${label}</span>${sc}</div>`;
 }
 
 // ── Knockout match schedule (dates from FIFA/Wikipedia) ──

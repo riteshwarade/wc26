@@ -634,6 +634,7 @@
     color: var(--neutral-darkest);
   }
   .group-table td.td-team { text-align: left; font-weight: 700; }
+  .team-rank { font-weight: 400; color: var(--neutral-dark); font-size: 0.68rem; }
   .group-table td.td-pts  { font-weight: 700; color: var(--swiftly-blue); }
   .group-table tr.qualified     td { background: var(--blue-lightest); }
   .group-table tr.third-pending td { background: #fff8e6; }
@@ -943,7 +944,7 @@ function renderPickGroupTables() {
       const rowClass = grpStarted ? (i < 2 ? 'qualified' : i === 2 ? 'third-pending' : 'eliminated') : '';
       const rank = RANKINGS[t] ?? '–';
       return `<tr class="${rowClass}">
-        <td class="td-team">${(FLAGS[t]||'')+' '+t}</td>
+        <td class="td-team">${teamHtml(t, false)}</td>
         <td style="color:var(--neutral-medium)">${rank}</td>
         <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
         <td class="td-pts">${s.Pts}</td>
@@ -1089,6 +1090,15 @@ const FLAGS = {
   'Portugal':'🇵🇹','DR Congo':'🇨🇩','Uzbekistan':'🇺🇿','Colombia':'🇨🇴',
   'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Croatia':'🇭🇷','Ghana':'🇬🇭','Panama':'🇵🇦',
 };
+
+// ── Reusable team display: flag + name + rank ─────────────
+function teamHtml(name, showRank=true) {
+  if (!name) return '';
+  const flag = FLAGS[name] || '';
+  const rank = showRank ? (RANKINGS[name] || null) : null;
+  const rankHtml = rank ? ` <span class="team-rank">(${rank})</span>` : '';
+  return `${flag ? flag + ' ' : ''}${name}${rankHtml}`;
+}
 
 const RANKINGS = {
   'Mexico': 15, 'South Africa': 60, 'South Korea': 25, 'Czech Republic': 41,
