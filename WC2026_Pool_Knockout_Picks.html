@@ -173,6 +173,84 @@
   .bk-team[data-match].l:hover .bk-fl { opacity: 1; }
   .bk-team[data-match].l:hover .bk-tn { color: var(--neutral-darkest); font-weight: 600; }
 
+  /* ── Submit section ─────────────────────────────────────── */
+  .submit-section {
+    margin-top: 36px;
+    text-align: center;
+  }
+
+  .submit-btn {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    border: none;
+    padding: 15px 48px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.18s;
+    box-shadow: 0 4px 14px rgba(0,158,223,0.3);
+    letter-spacing: 0.2px;
+  }
+
+  .submit-btn:hover {
+    background: #0089c3;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0,158,223,0.38);
+  }
+
+  .submit-note {
+    margin-top: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    color: var(--neutral-dark);
+  }
+
+  .confirm-row {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .confirm-row.visible { display: flex; }
+
+  .confirm-note {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.68rem;
+    color: var(--neutral-dark);
+  }
+
+  .confirm-btn {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+
+  .confirm-btn:hover { background: #0089c3; }
+
+  .validation-msg {
+    background: #fff8e6;
+    border: 1px solid var(--swiftly-orange);
+    border-radius: 7px;
+    padding: 11px 16px;
+    margin-top: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    color: #7a4a00;
+    display: none;
+    text-align: left;
+  }
+
   /* ── Podium (Variant 2 & 3) ── */
   .bk-float .bk-podium { position: absolute; left: 0; right: 0; }
   .bk-podium { border-radius: 8px; overflow: hidden; border: 0.5px solid var(--neutral-light); background: #ffffff; }
@@ -221,6 +299,15 @@
   </div>
 
   <div id="bracketContainer"></div>
+
+  <div class="submit-section">
+    <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">Happy with your picks?</button>
+    <div class="validation-msg" id="validationMsg"></div>
+    <div class="confirm-row" id="confirmRow">
+      <span class="confirm-note">Your picks will be downloaded as a CSV file.</span>
+      <button class="confirm-btn" onclick="confirmSubmit()">Download CSV</button>
+    </div>
+  </div>
 
 </div>
 
@@ -398,6 +485,64 @@ document.getElementById('bracketContainer').addEventListener('click', e => {
   if (!row) return;
   pickTeam(+row.dataset.match, row.dataset.team);
 });
+
+// ── Submit / CSV download ──────────────────────────────────────────────────
+function handleSubmit() {
+  const name   = document.getElementById('entrantName').value.trim();
+  const valMsg = document.getElementById('validationMsg');
+  valMsg.style.background   = '#fff8e6';
+  valMsg.style.borderColor  = 'var(--swiftly-orange)';
+  valMsg.style.color        = '#7a4a00';
+  valMsg.style.display      = 'none';
+  document.getElementById('confirmRow').classList.remove('visible');
+
+  if (!name) {
+    valMsg.textContent = 'Please enter your name before submitting.';
+    valMsg.style.display = 'block';
+    document.getElementById('entrantName').focus();
+    return;
+  }
+
+  const done = Object.keys(picks).length;
+  if (done < 32) {
+    const remaining = 32 - done;
+    valMsg.textContent = `You still have ${remaining} match${remaining === 1 ? '' : 'es'} without a pick. Please complete all 32 matches before submitting.`;
+    valMsg.style.display = 'block';
+    return;
+  }
+
+  document.getElementById('confirmRow').classList.add('visible');
+  document.getElementById('submitBtn').style.display = 'none';
+}
+
+function confirmSubmit() {
+  const name = document.getElementById('entrantName').value.trim();
+  downloadCSV(name);
+  document.getElementById('confirmRow').classList.remove('visible');
+  const valMsg = document.getElementById('validationMsg');
+  valMsg.style.background  = '#ebf9ff';
+  valMsg.style.borderColor = 'var(--swiftly-blue)';
+  valMsg.style.color       = 'var(--neutral-darkest)';
+  valMsg.textContent = '✓ Done! Your picks have been downloaded as a CSV file. Please send to Ritesh.';
+  valMsg.style.display = 'block';
+  document.getElementById('submitBtn').style.display = '';
+}
+
+function downloadCSV(name) {
+  const escape = v => (String(v).includes(',') ? `"${v}"` : v);
+  const rows = [['match', 'winner']];
+  for (const m of MATCH_ORDER) {
+    rows.push([m, escape(picks[m] || '')]);
+  }
+  const csv  = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `wc26_knockout_${name.replace(/\s+/g, '-').toLowerCase()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 // ── Load bracket JSON, then render ──
 async function init() {
