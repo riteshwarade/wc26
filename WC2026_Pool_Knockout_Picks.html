@@ -52,6 +52,15 @@
   }
   .name-card input:focus { background: #ffffff; }
   .name-card input::placeholder { color: var(--neutral-medium); }
+
+  .shortcuts-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .shortcuts-label { font-size: 0.68rem; font-weight: 700; color: var(--neutral-medium); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; margin-right: 4px; }
+  .shortcut-btn {
+    font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 700;
+    color: var(--neutral-dark); background: #ffffff; border: 1.5px solid var(--neutral-light);
+    border-radius: 5px; padding: 4px 12px; cursor: pointer; transition: all 0.14s; white-space: nowrap;
+  }
+  .shortcut-btn:hover { border-color: var(--swiftly-blue); color: var(--swiftly-blue); background: var(--blue-lightest); }
 </style>
 </head>
 <body>
@@ -68,6 +77,12 @@
   <div class="name-card">
     <label for="entrantName">Your name</label>
     <input type="text" id="entrantName" placeholder="Enter your full name…" autocomplete="name">
+  </div>
+
+  <div class="shortcuts-bar">
+    <span class="shortcuts-label">Shortcuts</span>
+    <button class="shortcut-btn">💪&nbsp;&nbsp;Pick all higher-ranked teams</button>
+    <button class="shortcut-btn">✕&nbsp;&nbsp;Reset all picks</button>
   </div>
 
 </div>
