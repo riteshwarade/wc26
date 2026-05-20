@@ -1,0 +1,355 @@
+// bracket.js — shared bracket rendering primitives
+// Used by: WC2026_Pool_Leaderboard_*.html (Variant 1)
+//           WC2026_Pool_Knockout_Picks_*.html (Variant 2)
+//           Results bracket during knockout (Variant 3)
+//
+// Each page includes this file, then defines its own renderBracket()
+// that calls buildBracketHtml(mkCard) with a page-specific card builder.
+
+// ── Flag emoji lookup ─────────────────────────────────────
+const FLAGS = {
+  'Mexico':'🇲🇽','South Africa':'🇿🇦','South Korea':'🇰🇷','Czech Republic':'🇨🇿',
+  'Canada':'🇨🇦','Bosnia and Herzegovina':'🇧🇦','Qatar':'🇶🇦','Switzerland':'🇨🇭',
+  'Brazil':'🇧🇷','Morocco':'🇲🇦','Haiti':'🇭🇹','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  'United States':'🇺🇸','Paraguay':'🇵🇾','Australia':'🇦🇺','Turkey':'🇹🇷',
+  'Germany':'🇩🇪','Curaçao':'🇨🇼','Ivory Coast':'🇨🇮','Ecuador':'🇪🇨',
+  'Netherlands':'🇳🇱','Japan':'🇯🇵','Sweden':'🇸🇪','Tunisia':'🇹🇳',
+  'Belgium':'🇧🇪','Egypt':'🇪🇬','Iran':'🇮🇷','New Zealand':'🇳🇿',
+  'Spain':'🇪🇸','Cape Verde':'🇨🇻','Saudi Arabia':'🇸🇦','Uruguay':'🇺🇾',
+  'France':'🇫🇷','Senegal':'🇸🇳','Iraq':'🇮🇶','Norway':'🇳🇴',
+  'Argentina':'🇦🇷','Algeria':'🇩🇿','Austria':'🇦🇹','Jordan':'🇯🇴',
+  'Portugal':'🇵🇹','DR Congo':'🇨🇩','Uzbekistan':'🇺🇿','Colombia':'🇨🇴',
+  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Croatia':'🇭🇷','Ghana':'🇬🇭','Panama':'🇵🇦',
+};
+
+// ── FIFA rankings ─────────────────────────────────────────
+// Used for tiebreaking, display, and "pick higher-ranked" shortcut.
+const RANKINGS = {
+  'Mexico':15,'South Africa':60,'South Korea':25,'Czech Republic':41,
+  'Canada':30,'Bosnia and Herzegovina':65,'Qatar':55,'Switzerland':19,
+  'Brazil':6,'Morocco':8,'Haiti':83,'Scotland':43,
+  'United States':16,'Paraguay':40,'Australia':27,'Turkey':22,
+  'Germany':10,'Curaçao':82,'Ivory Coast':34,'Ecuador':23,
+  'Netherlands':7,'Japan':18,'Sweden':38,'Tunisia':44,
+  'Belgium':9,'Egypt':29,'Iran':21,'New Zealand':85,
+  'Spain':2,'Cape Verde':69,'Saudi Arabia':61,'Uruguay':17,
+  'France':1,'Senegal':14,'Iraq':57,'Norway':31,
+  'Argentina':3,'Algeria':28,'Austria':24,'Jordan':63,
+  'Portugal':5,'DR Congo':46,'Uzbekistan':50,'Colombia':13,
+  'England':4,'Croatia':11,'Ghana':74,'Panama':33,
+};
+
+// ── Knockout match dates ──────────────────────────────────
+const KO_SCHEDULE = {
+  // Round of 32 (Jun 28 – Jul 3)
+  73:'Jun 28', 74:'Jun 29', 75:'Jun 29', 76:'Jun 29',
+  77:'Jun 30', 78:'Jun 30', 79:'Jun 30', 80:'Jul 1',
+  81:'Jul 1',  82:'Jul 1',  83:'Jul 2',  84:'Jul 2',
+  85:'Jul 2',  86:'Jul 3',  87:'Jul 3',  88:'Jul 3',
+  // Round of 16 (Jul 4 – Jul 7)
+  89:'Jul 4',  90:'Jul 4',  91:'Jul 5',  92:'Jul 5',
+  93:'Jul 6',  94:'Jul 6',  95:'Jul 7',  96:'Jul 7',
+  // Quarterfinals (Jul 9 – Jul 11)
+  97:'Jul 9',  98:'Jul 10', 99:'Jul 11', 100:'Jul 11',
+  // Semifinals (Jul 14 – Jul 15)
+  101:'Jul 14', 102:'Jul 15',
+  // 3rd place & Final
+  103:'Jul 18', 104:'Jul 19',
+};
+
+// ── Bracket topology: feeders for each round ─────────────
+// These define the bracket structure for all three variants.
+const R16 = {
+   89:[74,77],  90:[73,75],  91:[76,78],  92:[79,80],
+   93:[83,84],  94:[81,82],  95:[86,88],  96:[85,87],
+};
+const QF = {
+   97:[89,90],  98:[93,94],  99:[91,92], 100:[95,96],
+};
+const SF = {
+  101:[97,98], 102:[99,100],
+};
+
+// ── Reusable team display: flag + name + rank ─────────────
+// showRank=false when rank is shown separately (e.g. pick form rank column)
+function teamHtml(name, showRank=true) {
+  if (!name) return '';
+  const flag  = FLAGS[name] || '';
+  const rank  = showRank ? (RANKINGS[name] || null) : null;
+  const rankHtml = rank ? ` <span class="team-rank">(${rank})</span>` : '';
+  return `${flag ? flag + ' ' : ''}${name}${rankHtml}`;
+}
+
+// ── TBD slot detection ────────────────────────────────────
+function isTbd(name) {
+  return !name || name === 'TBD' || /^[WL]\d+$/.test(name) || /^[12][A-L]$/.test(name) || /^3M\d+$/.test(name);
+}
+
+// ── Single team row inside a bracket card ─────────────────
+// extraAttrs: optional HTML attribute string, e.g. 'data-match="73" data-team="Mexico"'
+// Used by Variant 2 (picks) to attach click-target data.
+function bkTeamRow(name, stateCls, score, extraAttrs='') {
+  const tbd  = isTbd(name);
+  const cls  = tbd ? 'tbd' : (stateCls || '');
+  const flag = tbd ? '—' : (FLAGS[name] || '🏳');
+  // Name + rank only — flag is already in .bk-fl, so don't call teamHtml() here
+  const rank     = (!tbd && RANKINGS[name]) ? RANKINGS[name] : null;
+  const rankHtml = rank ? ` <span class="team-rank">(${rank})</span>` : '';
+  const label    = tbd ? name : `${name}${rankHtml}`;
+  const sc       = (score !== undefined && score !== null && score !== '')
+                     ? `<span class="bk-sc">${score}</span>` : '';
+  return `<div class="bk-team ${cls}"${extraAttrs ? ' ' + extraAttrs : ''}><span class="bk-fl">${flag}</span><span class="bk-tn">${label}</span>${sc}</div>`;
+}
+
+// ── Bracket match card ────────────────────────────────────
+// homeAttrs / awayAttrs: optional extra HTML attributes for each team row.
+function matchCard(num, home, away, label, homeScore, awayScore, homeCls, awayCls, homeAttrs='', awayAttrs='') {
+  const date = KO_SCHEDULE[num] ? ` · ${KO_SCHEDULE[num]}` : '';
+  const mnumText = `M${num}${date}${label ? ' · ' + label : ''}`;
+  return `<div class="bk-card" data-match="${num}">
+    <div class="bk-mnum">${mnumText}</div>
+    ${bkTeamRow(home, homeCls, homeScore, homeAttrs)}
+    ${bkTeamRow(away, awayCls, awayScore, awayAttrs)}
+  </div>`;
+}
+
+// ── Build bracket HTML ────────────────────────────────────
+// mkCard(matchNum) → HTML string
+// Each page provides its own mkCard — the only thing that varies between
+// variants is how teams and state are resolved per match.
+//
+// Bracket layout (top half → bottom half):
+//   Top:    (M74,M77)+(M73,M75) → M89,M90 → M97
+//           (M83,M84)+(M81,M82) → M93,M94 → M98  → M101
+//   Bottom: (M76,M78)+(M79,M80) → M91,M92 → M99
+//           (M86,M88)+(M85,M87) → M95,M96 → M100 → M102
+//   3rd place M103 and Final M104 share the fin column.
+// ── Podium / final results section ───────────────────────
+// Renders champion, runner-up, and third-place in the fin column.
+// Pass null for any team that isn't known yet — shows as TBD.
+//
+// Intended for Variant 2 (picks) and Variant 3 (live results).
+// Currently also passed in Variant 1 for preview; will be removed there
+// once Variants 2/3 are complete.
+//
+// CSS for .bk-podium must be present in the page's <style> block — see
+// the "── Knockout bracket ──" section in the leaderboard pages.
+function buildPodiumHtml(champion, runnerUp, thirdPlace) {
+  function row(medal, team, rowCls) {
+    const tbd = !team || isTbd(team);
+    const teamContent = tbd
+      ? `<span class="bk-podium-team tbd">TBD</span>`
+      : `<span class="bk-podium-team">${teamHtml(team, false)}</span>`;
+    return `<div class="bk-podium-row ${rowCls}">
+      <span class="bk-podium-medal">${medal}</span>
+      ${teamContent}
+    </div>`;
+  }
+  return `<div class="bk-podium" id="bk-podium-results">
+    <div class="bk-podium-hdr">Podium</div>
+    ${row('🥇', champion,   'gold')}
+    ${row('🥈', runnerUp,   'silver')}
+    ${row('🥉', thirdPlace, 'bronze')}
+  </div>`;
+}
+
+// ── Build bracket HTML ────────────────────────────────────
+// mkCard(matchNum) → HTML string
+// opts.podiumHtml: optional HTML injected below the Final column's float
+//   (below the 3rd place and Final cards). Used by Variants 2 & 3.
+function buildBracketHtml(mkCard, opts={}) {
+  function mkPair(ms)  { return `<div class="bk-pair">${ms.map(mkCard).join('')}</div>`; }
+  function mkQtr(ps)   { return `<div class="bk-quarter">${ps.map(mkPair).join('')}</div>`; }
+  function mkHalf(qs)  { return `<div class="bk-half">${qs.map(mkQtr).join('')}</div>`; }
+
+  const r32Html = `<div class="bk-col r32">
+    <div class="bk-col-hdr">Round of 32</div>
+    <div class="bk-matches" id="bk-r32-matches">
+      ${mkHalf([[[74,77],[73,75]], [[83,84],[81,82]]])}
+      ${mkHalf([[[76,78],[79,80]], [[86,88],[85,87]]])}
+    </div>
+  </div>`;
+
+  // All non-R32 cards (including podium) are absolutely positioned by JS.
+  function floatCol(cls, hdr, matches, floatExtra='') {
+    const cards = matches.map(mkCard).join('');
+    return `<div class="bk-col ${cls}">
+      <div class="bk-col-hdr">${hdr}</div>
+      <div class="bk-float" id="bk-float-${cls}">${cards}${floatExtra}</div>
+    </div>`;
+  }
+
+  // 3rd place card and optional podium are both inside the float,
+  // positioned by positionAndConnectBracket().
+  const thirdPlaceHtml = mkCard(103);
+  const podiumSection  = opts.podiumHtml || '';
+
+  return `<div class="bk-wrap"><div class="bk-bracket">
+    ${r32Html}
+    ${floatCol('r16', 'Round of 16',   [89,90,93,94,91,92,95,96])}
+    ${floatCol('qf',  'Quarterfinals', [97,98,99,100])}
+    ${floatCol('sf',  'Semifinals',    [101,102])}
+    ${floatCol('fin', '🏆 Final',      [104], thirdPlaceHtml + podiumSection)}
+  </div></div>`;
+}
+
+// ── Position float columns then draw connectors ───────────
+// Call after injecting bracket HTML:
+//   requestAnimationFrame(() => requestAnimationFrame(positionAndConnectBracket));
+function positionAndConnectBracket() {
+  const bracket = document.querySelector('.bk-bracket');
+  if (!bracket) return;
+
+  // Size all float containers to match R32 matches height
+  const r32m = document.getElementById('bk-r32-matches');
+  if (!r32m) return;
+  const r32H = r32m.getBoundingClientRect().height;
+  document.querySelectorAll('.bk-float').forEach(d => { d.style.height = r32H + 'px'; });
+
+  const br = bracket.getBoundingClientRect();
+
+  // Returns the y-coord of the dividing line between the two team rows
+  function teamMidY(el, refTop) {
+    const rows = el.querySelectorAll('.bk-team');
+    if (rows.length >= 2) {
+      const a = rows[0].getBoundingClientRect();
+      const b = rows[1].getBoundingClientRect();
+      return (a.bottom + b.top) / 2 - refTop;
+    }
+    const r = el.getBoundingClientRect();
+    return (r.top + r.bottom) / 2 - refTop;
+  }
+
+  function yc(m) {
+    const el = bracket.querySelector(`[data-match="${m}"]`);
+    if (!el) return null;
+    return teamMidY(el, br.top);
+  }
+
+  function setY(m, targetY) {
+    const el = bracket.querySelector(`[data-match="${m}"]`);
+    if (!el) return;
+    const container = el.parentElement;
+    const ct = container.getBoundingClientRect().top - br.top;
+    // Offset from card top to the team-dividing line
+    const midOffset = teamMidY(el, el.getBoundingClientRect().top);
+    el.style.top = `${targetY - ct - midOffset}px`;
+  }
+
+  // Position each non-R32 card at the midpoint of its two feeders, level by level
+  const LEVELS = [
+    [[74,77,89],[73,75,90],[83,84,93],[81,82,94],
+     [76,78,91],[79,80,92],[86,88,95],[85,87,96]],
+    [[89,90,97],[93,94,98],[91,92,99],[95,96,100]],
+    [[97,98,101],[99,100,102]],
+    [[101,102,104]],
+  ];
+
+  LEVELS.forEach(level => {
+    level.forEach(([m1, m2, mn]) => {
+      const y1 = yc(m1), y2 = yc(m2);
+      if (y1 !== null && y2 !== null) setY(mn, (y1 + y2) / 2);
+    });
+  });
+
+  // Position M103 (3rd place): align its team-dividing line with M99 in the QF column
+  const m103el = bracket.querySelector('[data-match="103"]');
+  const m104el = bracket.querySelector('[data-match="104"]');
+  const m99el  = bracket.querySelector('[data-match="99"]');
+  if (m103el) {
+    const ct = m103el.parentElement.getBoundingClientRect().top - br.top;
+    let targetY;
+    if (m99el) {
+      targetY = teamMidY(m99el, br.top);
+    } else if (m104el) {
+      const bot104 = m104el.getBoundingClientRect().bottom - br.top;
+      targetY = bot104 + 80;
+    }
+    if (targetY !== undefined) {
+      const midOffset = teamMidY(m103el, m103el.getBoundingClientRect().top);
+      m103el.style.top = `${targetY - ct - midOffset}px`;
+    }
+  }
+
+  // Position podium: top edge aligned with M89 (top of Round of 16)
+  const podiumEl = bracket.querySelector('#bk-podium-results');
+  const m89el    = bracket.querySelector('[data-match="89"]');
+  if (podiumEl && m89el) {
+    const ct     = podiumEl.parentElement.getBoundingClientRect().top - br.top;
+    const m89top = m89el.getBoundingClientRect().top - br.top;
+    podiumEl.style.top = `${m89top - ct}px`;
+  }
+
+  // Draw SVG connectors between positioned cards
+  drawBracketConnectors();
+}
+
+// ── Draw SVG bracket connectors ───────────────────────────
+function drawBracketConnectors() {
+  const bracket = document.querySelector('.bk-bracket');
+  if (!bracket) return;
+  const old = bracket.querySelector('.bk-svg');
+  if (old) old.remove();
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.className = 'bk-svg';
+  svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;';
+  bracket.appendChild(svg);
+
+  const br = bracket.getBoundingClientRect();
+
+  const CONNS = [
+    [74,77,89],[73,75,90],[83,84,93],[81,82,94],
+    [76,78,91],[79,80,92],[86,88,95],[85,87,96],
+    [89,90,97],[93,94,98],[91,92,99],[95,96,100],
+    [97,98,101],[99,100,102],
+    [101,102,104],
+  ];
+
+  const color = '#B5D4F4';
+
+  CONNS.forEach(([m1, m2, mn]) => {
+    const e1 = bracket.querySelector(`[data-match="${m1}"]`);
+    const e2 = bracket.querySelector(`[data-match="${m2}"]`);
+    const en = mn ? bracket.querySelector(`[data-match="${mn}"]`) : null;
+    if (!e1 || !e2) return;
+
+    const r1 = e1.getBoundingClientRect();
+    const r2 = e2.getBoundingClientRect();
+
+    // Connect at the dividing line between the two team rows
+    function tmY(el) {
+      const rows = el.querySelectorAll('.bk-team');
+      if (rows.length >= 2) {
+        const a = rows[0].getBoundingClientRect();
+        const b = rows[1].getBoundingClientRect();
+        return (a.bottom + b.top) / 2 - br.top;
+      }
+      return (el.getBoundingClientRect().top + el.getBoundingClientRect().bottom) / 2 - br.top;
+    }
+
+    const x1 = r1.right  - br.left;
+    const y1 = tmY(e1);
+    const y2 = tmY(e2);
+    const ym = (y1 + y2) / 2;
+
+    let xc = x1 + 14;
+    if (en) {
+      const rn = en.getBoundingClientRect();
+      xc = (x1 + (rn.left - br.left)) / 2;
+    }
+
+    // ] bracket shape + horizontal line to next card's team-dividing-line y
+    const xn = en ? en.getBoundingClientRect().left - br.left : xc;
+    const d  = `M${x1},${y1} H${xc} V${y2} M${x1},${y2} H${xc}` +
+               (en ? ` M${xc},${ym} H${xn}` : '');
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(path);
+  });
+}
