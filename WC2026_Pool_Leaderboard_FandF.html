@@ -507,6 +507,7 @@
   .bk-team + .bk-team { border-top: 0.5px solid var(--neutral-light); }
   .bk-fl { font-size: 0.85rem; line-height: 1; flex-shrink: 0; width: 16px; text-align: center; }
   .bk-tn { flex: 1; font-weight: 600; color: var(--neutral-darkest); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk-rank { font-weight: 400; color: var(--neutral-medium); font-size: 0.68rem; }
   .bk-sc { font-size: 0.78rem; font-weight: 700; color: var(--neutral-medium); min-width: 12px; text-align: right; flex-shrink: 0; }
   .bk-team.tbd .bk-fl { opacity: 0.25; }
   .bk-team.tbd .bk-tn { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
@@ -1683,8 +1684,9 @@ function bkTeamRow(name, stateCls, score) {
   const tbd = isTbd(name);
   const cls = tbd ? 'tbd' : (stateCls || '');
   const flag = tbd ? '—' : (FLAGS[name] || '🏳');
+  const rank = (!tbd && LB_RANKINGS[name]) ? ` <span class="bk-rank">(${LB_RANKINGS[name]})</span>` : '';
   const sc = (score !== undefined && score !== null && score !== '') ? `<span class="bk-sc">${score}</span>` : '';
-  return `<div class="bk-team ${cls}"><span class="bk-fl">${flag}</span><span class="bk-tn">${name}</span>${sc}</div>`;
+  return `<div class="bk-team ${cls}"><span class="bk-fl">${flag}</span><span class="bk-tn">${name}${rank}</span>${sc}</div>`;
 }
 
 // ── Knockout match schedule (dates from FIFA/Wikipedia) ──
