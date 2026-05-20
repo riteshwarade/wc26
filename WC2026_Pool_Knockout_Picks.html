@@ -183,7 +183,7 @@
 <header>
   <div class="header-inner">
     <div class="header-title">World Cup 2026 pool – knockout picks</div>
-    <div class="header-subtitle" id="headerSubtitle">Swiftly pool · pick all 32 knockout matches</div>
+    <div class="header-subtitle" id="headerSubtitle">World Cup 2026 pool · pick all 32 knockout matches</div>
   </div>
 </header>
 
@@ -226,10 +226,6 @@
 </div>
 
 <script>
-// ── Pool config ───────────────────────────────────────────
-const POOL_ID   = 'fandf';
-const POOL_NAME = 'Friends & Family';
-// ─────────────────────────────────────────────────────────
 
 const USE_LOCAL_DATA = true; // set false for live data from GitHub
 
@@ -310,7 +306,7 @@ let pickedCount = 0;
 // ── Init ──────────────────────────────────────────────────
 async function init() {
   document.getElementById('headerSubtitle').textContent =
-    `${POOL_NAME} pool · pick all 32 knockout matches`;
+    'World Cup 2026 pool · pick all 32 knockout matches';
 
   let bracket;
   if (USE_LOCAL_DATA) {
@@ -646,7 +642,7 @@ function downloadCSV(name) {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `wc26knockout_${POOL_ID}_${name.replace(/\s+/g,'-').toLowerCase()}.csv`;
+  a.download = `wc26knockout_${name.replace(/\s+/g,'-').toLowerCase()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

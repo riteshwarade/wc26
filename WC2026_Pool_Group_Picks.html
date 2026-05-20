@@ -653,7 +653,7 @@
 <header>
   <div class="header-inner">
     <div class="header-title">World Cup 2026 pool</div>
-    <div class="header-subtitle" id="headerSubtitle">Pick a result for all 72 group stage matches</div>
+    <div class="header-subtitle" id="headerSubtitle">World Cup 2026 pool · Pick a result for all 72 group stage matches</div>
   </div>
 </header>
 
@@ -720,13 +720,6 @@
 </div>
 
 <script>
-// ── Pool config ───────────────────────────────────────────
-// Change these two values to configure each pool version
-const POOL_ID   = 'swiftly';   // used in CSV filename and GitHub folder
-const POOL_NAME = 'Swiftly';   // displayed in the page header
-// ──────────────────────────────────────────────────────────
-
-
 // ── Match data ────────────────────────────────────────────
 // [match#, group, date, time (ET), team1, team2]
 const MATCHES = [
@@ -1168,7 +1161,7 @@ function downloadCSV(name) {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `wc26group_${POOL_ID}_${name.replace(/\s+/g, '-').toLowerCase()}.csv`;
+  a.download = `wc26group_${name.replace(/\s+/g, '-').toLowerCase()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -1180,7 +1173,7 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
 
 // Init
 document.getElementById('headerSubtitle').textContent =
-  `${POOL_NAME} pool · Pick a result for all 72 group stage matches`;
+  'World Cup 2026 pool · Pick a result for all 72 group stage matches';
 buildForm();
 renderPickGroupTables();
 </script>
