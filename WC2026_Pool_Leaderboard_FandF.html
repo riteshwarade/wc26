@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WC2026 Leaderboard – Friends & Family</title>
+<title>WC2026 Leaderboard – Swiftly</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Inter:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -541,7 +541,7 @@
 <header>
   <div class="header-inner">
     <div class="header-title">World Cup 2026 pool — Leaderboard</div>
-    <div class="header-subtitle" id="headerSubtitle">Friends & Family pool · group stage</div>
+    <div class="header-subtitle" id="headerSubtitle">Swiftly pool · group stage</div>
   </div>
 </header>
 
@@ -554,6 +554,7 @@
     <span class="progress-count" id="matchesPlayed">Loading…</span>
     <span class="updated-at" id="updatedAt"></span>
   </div>
+</div>
 
 <div id="sq-tooltip"></div>
 
@@ -919,6 +920,23 @@ const GROUP_ORDER = {
 };
 
 // ── Group tables ─────────────────────────────────────────
+// ── Group table card template (reusable across leaderboard + picks) ──
+// teams: ordered array of team names
+// stats: { teamName: {P,W,D,L,GF,GA,Pts} }
+// opts.rowClassFn(team, index): returns CSS class string for each row
+// opts.showGD: include GF/GA/GD columns (default false)
+function renderGroupTableCard(grp, teams, stats, opts={}) {
+  const { rowClassFn = () => '', showGD = false } = opts;
+  const rows = teams.map((t, i) => {
+    const s = stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0};
+    const rc = rowClassFn(t, i);
+    const gdCell = showGD ? `<td>${s.GF}</td><td>${s.GA}</td><td>${(s.GF-s.GA)>=0?'+':''}${s.GF-s.GA}</td>` : '';
+    return `<tr${rc ? ` class="${rc}"` : ''}><td class="td-team">${teamHtml(t)}</td><td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>${gdCell}<td class="td-pts">${s.Pts}</td></tr>`;
+  }).join('');
+  const gdHeaders = showGD ? `<th title="Goals for">GF</th><th title="Goals against">GA</th><th title="Goal difference">GD</th>` : '';
+  return `<div class="group-table-card"><div class="group-table-header">Group ${grp}</div><div class="group-table"><table><thead><tr><th class="th-team">Team</th><th title="Played">P</th><th title="Won">W</th><th title="Drawn">D</th><th title="Lost">L</th>${gdHeaders}<th title="Points">Pts</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
 function renderGroupTables(results) {
   // Build team stats from MATCHES + results
   const groups = {};
@@ -1031,44 +1049,16 @@ function renderGroupTables(results) {
     const teams = sortedStandings(grp);
     const grpStarted = isGroupStarted(grp);
 
-    const rows = teams.map((t, i) => {
-      const s = stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0};
-      const gd = s.GF - s.GA;
-      let rowClass = '';
-      if (i < 2) {
-        rowClass = 'qualified';
-      } else if (i === 2) {
-        if (allGroupsStarted) rowClass = qualifiedThirds.has(t) ? 'third-qual' : 'eliminated';
-        else rowClass = 'third-pending';
-      } else {
-        rowClass = grpStarted ? 'eliminated' : '';
+    const rowClassFn = (t, i) => {
+      if (i < 2) return 'qualified';
+      if (i === 2) {
+        if (allGroupsStarted) return qualifiedThirds.has(t) ? 'third-qual' : 'eliminated';
+        return 'third-pending';
       }
-      const qualClass = rowClass ? ` class="${rowClass}"` : '';
-      return `<tr${qualClass}>
-        <td class="td-team">${teamHtml(t)}</td>
-        <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
-        <td>${s.GF}</td><td>${s.GA}</td>
-        <td>${gd >= 0 ? '+' : ''}${gd}</td>
-        <td class="td-pts">${s.Pts}</td>
-      </tr>`;
-    }).join('');
+      return grpStarted ? 'eliminated' : '';
+    };
 
-    return `
-      <div class="group-table-card">
-        <div class="group-table-header">Group ${grp}</div>
-        <div class="group-table">
-          <table>
-            <thead><tr>
-              <th class="th-team">Team</th>
-              <th title="Played">P</th><th title="Won">W</th>
-              <th title="Drawn">D</th><th title="Lost">L</th>
-              <th title="Goals for">GF</th><th title="Goals against">GA</th>
-              <th title="Goal difference">GD</th><th title="Points">Pts</th>
-            </tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
-      </div>`;
+    return renderGroupTableCard(grp, teams, stats, { rowClassFn, showGD: true });
   }).join('');
 
   const legend = `<div style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 0 4px;font-size:0.72rem;color:var(--neutral-dark)">
@@ -1914,7 +1904,87 @@ function renderBracket(results, allGroupsStarted) {
   requestAnimationFrame(() => requestAnimationFrame(positionAndConnectBracket));
 }
 
-// ── Bracket connector lines ───────────────────────────────
+// ── Bracket: position float cards then draw connectors ────
+function positionAndConnectBracket() {
+  const bracket = document.querySelector('.bk-bracket');
+  if (!bracket) return;
+
+  // Size all float containers to match R32 matches height
+  const r32m = document.getElementById('bk-r32-matches');
+  if (!r32m) return;
+  const r32H = r32m.getBoundingClientRect().height;
+  document.querySelectorAll('.bk-float').forEach(d => { d.style.height = r32H + 'px'; });
+
+  const br = bracket.getBoundingClientRect();
+
+  // Returns the y-coord of the dividing line between the two team rows
+  function teamMidY(el, refTop) {
+    const rows = el.querySelectorAll('.bk-team');
+    if (rows.length >= 2) {
+      const a = rows[0].getBoundingClientRect();
+      const b = rows[1].getBoundingClientRect();
+      return (a.bottom + b.top) / 2 - refTop;
+    }
+    const r = el.getBoundingClientRect();
+    return (r.top + r.bottom) / 2 - refTop;
+  }
+
+  function yc(m) {
+    const el = bracket.querySelector(`[data-match="${m}"]`);
+    if (!el) return null;
+    return teamMidY(el, br.top);
+  }
+
+  function setY(m, targetY) {
+    const el = bracket.querySelector(`[data-match="${m}"]`);
+    if (!el) return;
+    const container = el.parentElement;
+    const ct = container.getBoundingClientRect().top - br.top;
+    // Offset from card top to the team-dividing line
+    const midOffset = teamMidY(el, el.getBoundingClientRect().top);
+    el.style.top = `${targetY - ct - midOffset}px`;
+  }
+
+  // Position each non-R32 card at the midpoint of its two feeders, level by level
+  const LEVELS = [
+    [[74,77,89],[73,75,90],[83,84,93],[81,82,94],
+     [76,78,91],[79,80,92],[86,88,95],[85,87,96]],
+    [[89,90,97],[93,94,98],[91,92,99],[95,96,100]],
+    [[97,98,101],[99,100,102]],
+    [[101,102,104]],
+  ];
+
+  LEVELS.forEach(level => {
+    level.forEach(([m1, m2, mn]) => {
+      const y1 = yc(m1), y2 = yc(m2);
+      if (y1 !== null && y2 !== null) setY(mn, (y1 + y2) / 2);
+    });
+  });
+
+  // Position M103 (3rd place) aligned with M99 in the QF column
+  const m104el = bracket.querySelector('[data-match="104"]');
+  const m103el = bracket.querySelector('[data-match="103"]');
+  const m99el  = bracket.querySelector('[data-match="99"]');
+  if (m103el) {
+    const ct = m103el.parentElement.getBoundingClientRect().top - br.top;
+    let targetY;
+    if (m99el) {
+      // Align team-dividing line of M103 with that of M99
+      targetY = teamMidY(m99el, br.top);
+    } else if (m104el) {
+      const bot104 = m104el.getBoundingClientRect().bottom - br.top;
+      targetY = bot104 + 80;
+    }
+    if (targetY !== undefined) {
+      const midOffset = teamMidY(m103el, m103el.getBoundingClientRect().top);
+      m103el.style.top = `${targetY - ct - midOffset}px`;
+    }
+  }
+
+  // Draw SVG connectors between positioned cards
+  drawBracketConnectors();
+}
+
 function drawBracketConnectors() {
   const bracket = document.querySelector('.bk-bracket');
   if (!bracket) return;

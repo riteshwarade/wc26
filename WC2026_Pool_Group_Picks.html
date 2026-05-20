@@ -958,32 +958,12 @@ function renderPickGroupTables() {
       return order.indexOf(a) - order.indexOf(b);
     });
 
-    const rows = teams.map((t, i) => {
-      const s = stats[t];
-      const grpStarted = teams.every(t => stats[t].P > 0);
-      const rowClass = grpStarted ? (i < 2 ? 'qualified' : i === 2 ? 'third-pending' : 'eliminated') : '';
-      return `<tr class="${rowClass}">
-        <td class="td-team">${teamHtml(t)}</td>
-        <td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>
-        <td class="td-pts">${s.Pts}</td>
-      </tr>`;
-    }).join('');
+    const grpStarted = teams.every(t => stats[t].P > 0);
+    const rowClassFn = (t, i) => grpStarted
+      ? (i < 2 ? 'qualified' : i === 2 ? 'third-pending' : 'eliminated')
+      : '';
 
-    return `
-      <div class="group-table-card">
-        <div class="group-table-header">Group ${grp}</div>
-        <div class="group-table">
-          <table>
-            <thead><tr>
-              <th class="th-team">Team</th>
-              <th title="Played">P</th><th title="Won">W</th>
-              <th title="Drawn">D</th><th title="Lost">L</th>
-              <th title="Points">Pts</th>
-            </tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
-      </div>`;
+    return renderGroupTableCard(grp, teams, stats, { rowClassFn, showGD: false });
   }).join('');
 
   document.getElementById('pickGroupTables').innerHTML = html;
@@ -1109,6 +1089,19 @@ const FLAGS = {
 };
 
 // ── Reusable team display: flag + name + rank ─────────────
+// ── Group table card template (matches leaderboard) ──────
+function renderGroupTableCard(grp, teams, stats, opts={}) {
+  const { rowClassFn = () => '', showGD = false } = opts;
+  const rows = teams.map((t, i) => {
+    const s = stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0};
+    const rc = rowClassFn(t, i);
+    const gdCell = showGD ? `<td>${s.GF}</td><td>${s.GA}</td><td>${(s.GF-s.GA)>=0?'+':''}${s.GF-s.GA}</td>` : '';
+    return `<tr${rc ? ` class="${rc}"` : ''}><td class="td-team">${teamHtml(t)}</td><td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>${gdCell}<td class="td-pts">${s.Pts}</td></tr>`;
+  }).join('');
+  const gdHeaders = showGD ? `<th title="Goals for">GF</th><th title="Goals against">GA</th><th title="Goal difference">GD</th>` : '';
+  return `<div class="group-table-card"><div class="group-table-header">Group ${grp}</div><div class="group-table"><table><thead><tr><th class="th-team">Team</th><th title="Played">P</th><th title="Won">W</th><th title="Drawn">D</th><th title="Lost">L</th>${gdHeaders}<th title="Points">Pts</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
 function teamHtml(name, showRank=true) {
   if (!name) return '';
   const flag = FLAGS[name] || '';
