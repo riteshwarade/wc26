@@ -588,6 +588,7 @@
   .pick-main { flex: 1; min-width: 0; }
 
   /* ── Group tables (same as leaderboard) ── */
+  .group-tables-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
   .group-tables-grid {
     display: flex;
     flex-direction: column;
@@ -967,7 +968,7 @@ function renderPickGroupTables() {
     return renderGroupTableCard(grp, teams, stats, { rowClassFn, showGD: false });
   }).join('');
 
-  document.getElementById('pickGroupTables').innerHTML = html;
+  document.getElementById('pickGroupTables').innerHTML = `<div class="group-tables-grid">${html}</div>`;
 }
 
 function updateProgress() {
