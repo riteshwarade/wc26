@@ -310,21 +310,7 @@ function positionAndConnect() {
    [76,78,91],[79,80,92],[86,88,95],[85,87,96]].forEach(c=>drawConn(...c));
   [[89,90,97],[93,94,98],[91,92,99],[95,96,100]].forEach(c=>drawConn(...c));
   drawConn(97,98,101); drawConn(99,100,102);
-
-  // SF → Final stubs
-  [[101,104,false],[102,104,true]].forEach(([sf,fin,mirror])=>{
-    const esf = bracket.querySelector(`[data-match="${sf}"]`);
-    const efin = bracket.querySelector(`[data-match="${fin}"]`);
-    if (!esf||!efin) return;
-    const y = teamMidY(esf, br.top);
-    const x1 = mirror ? esf.getBoundingClientRect().left-br.left : esf.getBoundingClientRect().right-br.left;
-    const xn = mirror ? efin.getBoundingClientRect().right-br.left : efin.getBoundingClientRect().left-br.left;
-    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
-    p.setAttribute('d',`M${x1},${y} H${xn}`); p.setAttribute('stroke',color);
-    p.setAttribute('stroke-width','1.5'); p.setAttribute('fill','none');
-    p.setAttribute('stroke-linecap','round');
-    svg.appendChild(p);
-  });
+  drawConn(101,102,104);
 }
 
 renderBracket();
