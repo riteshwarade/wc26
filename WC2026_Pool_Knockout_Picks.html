@@ -417,20 +417,22 @@ function positionFloatCards() {
 
   const br = bracket.getBoundingClientRect();
 
-  function teamMidY(el) {
+  // refTop: the reference point to subtract. Pass br.top for bracket-relative coords,
+  // or el.getBoundingClientRect().top for card-relative offset.
+  function teamMidY(el, refTop) {
     const rows = el.querySelectorAll('.kp-team');
     if (rows.length >= 2) {
       const a = rows[0].getBoundingClientRect();
       const b = rows[1].getBoundingClientRect();
-      return (a.bottom + b.top) / 2 - br.top;
+      return (a.bottom + b.top) / 2 - refTop;
     }
     const r = el.getBoundingClientRect();
-    return (r.top + r.bottom) / 2 - br.top;
+    return (r.top + r.bottom) / 2 - refTop;
   }
 
   function yc(m) {
     const el = document.getElementById(`card-${m}`);
-    return el ? teamMidY(el) : null;
+    return el ? teamMidY(el, br.top) : null;
   }
 
   function setY(m, targetY) {
@@ -438,7 +440,8 @@ function positionFloatCards() {
     if (!el) return;
     const container = el.parentElement;
     const ct = container.getBoundingClientRect().top - br.top;
-    const midOffset = teamMidY(el);
+    // midOffset = distance from card top to team-dividing line
+    const midOffset = teamMidY(el, el.getBoundingClientRect().top);
     el.style.top = `${targetY - ct - midOffset}px`;
   }
 
@@ -486,7 +489,7 @@ function positionFloatCards() {
     const en = mn ? bracket.querySelector(`[id="card-${mn}"]`) : null;
     if (!e1 || !e2) return;
 
-    const y1 = teamMidY(e1), y2 = teamMidY(e2), ym = (y1+y2)/2;
+    const y1 = teamMidY(e1, br.top), y2 = teamMidY(e2, br.top), ym = (y1+y2)/2;
     const x1 = mirrored
       ? e1.getBoundingClientRect().left - br.left
       : e1.getBoundingClientRect().right - br.left;
@@ -519,7 +522,7 @@ function positionFloatCards() {
   const e102 = bracket.querySelector('[id="card-102"]');
   const e104 = bracket.querySelector('[id="card-104"]');
   if (e101 && e104) {
-    const y = teamMidY(e101);
+    const y = teamMidY(e101, br.top);
     const x1 = e101.getBoundingClientRect().right - br.left;
     const xn = e104.getBoundingClientRect().left - br.left;
     const p = document.createElementNS('http://www.w3.org/2000/svg','path');
@@ -529,7 +532,7 @@ function positionFloatCards() {
     svg.appendChild(p);
   }
   if (e102 && e104) {
-    const y = teamMidY(e102);
+    const y = teamMidY(e102, br.top);
     const x1 = e102.getBoundingClientRect().left - br.left;
     const xn = e104.getBoundingClientRect().right - br.left;
     const p = document.createElementNS('http://www.w3.org/2000/svg','path');
