@@ -642,7 +642,7 @@ function downloadCSV(name) {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `wc26knockout_${name.replace(/\s+/g,'-').toLowerCase()}.csv`;
+  a.download = `wc26_knockout_${name.replace(/\s+/g,'-').toLowerCase()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

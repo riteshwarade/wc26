@@ -1161,7 +1161,7 @@ function downloadCSV(name) {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `wc26group_${name.replace(/\s+/g, '-').toLowerCase()}.csv`;
+  a.download = `wc26_group_${name.replace(/\s+/g, '-').toLowerCase()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
