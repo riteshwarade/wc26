@@ -56,7 +56,7 @@
   /* ── Bracket (copied from leaderboard Variant 1) ── */
   .bk-wrap { overflow-x: auto; padding: 14px 4px 18px; }
   .bk-bracket { display: flex; width: 100%; align-items: flex-start; position: relative; }
-  .bk-col { flex: 1; min-width: 72px; padding: 0 8px; }
+  .bk-col { flex: 1; min-width: 120px; padding: 0 10px; }
   .bk-col.r32 { flex: 1.4; }
   .bk-col-hdr { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; text-align: center; padding-bottom: 6px; border-bottom: 2px solid; margin-bottom: 10px; }
   .bk-col.r32 .bk-col-hdr { border-color: #B5D4F4; color: #378ADD; }
@@ -210,8 +210,8 @@ function renderBracket() {
       <div class="bk-col-hdr">🏆 Final</div>
       <div class="bk-float" id="float-fin">
         ${card(104)}
-        <div class="bk-3rd-lbl" id="lbl-3rd"></div>
-        <div class="bk-3rd-card" id="card-3rd-wrap">${card(103)}</div>
+        <div class="bk-3rd-lbl" id="bk-3rd-lbl"></div>
+        <div class="bk-3rd-card">${card(103)}</div>
       </div>
     </div>
 
@@ -269,15 +269,26 @@ function positionAndConnect() {
     });
   });
 
-  // 3rd place: position below Final
-  const e104 = bracket.querySelector('[data-match="104"]');
-  const wrap3rd = document.getElementById('card-3rd-wrap');
-  const lbl3rd = document.getElementById('lbl-3rd');
-  if (e104 && wrap3rd) {
-    const ct = wrap3rd.parentElement.getBoundingClientRect().top - br.top;
-    const bot = e104.getBoundingClientRect().bottom - br.top;
-    if (lbl3rd) lbl3rd.style.top = `${bot - ct + 10}px`;
-    wrap3rd.style.top = `${bot - ct + 26}px`;
+  // 3rd place: align with M99 (same as leaderboard)
+  const m103el = bracket.querySelector('[data-match="103"]');
+  const lbl3rd = document.getElementById('bk-3rd-lbl');
+  const m99el  = bracket.querySelector('[data-match="99"]');
+  const m104el = bracket.querySelector('[data-match="104"]');
+  if (m103el) {
+    const ct = m103el.parentElement.getBoundingClientRect().top - br.top;
+    let targetY;
+    if (m99el) {
+      targetY = teamMidY(m99el, br.top);
+    } else if (m104el) {
+      const bot104 = m104el.getBoundingClientRect().bottom - br.top;
+      targetY = bot104 + 80;
+    }
+    if (targetY !== undefined) {
+      const midOffset = teamMidY(m103el, m103el.getBoundingClientRect().top);
+      if (lbl3rd) lbl3rd.style.top = `${targetY - ct - midOffset - 18}px`;
+      m103el.style.top = `${targetY - ct - midOffset}px`;
+    }
+    m103el.style.opacity = '0.65';
   }
 
   // Draw SVG connectors
@@ -296,7 +307,7 @@ function positionAndConnect() {
     if (!e1 || !e2) return;
     const y1=teamMidY(e1,br.top), y2=teamMidY(e2,br.top), ym=(y1+y2)/2;
     const x1 = e1.getBoundingClientRect().right - br.left;
-    let xc = x1+10, xn = xc;
+    let xc = x1+14, xn = xc;
     if (en) { xn = en.getBoundingClientRect().left - br.left; xc=(x1+xn)/2; }
     const d = `M${x1},${y1} H${xc} V${y2} M${x1},${y2} H${xc}` + (en?` M${xc},${ym} H${xn}`:'');
     const p = document.createElementNS('http://www.w3.org/2000/svg','path');
