@@ -79,7 +79,7 @@
   .bk-team.tbd .bk-fl { opacity: 0.25; }
   .bk-team.tbd .bk-tn { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
   .bk-3rd-lbl { position: absolute; left: 0; right: 0; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.6px; color: var(--neutral-medium); text-align: center; font-weight: 500; }
-  .bk-3rd-card { position: absolute; left: 0; right: 0; opacity: 0.65; }
+  .bk-3rd-card { opacity: 0.65; }
 </style>
 </head>
 <body>
@@ -211,7 +211,7 @@ function renderBracket() {
       <div class="bk-float" id="float-fin">
         ${card(104)}
         <div class="bk-3rd-lbl" id="bk-3rd-lbl"></div>
-        <div class="bk-3rd-card">${card(103)}</div>
+        ${card(103)}
       </div>
     </div>
 
