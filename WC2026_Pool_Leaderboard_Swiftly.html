@@ -484,7 +484,9 @@
   /* R16/QF/SF/Final: cards absolutely positioned by JS to align with R32 anchors */
   .bk-float    { position: relative; }  /* wraps absolutely-positioned cards */
   .bk-float .bk-card { position: absolute; left: 0; right: 0; }
-
+  .bk-3rd-lbl { position: absolute; left: 0; right: 0; font-size: 0.68rem;
+    text-transform: uppercase; letter-spacing: 0.6px; color: var(--neutral-medium);
+    text-align: center; font-weight: 500; }
   .bk-card {
     background: #ffffff;
     border: 0.5px solid var(--neutral-light);
@@ -528,7 +530,7 @@
     border-top: 0.5px solid var(--neutral-light);
   }
 
-
+  .bk-3rd-card { opacity: 0.65; }
   .bracket-pending {
     font-size: 0.78rem;
     color: var(--neutral-dark);
@@ -1900,13 +1902,14 @@ function renderBracket(results, allGroupsStarted) {
 
   const [fh,fa] = slotTeams(104);
   const [th,ta] = slotTeams(103);
+  const finalExtra = `<div class="bk-3rd-lbl" id="bk-3rd-lbl"></div>${matchCard(103,th,ta,'')}`;
 
   const html = `<div class="bk-wrap"><div class="bk-bracket">
     ${r32html}
     ${floatCol('r16','Round of 16',[89,90,93,94,91,92,95,96])}
     ${floatCol('qf','Quarterfinals',[97,98,99,100])}
     ${floatCol('sf','Semifinals',[101,102])}
-    ${floatCol('fin','🏆 Final',[104],matchCard(103,th,ta,''))}
+    ${floatCol('fin','🏆 Final',[104],finalExtra)}
   </div></div>`;
 
   el.innerHTML = html;
@@ -1973,14 +1976,15 @@ function positionAndConnectBracket() {
   });
 
   // Position M103 (3rd place) aligned with M99 in the QF column
-  // Position M103 (3rd place) aligned with M99 in the QF column
+  const m104el = bracket.querySelector('[data-match="104"]');
   const m103el = bracket.querySelector('[data-match="103"]');
   const m99el  = bracket.querySelector('[data-match="99"]');
-  const m104el = bracket.querySelector('[data-match="104"]');
+  const lbl    = document.getElementById('bk-3rd-lbl');
   if (m103el) {
     const ct = m103el.parentElement.getBoundingClientRect().top - br.top;
     let targetY;
     if (m99el) {
+      // Align team-dividing line of M103 with that of M99
       targetY = teamMidY(m99el, br.top);
     } else if (m104el) {
       const bot104 = m104el.getBoundingClientRect().bottom - br.top;
@@ -1988,8 +1992,10 @@ function positionAndConnectBracket() {
     }
     if (targetY !== undefined) {
       const midOffset = teamMidY(m103el, m103el.getBoundingClientRect().top);
+      if (lbl) lbl.style.top = `${targetY - ct - midOffset - 18}px`;
       m103el.style.top = `${targetY - ct - midOffset}px`;
     }
+    m103el.style.opacity = '0.65';
   }
 
   // Draw SVG connectors between positioned cards
