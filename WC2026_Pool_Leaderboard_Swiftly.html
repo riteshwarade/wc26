@@ -478,10 +478,8 @@
   .bk-col.sf  .bk-col-hdr { border-color: #185FA5; color: #0C447C; }
   .bk-col.fin .bk-col-hdr { border-color: #0C447C; color: #0C447C; }
   /* R32 anchor column: nested flex with hierarchy gaps */
-  .bk-matches  { display: flex; flex-direction: column; gap: 16px; }
-  .bk-half     { display: flex; flex-direction: column; gap: 16px; }
-  .bk-quarter  { display: flex; flex-direction: column; gap: 16px; }
-  .bk-pair     { display: flex; flex-direction: column; gap: 16px; }
+  /* R32 hierarchy — uniform 16px gap at every level */
+  .bk-matches, .bk-half, .bk-quarter, .bk-pair { display: flex; flex-direction: column; gap: 16px; }
   /* R16/QF/SF/Final: cards absolutely positioned by JS to align with R32 anchors */
   .bk-float    { position: relative; }  /* wraps absolutely-positioned cards */
   .bk-float .bk-card { position: absolute; left: 0; right: 0; }
@@ -518,26 +516,6 @@
   .bk-team.l .bk-fl { opacity: 0.35; }
   .bk-team.l .bk-tn { color: var(--neutral-medium); font-weight: 400; }
   .bk-team.l .bk-sc { color: var(--neutral-medium); }
-  .bk-pens {
-    font-size: 0.65rem;
-    color: var(--neutral-medium);
-    padding: 1px 8px 3px;
-    font-style: italic;
-    text-align: right;
-    background: var(--neutral-lightest);
-    border-top: 0.5px solid var(--neutral-light);
-  }
-  .bk-3rd-sep {
-    font-size: 0.58rem;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: var(--neutral-medium);
-    text-align: center;
-    margin-top: 14px;
-    padding-top: 10px;
-    border-top: 0.5px solid var(--neutral-light);
-    margin-bottom: 6px;
-  }
   .bracket-pending {
     font-size: 0.78rem;
     color: var(--neutral-dark);
