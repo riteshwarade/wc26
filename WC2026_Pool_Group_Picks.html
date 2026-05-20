@@ -587,15 +587,22 @@
 
   .pick-main { flex: 1; min-width: 0; }
 
-  /* ── Pick group tables (same as leaderboard) ── */
+  /* ── Group tables (same as leaderboard) ── */
+  .group-tables-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
   .group-table-card {
     background: #ffffff;
     border: 1px solid var(--neutral-light);
     border-radius: var(--radius);
     overflow: hidden;
     box-shadow: 0 1px 5px rgba(0,0,0,0.04);
-    margin-bottom: 8px;
   }
+
   .group-table-header {
     background: var(--swiftly-blue);
     color: #ffffff;
@@ -604,15 +611,18 @@
     font-size: 0.78rem;
     padding: 7px 12px;
   }
+
   .group-table table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.78rem;
   }
+
   .group-table thead tr {
     background: var(--neutral-lightest);
     border-bottom: 1px solid var(--neutral-light);
   }
+
   .group-table th {
     padding: 5px 8px;
     font-size: 0.68rem;
@@ -622,30 +632,40 @@
     letter-spacing: 0.4px;
     text-align: center;
   }
+
   .group-table th.th-team { text-align: left; }
   .group-table td.td-team { min-width: 130px; }
-  .group-table td:not(.td-team), .group-table th:not(.th-team) { white-space: nowrap; width: 1%; }
-  .group-table tbody tr { border-bottom: 1px solid var(--neutral-light); }
+  .group-table td:not(.td-team), .group-table th:not(.th-team) { white-space: nowrap; width: 1%; padding-left: 4px; padding-right: 4px; }
+
+  .group-table tbody tr {
+    border-bottom: 1px solid var(--neutral-light);
+  }
+
   .group-table tbody tr:last-child { border-bottom: none; }
   .group-table tbody tr:nth-child(even) { background: var(--neutral-lightest); }
+
   .group-table td {
     padding: 5px 8px;
     text-align: center;
     color: var(--neutral-darkest);
   }
-  .group-table td.td-team { text-align: left; font-weight: 700; }
-  .team-rank { font-weight: 400; color: var(--neutral-dark); font-size: 0.68rem; }
-  .group-table td.td-pts  { font-weight: 700; color: var(--swiftly-blue); }
-  .group-table tr.qualified     td { background: var(--blue-lightest); }
-  .group-table tr.third-pending td { background: #fff8e6; }
-  .group-table tr.eliminated    td { background: #fdf0f0; color: var(--neutral-medium); }
+
+  .group-table td.td-team {
+    text-align: left;
+    font-weight: 700;
+  }
+
+  .group-table td.td-pts {
+    font-weight: 700;
+    color: var(--swiftly-blue);
+  }
+
+  .group-table tr.qualified      td { background: var(--blue-lightest); }
+  .group-table tr.third-qual     td { background: #e6f9ef; }
+  .group-table tr.third-pending  td { background: #fff8e6; }
+  .group-table tr.eliminated     td { background: #fdf0f0; color: var(--neutral-medium); }
   .group-table tr.eliminated td.td-team { color: var(--neutral-dark); }
 
-  .sidebar-note {
-    font-size: 0.68rem;
-    color: var(--neutral-medium);
-    padding: 0 0 8px;
-  }
 </style>
 </head>
 <body>
