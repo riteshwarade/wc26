@@ -223,17 +223,27 @@
   }
 
   .sq {
-    width: 8px;
-    height: 8px;
+    width: 12px;
+    height: 12px;
     border-radius: 2px;
     flex-shrink: 0;
   }
+  .sq.sq-sm {
+    width: 9px;
+    height: 9px;
+    border-radius: 1px;
+  }
+  .squares-wrap.nowrap {
+    flex-wrap: nowrap;
+    gap: 1.5px;
+  }
 
-  .sq-correct { background: var(--swiftly-blue); }
-  .sq-wrong   { background: var(--neutral-light); }
-  .sq-pending { background: transparent; border: 1px solid var(--neutral-light); }
-  .sq-empty   { background: transparent; }
-  .sq         { cursor: pointer; }
+  .sq-correct   { background: var(--swiftly-blue); }
+  .sq-wrong     { background: var(--wrong-red); }
+  .sq-cascaded  { background: var(--wrong-red); }
+  .sq-pending   { background: transparent; border: 1px solid var(--neutral-light); }
+  .sq-empty     { background: transparent; }
+  .sq           { cursor: pointer; }
 
   /* ── Tooltip ── */
   #sq-tooltip {
@@ -255,9 +265,10 @@
   #sq-tooltip .tt-pick   { margin-bottom: 2px; }
   #sq-tooltip .tt-result { margin-bottom: 4px; color: var(--neutral-medium); }
   #sq-tooltip .tt-status { font-weight: 700; }
-  #sq-tooltip .tt-status.correct { color: var(--correct-green); }
-  #sq-tooltip .tt-status.wrong   { color: var(--wrong-red); }
-  #sq-tooltip .tt-status.pending { color: var(--neutral-medium); }
+  #sq-tooltip .tt-status.correct   { color: var(--swiftly-blue); }
+  #sq-tooltip .tt-status.wrong     { color: var(--wrong-red); }
+  #sq-tooltip .tt-status.cascaded  { color: var(--wrong-red); }
+  #sq-tooltip .tt-status.pending   { color: var(--neutral-medium); }
 
   /* ── Results table ── */
   .results-table {
@@ -552,6 +563,54 @@
   }
 
   .state-msg .emoji { font-size: 2rem; display: block; margin-bottom: 12px; }
+
+
+  /* ── KO teaser ── */
+  .ko-teaser {
+    text-align: center;
+    padding: 28px 20px;
+    margin-bottom: 32px;
+  }
+  .ko-teaser-icon { font-size: 2rem; margin-bottom: 8px; }
+  .ko-teaser-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--neutral-darkest);
+    margin-bottom: 6px;
+  }
+  .ko-teaser-msg { font-size: 0.78rem; color: var(--neutral-dark); }
+
+  /* ── Combined standings columns ── */
+  .td-grp-pts, .td-ko-pts, .td-total-pts, .td-max-pts { width: 64px; min-width: 64px; text-align: center; }
+  .td-grp-pts   { color: var(--neutral-dark); font-weight: 400; }
+  .td-ko-pts    { color: var(--neutral-dark); font-weight: 400; }
+  .td-total-pts { font-weight: 700; color: var(--neutral-darkest); }
+  .td-max-pts   { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
+  .sq-divider {
+    display: inline-block;
+    width: 1.5px;
+    height: 14px;
+    background: var(--neutral-medium);
+    margin: 0 5px;
+    vertical-align: middle;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+  .sq-divider-sm {
+    display: inline-block;
+    width: 1.5px;
+    height: 10px;
+    background: var(--neutral-medium);
+    margin: 0 4px;
+    vertical-align: middle;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+  .champ-pick  { font-size: 0.82rem; color: var(--neutral-dark); margin-left: 6px; white-space: nowrap; align-self: center; }
+  .champ-correct   { color: var(--swiftly-blue); font-weight: 600; }
+  .champ-wrong     { color: var(--wrong-red); text-decoration: line-through; }
+  .champ-cascaded  { color: var(--wrong-red); text-decoration: line-through; font-style: italic; }
 </style>
 <script src="bracket.js"></script>
 </head>
@@ -566,12 +625,17 @@
 
 <div class="sticky-bar">
   <div class="sticky-inner">
-    <span class="progress-label">Group stage</span>
+    <span class="progress-label" id="stageLabel">Group stage</span>
     <div class="progress-bar-wrap">
       <div class="progress-bar-fill" id="progressFill"></div>
     </div>
     <span class="progress-count" id="matchesPlayed">Loading…</span>
     <span class="updated-at" id="updatedAt"></span>
+    <span class="dev-override" id="devOverride" style="display:none">
+      <label for="devGamesInput" style="font-size:0.68rem;color:var(--neutral-dark);margin-right:4px">🧪 KO games played:</label>
+      <input id="devGamesInput" type="number" min="0" max="32" step="1"
+        style="width:52px;font-size:0.78rem;padding:1px 4px;border:1px solid var(--neutral-light);border-radius:4px;text-align:center">
+    </span>
   </div>
 </div>
 
@@ -579,36 +643,50 @@
 
 <div class="container">
 
-  <p class="section-label">Standings</p>
-  <div class="section-body" id="standings-body">
-    <div class="card" id="standingsCard">
-      <div class="state-msg"><span class="emoji">⏳</span>Loading picks and results…</div>
+  <!-- KO standings: teaser (group mode) or primary (KO mode) -->
+  <div id="koStandingsSection"></div>
+
+  <!-- KO bracket: only visible in KO mode -->
+  <div id="koBracketSection" style="display:none">
+    <p class="section-label">Knockout bracket</p>
+    <div class="section-body">
+      <div id="koBracketCard"><div class="state-msg"><span class="emoji">⏳</span>Loading…</div></div>
     </div>
   </div>
 
-  <div class="side-by-side-layout">
-    <div class="side-left">
-      <p class="section-label">Group tables</p>
-      <div class="section-body" id="groups-body">
-        <div id="groupTablesCard">
-          <div class="state-msg"><span class="emoji">⏳</span>Loading…</div>
-        </div>
-      </div>
-    </div>
-    <div class="side-right">
-      <p class="section-label">Match results</p>
-      <div class="section-body" id="results-body">
-        <div class="card" id="resultsCard">
-          <div class="state-msg"><span class="emoji">⏳</span>Loading…</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Divider between KO and group sections (shown in KO mode only) -->
+  <div id="koSectionDivider" style="display:none;border-top:2px solid var(--neutral-light);margin:8px 0 20px"></div>
 
-  <p class="section-label">Knockout bracket</p>
-  <div class="section-body" id="bracket-body">
-    <div id="bracketCard">
-      <div class="state-msg"><span class="emoji">⏳</span>Loading…</div>
+  <!-- Group section: flat in group mode, no toggle in KO mode -->
+  <div id="groupSection">
+    <div id="groupAccordionHeader" style="display:none">
+      <!-- rendered by JS in KO mode -->
+    </div>
+    <div id="groupSectionBody">
+      <p class="section-label" id="groupStandingsLabel">Standings</p>
+      <div class="section-body" id="standings-body">
+        <div class="card" id="standingsCard"><div class="state-msg"><span class="emoji">⏳</span>Loading picks and results…</div></div>
+      </div>
+      <div class="side-by-side-layout">
+        <div class="side-left">
+          <p class="section-label">Group tables</p>
+          <div class="section-body" id="groups-body">
+            <div id="groupTablesCard"><div class="state-msg"><span class="emoji">⏳</span>Loading…</div></div>
+          </div>
+        </div>
+        <div class="side-right">
+          <p class="section-label">Match results</p>
+          <div class="section-body" id="results-body">
+            <div class="card" id="resultsCard"><div class="state-msg"><span class="emoji">⏳</span>Loading…</div></div>
+          </div>
+        </div>
+      </div>
+      <p class="section-label" id="bracketSectionLabel">Provisional bracket</p>
+      <div class="section-body" id="bracket-body">
+        <div id="bracketCard"><div class="state-msg"><span class="emoji">⏳</span>Loading…</div></div>
+      </div>
+      <!-- KO teaser rendered here in group mode -->
+      <div id="koTeaserSection"></div>
     </div>
   </div>
 
@@ -629,82 +707,159 @@ const USE_LOCAL_DATA = false;
 const PICKS_URL   = `https://raw.githubusercontent.com/riteshwarade/wc26/main/data/group_${POOL_ID}_picks.json`;
 const RESULTS_URL   = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/results/group_results.csv';
 const BRACKET_URL   = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/data/knockout_bracket.json';
+const KO_PICKS_URL  = `https://raw.githubusercontent.com/riteshwarade/wc26/main/data/knockout_${POOL_ID}_picks.json`;
+const KO_RESULTS_URL = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/results/knockout_results.csv';
+
+// ── Mode detection ────────────────────────────────────────
+const knockoutMode = new Date() >= new Date('2026-06-28T00:00:00Z');
 
 // ── Embedded simulation data (used when USE_LOCAL_DATA = true) ────────────────
-const LOCAL_PICKS = {"Simulation 1":{"1":"Draw","2":"Draw","3":"Draw","4":"W2","5":"W1","6":"W1","7":"Draw","8":"W2","9":"W1","10":"W1","11":"Draw","12":"W1","13":"Draw","14":"W1","15":"W1","16":"Draw","17":"W1","18":"W1","19":"Draw","20":"Draw","21":"W2","22":"W2","23":"Draw","24":"Draw","25":"W1","26":"W2","27":"W1","28":"Draw","29":"Draw","30":"Draw","31":"W2","32":"Draw","33":"W1","34":"Draw","35":"W1","36":"Draw","37":"W2","38":"W1","39":"Draw","40":"W2","41":"Draw","42":"W1","43":"W2","44":"W2","45":"W2","46":"W2","47":"Draw","48":"Draw","49":"W2","50":"W2","51":"W2","52":"W2","53":"W1","54":"W1","55":"W1","56":"W1","57":"W1","58":"W2","59":"W1","60":"W1","61":"W1","62":"Draw","63":"Draw","64":"W1","65":"Draw","66":"W2","67":"W2","68":"W1","69":"Draw","70":"W1","71":"W1","72":"W1"},"Simulation 2":{"1":"Draw","2":"W1","3":"W2","4":"W1","5":"W1","6":"W2","7":"Draw","8":"W1","9":"Draw","10":"W1","11":"W1","12":"Draw","13":"W2","14":"W1","15":"W1","16":"W2","17":"W1","18":"W2","19":"W1","20":"W1","21":"W1","22":"Draw","23":"Draw","24":"W2","25":"W1","26":"Draw","27":"Draw","28":"W2","29":"W2","30":"Draw","31":"W1","32":"W2","33":"Draw","34":"W1","35":"W1","36":"W1","37":"Draw","38":"W1","39":"W1","40":"W1","41":"Draw","42":"W1","43":"Draw","44":"Draw","45":"W2","46":"W1","47":"W1","48":"W1","49":"Draw","50":"W2","51":"W2","52":"W1","53":"Draw","54":"W2","55":"Draw","56":"Draw","57":"Draw","58":"W1","59":"W1","60":"W1","61":"W2","62":"W1","63":"W2","64":"W1","65":"Draw","66":"W2","67":"Draw","68":"Draw","69":"Draw","70":"Draw","71":"Draw","72":"Draw"},"Simulation 3":{"1":"W1","2":"W1","3":"W2","4":"W1","5":"W2","6":"W1","7":"W2","8":"W2","9":"Draw","10":"Draw","11":"Draw","12":"W2","13":"Draw","14":"Draw","15":"Draw","16":"W2","17":"W1","18":"W1","19":"W2","20":"Draw","21":"W2","22":"W2","23":"Draw","24":"Draw","25":"Draw","26":"W1","27":"W2","28":"W1","29":"Draw","30":"Draw","31":"Draw","32":"Draw","33":"W2","34":"W2","35":"W2","36":"Draw","37":"Draw","38":"Draw","39":"Draw","40":"W2","41":"W2","42":"W2","43":"W2","44":"W1","45":"W2","46":"W1","47":"Draw","48":"W1","49":"W1","50":"Draw","51":"W1","52":"Draw","53":"Draw","54":"W1","55":"Draw","56":"W2","57":"Draw","58":"Draw","59":"Draw","60":"Draw","61":"Draw","62":"W2","63":"Draw","64":"Draw","65":"W1","66":"W1","67":"W2","68":"Draw","69":"Draw","70":"W2","71":"W1","72":"W2"},"Simulation 4":{"1":"Draw","2":"Draw","3":"W1","4":"W2","5":"W2","6":"W2","7":"W2","8":"W1","9":"W2","10":"W2","11":"W1","12":"W1","13":"Draw","14":"W1","15":"W2","16":"W1","17":"Draw","18":"Draw","19":"W2","20":"Draw","21":"Draw","22":"W2","23":"Draw","24":"W1","25":"Draw","26":"W2","27":"W2","28":"W2","29":"Draw","30":"W1","31":"W1","32":"Draw","33":"Draw","34":"W2","35":"Draw","36":"Draw","37":"W1","38":"W2","39":"W2","40":"W1","41":"W2","42":"Draw","43":"W2","44":"W1","45":"W2","46":"W1","47":"Draw","48":"W1","49":"W2","50":"Draw","51":"W2","52":"W1","53":"W1","54":"W2","55":"W2","56":"W2","57":"Draw","58":"W1","59":"W1","60":"W1","61":"W1","62":"W2","63":"Draw","64":"W1","65":"W1","66":"W2","67":"W2","68":"W1","69":"W2","70":"W1","71":"W2","72":"Draw"},"Simulation 5":{"1":"Draw","2":"W1","3":"Draw","4":"W2","5":"W2","6":"W2","7":"W2","8":"W2","9":"W2","10":"W2","11":"Draw","12":"W1","13":"Draw","14":"W1","15":"Draw","16":"Draw","17":"Draw","18":"Draw","19":"W2","20":"W1","21":"Draw","22":"Draw","23":"Draw","24":"Draw","25":"W2","26":"W1","27":"W1","28":"W2","29":"W2","30":"W1","31":"W2","32":"W2","33":"W1","34":"W2","35":"W1","36":"W1","37":"W2","38":"W1","39":"W2","40":"Draw","41":"W1","42":"Draw","43":"W1","44":"Draw","45":"W1","46":"W2","47":"W2","48":"Draw","49":"Draw","50":"W1","51":"W2","52":"W1","53":"W1","54":"Draw","55":"Draw","56":"W2","57":"Draw","58":"W2","59":"W1","60":"W1","61":"W1","62":"W1","63":"W1","64":"W2","65":"W2","66":"W2","67":"Draw","68":"W2","69":"Draw","70":"W1","71":"Draw","72":"W1"}};
+const LOCAL_PICKS = {"Alice":{"1":"Draw","2":"W2","3":"Draw","4":"W2","5":"Draw","6":"W1","7":"W1","8":"W2","9":"Draw","10":"Draw","11":"W1","12":"W1","13":"W2","14":"W2","15":"Draw","16":"W1","17":"W2","18":"W2","19":"Draw","20":"Draw","21":"W1","22":"Draw","23":"W1","24":"W1","25":"W2","26":"W1","27":"Draw","28":"Draw","29":"W1","30":"W2","31":"Draw","32":"W2","33":"W2","34":"W1","35":"Draw","36":"Draw","37":"Draw","38":"W2","39":"Draw","40":"W2","41":"W2","42":"W2","43":"W1","44":"W1","45":"W2","46":"W1","47":"W2","48":"W2","49":"Draw","50":"Draw","51":"W1","52":"W1","53":"Draw","54":"W1","55":"Draw","56":"W1","57":"W2","58":"Draw","59":"Draw","60":"W2","61":"W2","62":"W2","63":"W1","64":"W2","65":"W1","66":"W2","67":"W1","68":"Draw","69":"W2","70":"W1","71":"W2","72":"Draw"},"Bob":{"1":"Draw","2":"Draw","3":"W2","4":"W1","5":"Draw","6":"Draw","7":"W2","8":"Draw","9":"W1","10":"W2","11":"W2","12":"Draw","13":"W2","14":"W1","15":"W1","16":"W2","17":"Draw","18":"W2","19":"W2","20":"Draw","21":"W2","22":"Draw","23":"Draw","24":"W2","25":"W2","26":"W2","27":"W2","28":"W2","29":"W1","30":"Draw","31":"W1","32":"W2","33":"W2","34":"W2","35":"Draw","36":"W2","37":"W1","38":"W2","39":"Draw","40":"Draw","41":"W1","42":"W1","43":"Draw","44":"W2","45":"Draw","46":"Draw","47":"W2","48":"Draw","49":"W2","50":"W1","51":"Draw","52":"W1","53":"Draw","54":"Draw","55":"W2","56":"W2","57":"W1","58":"Draw","59":"W2","60":"W2","61":"Draw","62":"W2","63":"W2","64":"W2","65":"W2","66":"W2","67":"W2","68":"Draw","69":"Draw","70":"Draw","71":"W2","72":"Draw"},"Carol":{"1":"W1","2":"Draw","3":"W2","4":"Draw","5":"W2","6":"W2","7":"Draw","8":"W1","9":"W2","10":"W2","11":"W2","12":"Draw","13":"Draw","14":"Draw","15":"W1","16":"W2","17":"W2","18":"W1","19":"W2","20":"W2","21":"W2","22":"W1","23":"W2","24":"W1","25":"W2","26":"Draw","27":"W2","28":"W2","29":"Draw","30":"W1","31":"Draw","32":"W2","33":"Draw","34":"W2","35":"W2","36":"Draw","37":"W2","38":"W1","39":"Draw","40":"W2","41":"Draw","42":"Draw","43":"W2","44":"Draw","45":"Draw","46":"Draw","47":"W1","48":"W1","49":"W2","50":"W1","51":"Draw","52":"Draw","53":"Draw","54":"Draw","55":"W1","56":"Draw","57":"Draw","58":"W2","59":"Draw","60":"W2","61":"Draw","62":"Draw","63":"W2","64":"W2","65":"W1","66":"W1","67":"W2","68":"Draw","69":"Draw","70":"W2","71":"W1","72":"Draw"},"Dave":{"1":"W1","2":"W2","3":"W1","4":"W2","5":"Draw","6":"W2","7":"W2","8":"W1","9":"Draw","10":"Draw","11":"W2","12":"Draw","13":"W2","14":"Draw","15":"W2","16":"W1","17":"Draw","18":"W2","19":"W2","20":"Draw","21":"W1","22":"W1","23":"Draw","24":"W1","25":"W1","26":"W2","27":"W2","28":"W1","29":"Draw","30":"W1","31":"W1","32":"Draw","33":"W2","34":"W1","35":"Draw","36":"W1","37":"W1","38":"Draw","39":"Draw","40":"W1","41":"W1","42":"W1","43":"Draw","44":"Draw","45":"Draw","46":"W2","47":"W2","48":"W1","49":"W1","50":"Draw","51":"Draw","52":"W1","53":"W2","54":"W2","55":"W2","56":"W2","57":"W2","58":"W1","59":"Draw","60":"W2","61":"W2","62":"Draw","63":"W1","64":"Draw","65":"W2","66":"W2","67":"Draw","68":"W2","69":"W1","70":"W2","71":"Draw","72":"W1"},"Eve":{"1":"W1","2":"W1","3":"W2","4":"Draw","5":"W2","6":"W2","7":"Draw","8":"Draw","9":"Draw","10":"W2","11":"Draw","12":"W1","13":"W2","14":"Draw","15":"W1","16":"W2","17":"Draw","18":"Draw","19":"W1","20":"W2","21":"W1","22":"W1","23":"Draw","24":"Draw","25":"W1","26":"W1","27":"W1","28":"Draw","29":"Draw","30":"W2","31":"W1","32":"Draw","33":"W2","34":"Draw","35":"W1","36":"W1","37":"Draw","38":"W2","39":"Draw","40":"Draw","41":"Draw","42":"W2","43":"W1","44":"Draw","45":"Draw","46":"W1","47":"W1","48":"Draw","49":"Draw","50":"W1","51":"Draw","52":"W1","53":"W2","54":"W2","55":"W1","56":"W1","57":"W2","58":"Draw","59":"W1","60":"W1","61":"W2","62":"W2","63":"W1","64":"Draw","65":"Draw","66":"Draw","67":"Draw","68":"W2","69":"Draw","70":"Draw","71":"W2","72":"W2"},"Frank":{"1":"Draw","2":"W1","3":"W2","4":"W1","5":"W2","6":"W2","7":"W1","8":"W2","9":"W1","10":"Draw","11":"Draw","12":"W1","13":"W2","14":"W2","15":"W2","16":"W2","17":"W2","18":"W1","19":"Draw","20":"W2","21":"W2","22":"W2","23":"Draw","24":"Draw","25":"W2","26":"W2","27":"W1","28":"Draw","29":"Draw","30":"W1","31":"W2","32":"W1","33":"W2","34":"Draw","35":"Draw","36":"W1","37":"W1","38":"Draw","39":"W2","40":"Draw","41":"W2","42":"Draw","43":"Draw","44":"Draw","45":"Draw","46":"Draw","47":"Draw","48":"W1","49":"W1","50":"Draw","51":"W2","52":"Draw","53":"Draw","54":"W2","55":"W2","56":"Draw","57":"W1","58":"W2","59":"W2","60":"W1","61":"W2","62":"Draw","63":"W1","64":"Draw","65":"W2","66":"Draw","67":"Draw","68":"W1","69":"W1","70":"W1","71":"Draw","72":"W1"},"Grace":{"1":"W1","2":"W2","3":"W2","4":"W2","5":"Draw","6":"W2","7":"W2","8":"W2","9":"Draw","10":"W2","11":"W2","12":"W1","13":"W2","14":"W2","15":"Draw","16":"W2","17":"W1","18":"W1","19":"Draw","20":"W2","21":"Draw","22":"Draw","23":"Draw","24":"W1","25":"W1","26":"W2","27":"W1","28":"Draw","29":"W2","30":"W1","31":"Draw","32":"Draw","33":"W2","34":"Draw","35":"W2","36":"W1","37":"W2","38":"W2","39":"W1","40":"W1","41":"Draw","42":"Draw","43":"W1","44":"W2","45":"W2","46":"Draw","47":"Draw","48":"W1","49":"W2","50":"Draw","51":"W1","52":"W1","53":"W1","54":"W1","55":"W2","56":"W1","57":"W2","58":"W1","59":"W2","60":"W2","61":"W1","62":"W2","63":"Draw","64":"Draw","65":"Draw","66":"W2","67":"W2","68":"W2","69":"W1","70":"W2","71":"W1","72":"W2"},"Hank":{"1":"Draw","2":"W2","3":"Draw","4":"W2","5":"Draw","6":"W1","7":"W2","8":"Draw","9":"W2","10":"Draw","11":"W1","12":"Draw","13":"W1","14":"Draw","15":"W1","16":"Draw","17":"W2","18":"W1","19":"W2","20":"W2","21":"Draw","22":"Draw","23":"W1","24":"Draw","25":"W1","26":"W2","27":"W1","28":"W2","29":"W1","30":"Draw","31":"W1","32":"W2","33":"Draw","34":"W2","35":"W2","36":"Draw","37":"W2","38":"W2","39":"W2","40":"Draw","41":"Draw","42":"W2","43":"Draw","44":"W2","45":"Draw","46":"W1","47":"W2","48":"W2","49":"W1","50":"W1","51":"Draw","52":"W1","53":"W2","54":"W2","55":"Draw","56":"Draw","57":"W2","58":"Draw","59":"Draw","60":"W2","61":"W2","62":"W1","63":"W1","64":"W2","65":"W1","66":"W2","67":"W2","68":"W2","69":"W2","70":"Draw","71":"W1","72":"Draw"},"Ivy":{"1":"W2","2":"Draw","3":"W1","4":"W2","5":"W1","6":"W2","7":"W1","8":"Draw","9":"W1","10":"Draw","11":"W1","12":"W1","13":"W2","14":"W1","15":"W1","16":"W2","17":"Draw","18":"W2","19":"W2","20":"Draw","21":"Draw","22":"Draw","23":"Draw","24":"W2","25":"W1","26":"W1","27":"W1","28":"W1","29":"Draw","30":"W1","31":"W2","32":"Draw","33":"W2","34":"W2","35":"Draw","36":"W1","37":"Draw","38":"W2","39":"W2","40":"Draw","41":"W2","42":"W2","43":"W1","44":"Draw","45":"W1","46":"W1","47":"W2","48":"W2","49":"Draw","50":"W2","51":"W1","52":"Draw","53":"W1","54":"W1","55":"W2","56":"W1","57":"W1","58":"W1","59":"W2","60":"W2","61":"W2","62":"W1","63":"W1","64":"W2","65":"Draw","66":"W1","67":"W2","68":"Draw","69":"Draw","70":"W1","71":"W2","72":"W1"},"Jack":{"1":"Draw","2":"Draw","3":"W2","4":"W2","5":"W2","6":"Draw","7":"W2","8":"W1","9":"W2","10":"W1","11":"W1","12":"W2","13":"W1","14":"W2","15":"W1","16":"W2","17":"Draw","18":"Draw","19":"Draw","20":"W2","21":"W1","22":"Draw","23":"W1","24":"W2","25":"W2","26":"Draw","27":"W2","28":"Draw","29":"W2","30":"W1","31":"W2","32":"W2","33":"Draw","34":"W1","35":"Draw","36":"W2","37":"W2","38":"Draw","39":"Draw","40":"W2","41":"W1","42":"Draw","43":"W2","44":"W1","45":"Draw","46":"Draw","47":"W1","48":"Draw","49":"Draw","50":"W2","51":"W1","52":"Draw","53":"W2","54":"Draw","55":"W1","56":"Draw","57":"W2","58":"W2","59":"W2","60":"W1","61":"Draw","62":"Draw","63":"W2","64":"W2","65":"W2","66":"W2","67":"Draw","68":"W1","69":"W1","70":"Draw","71":"W2","72":"W2"}};
 const LOCAL_RESULTS_CSV = `match,home_score,away_score,outcome
-1,2,2,Draw
-2,2,2,Draw
-3,1,1,Draw
-4,2,2,Draw
+1,2,0,W1
+2,0,1,W2
+3,0,0,Draw
+4,1,0,W1
 5,2,1,W1
-6,1,2,W2
+6,0,0,Draw
 7,0,1,W2
-8,0,3,W2
-9,2,2,Draw
-10,4,0,W1
-11,0,1,W2
-12,1,1,Draw
-13,0,4,W2
-14,2,4,W2
-15,1,0,W1
-16,3,1,W1
-17,0,0,Draw
-18,1,2,W2
-19,3,1,W1
-20,2,1,W1
-21,3,4,W2
-22,3,1,W1
-23,0,3,W2
-24,1,0,W1
-25,0,1,W2
-26,1,2,W2
-27,2,3,W2
+8,2,2,Draw
+9,1,2,W2
+10,2,0,W1
+11,2,1,W1
+12,2,3,W2
+13,0,2,W2
+14,0,0,Draw
+15,2,0,W1
+16,0,3,W2
+17,2,1,W1
+18,0,1,W2
+19,1,3,W2
+20,2,2,Draw
+21,0,1,W2
+22,1,0,W1
+23,3,0,W1
+24,1,1,Draw
+25,0,0,Draw
+26,2,1,W1
+27,2,2,Draw
 28,2,0,W1
-29,4,0,W1
-30,0,0,Draw
-31,2,1,W1
-32,0,0,Draw
-33,2,2,Draw
+29,0,1,W2
+30,3,1,W1
+31,2,2,Draw
+32,2,0,W1
+33,0,1,W2
 34,0,0,Draw
-35,2,2,Draw
-36,2,2,Draw
-37,1,1,Draw
-38,0,0,Draw
-39,4,3,W1
-40,1,0,W1
-41,0,1,W2
-42,1,4,W2
-43,2,4,W2
+35,0,1,W2
+36,0,2,W2
+37,3,2,W1
+38,0,2,W2
+39,3,0,W1
+40,2,3,W2
+41,3,2,W1
+42,0,0,Draw
+43,3,1,W1
 44,2,2,Draw
-45,0,1,W2
-46,1,1,Draw
-47,0,3,W2
-48,2,2,Draw
-49,0,2,W2
-50,2,0,W1
-51,3,2,W1
-52,1,0,W1
-53,1,1,Draw
-54,1,1,Draw
-55,0,1,W2
+45,0,0,Draw
+46,1,0,W1
+47,3,1,W1
+48,0,1,W2
+49,3,0,W1
+50,1,1,Draw
+51,1,1,Draw
+52,1,2,W2
+53,0,1,W2
+54,2,2,Draw
+55,0,2,W2
 56,1,0,W1
-57,1,0,W1
-58,1,1,Draw
-59,1,1,Draw
-60,0,1,W2
-61,2,0,W1
-62,2,1,W1
-63,0,1,W2
-64,0,2,W2
-65,3,4,W2
-66,1,2,W2
-67,2,1,W1
-68,0,0,Draw
-69,1,1,Draw
-70,0,4,W2
-71,1,0,W1
-72,0,2,W2`;
+57,0,1,W2
+58,2,2,Draw
+59,0,1,W2
+60,2,2,Draw
+61,1,3,W2
+62,2,2,Draw
+63,2,0,W1
+64,0,1,W2
+65,2,1,W1
+66,1,0,W1
+67,0,2,W2
+68,0,2,W2
+69,0,2,W2
+70,1,0,W1
+71,3,0,W1
+72,2,3,W2`;
+
+// ── Local KO picks (used when USE_LOCAL_DATA = true) ─────
+const LOCAL_KO_PICKS = {
+  "Alice": {"73":"Brazil", "74":"Norway", "75":"Spain", "76":"Switzerland", "77":"Argentina", "78":"Netherlands", "79":"England", "80":"Colombia", "81":"Belgium", "82":"Croatia", "83":"Saudi Arabia", "84":"Egypt", "85":"Canada", "86":"Austria", "87":"Tunisia", "88":"Panama", "89":"Norway", "90":"Brazil", "91":"Netherlands", "92":"Colombia", "93":"Egypt", "94":"Croatia", "95":"Panama", "96":"Tunisia", "97":"Brazil", "98":"Egypt", "99":"Netherlands", "100":"Panama", "101":"Brazil", "102":"Panama", "103":"Egypt", "104":"Brazil"},
+  "Bob": {"73":"Brazil", "74":"Norway", "75":"Ecuador", "76":"Switzerland", "77":"Mexico", "78":"Senegal", "79":"England", "80":"Portugal", "81":"Belgium", "82":"Croatia", "83":"South Korea", "84":"Egypt", "85":"Canada", "86":"Austria", "87":"Ghana", "88":"Australia", "89":"Norway", "90":"Brazil", "91":"Senegal", "92":"Portugal", "93":"South Korea", "94":"Belgium", "95":"Austria", "96":"Ghana", "97":"Brazil", "98":"Belgium", "99":"Senegal", "100":"Austria", "101":"Brazil", "102":"Senegal", "103":"Austria", "104":"Brazil"},
+  "Carol": {"73":"Morocco", "74":"France", "75":"Spain", "76":"Switzerland", "77":"Mexico", "78":"Senegal", "79":"England", "80":"Colombia", "81":"Belgium", "82":"Croatia", "83":"South Korea", "84":"Uruguay", "85":"Canada", "86":"Austria", "87":"Ghana", "88":"Australia", "89":"Mexico", "90":"Spain", "91":"Switzerland", "92":"Colombia", "93":"South Korea", "94":"Belgium", "95":"Australia", "96":"Ghana", "97":"Mexico", "98":"Belgium", "99":"Colombia", "100":"Ghana", "101":"Mexico", "102":"Colombia", "103":"Ghana", "104":"Colombia"},
+  "Dave": {"73":"Morocco", "74":"Norway", "75":"Spain", "76":"Switzerland", "77":"Argentina", "78":"Netherlands", "79":"England", "80":"Portugal", "81":"United States", "82":"Japan", "83":"Saudi Arabia", "84":"Uruguay", "85":"Canada", "86":"Sweden", "87":"Ghana", "88":"Australia", "89":"Norway", "90":"Spain", "91":"Switzerland", "92":"Portugal", "93":"Uruguay", "94":"Japan", "95":"Australia", "96":"Canada", "97":"Norway", "98":"Japan", "99":"Portugal", "100":"Australia", "101":"Norway", "102":"Portugal", "103":"Japan", "104":"Portugal"},
+  "Eve": {"73":"Brazil", "74":"Norway", "75":"Ecuador", "76":"Switzerland", "77":"Argentina", "78":"Netherlands", "79":"England", "80":"Portugal", "81":"Belgium", "82":"Croatia", "83":"Saudi Arabia", "84":"Uruguay", "85":"Canada", "86":"Sweden", "87":"Ghana", "88":"Panama", "89":"Norway", "90":"Ecuador", "91":"Switzerland", "92":"England", "93":"Uruguay", "94":"Croatia", "95":"Sweden", "96":"Ghana", "97":"Ecuador", "98":"Croatia", "99":"England", "100":"Ghana", "101":"Ecuador", "102":"Ghana", "103":"England", "104":"Ecuador"},
+  "Frank": {"73":"Brazil", "74":"Norway", "75":"Ecuador", "76":"Germany", "77":"Argentina", "78":"Netherlands", "79":"England", "80":"Colombia", "81":"Belgium", "82":"Croatia", "83":"Saudi Arabia", "84":"Egypt", "85":"Turkey", "86":"Sweden", "87":"Tunisia", "88":"Australia", "89":"Argentina", "90":"Ecuador", "91":"Netherlands", "92":"England", "93":"Saudi Arabia", "94":"Belgium", "95":"Australia", "96":"Tunisia", "97":"Ecuador", "98":"Belgium", "99":"England", "100":"Australia", "101":"Belgium", "102":"England", "103":"Ecuador", "104":"Belgium"},
+  "Grace": {"73":"Morocco", "74":"Norway", "75":"Ecuador", "76":"Germany", "77":"Argentina", "78":"Netherlands", "79":"England", "80":"Portugal", "81":"United States", "82":"Japan", "83":"South Korea", "84":"Egypt", "85":"Canada", "86":"Sweden", "87":"Ghana", "88":"Panama", "89":"Argentina", "90":"Morocco", "91":"Germany", "92":"England", "93":"South Korea", "94":"Japan", "95":"Sweden", "96":"Ghana", "97":"Argentina", "98":"South Korea", "99":"Germany", "100":"Sweden", "101":"Argentina", "102":"Germany", "103":"South Korea", "104":"Germany"},
+  "Hank": {"73":"Brazil", "74":"Norway", "75":"Spain", "76":"Germany", "77":"Argentina", "78":"Senegal", "79":"Ivory Coast", "80":"Portugal", "81":"United States", "82":"Croatia", "83":"South Korea", "84":"Uruguay", "85":"Turkey", "86":"Austria", "87":"Tunisia", "88":"Panama", "89":"Norway", "90":"Spain", "91":"Senegal", "92":"Portugal", "93":"Uruguay", "94":"United States", "95":"Austria", "96":"Tunisia", "97":"Norway", "98":"Uruguay", "99":"Senegal", "100":"Austria", "101":"Norway", "102":"Senegal", "103":"Austria", "104":"Norway"},
+  "Ivy": {"73":"Brazil", "74":"Norway", "75":"Ecuador", "76":"Germany", "77":"Mexico", "78":"Netherlands", "79":"Ivory Coast", "80":"Colombia", "81":"Belgium", "82":"Croatia", "83":"Saudi Arabia", "84":"Uruguay", "85":"Canada", "86":"Sweden", "87":"Ghana", "88":"Panama", "89":"Mexico", "90":"Brazil", "91":"Germany", "92":"Ivory Coast", "93":"Uruguay", "94":"Croatia", "95":"Panama", "96":"Canada", "97":"Mexico", "98":"Uruguay", "99":"Germany", "100":"Panama", "101":"Mexico", "102":"Germany", "103":"Panama", "104":"Germany"},
+  "Jack": {"73":"Brazil", "74":"France", "75":"Ecuador", "76":"Switzerland", "77":"Mexico", "78":"Netherlands", "79":"Ivory Coast", "80":"Colombia", "81":"United States", "82":"Croatia", "83":"South Korea", "84":"Uruguay", "85":"Canada", "86":"Austria", "87":"Ghana", "88":"Panama", "89":"Mexico", "90":"Brazil", "91":"Switzerland", "92":"Ivory Coast", "93":"Uruguay", "94":"Croatia", "95":"Austria", "96":"Canada", "97":"Mexico", "98":"Uruguay", "99":"Ivory Coast", "100":"Canada", "101":"Uruguay", "102":"Ivory Coast", "103":"Mexico", "104":"Ivory Coast"}
+};
+
+// ── Local KO results CSV (used when USE_LOCAL_DATA = true) ─
+const LOCAL_KO_RESULTS_CSV = `match,winner
+73,Morocco
+74,Norway
+75,Spain
+76,Switzerland
+77,Argentina
+78,Netherlands
+79,England
+80,Colombia
+81,Belgium
+82,Croatia
+83,Saudi Arabia
+84,Egypt
+85,Canada
+86,Sweden
+87,Ghana
+88,Panama
+89,Argentina
+90,Morocco
+91,Switzerland
+92,England
+93,Saudi Arabia
+94,Belgium
+95,Sweden
+96,Canada
+97,Morocco
+98,Belgium
+99,England
+100,Canada
+101,Belgium
+102,Canada
+103,England
+104,Belgium`;
+
+// ── Local bracket data (used when USE_LOCAL_DATA = true) ──
+const LOCAL_BRACKET_DATA = {
+  confirmed: true,
+  round_of_32: {
+    "73":{"home":"Brazil","away":"Morocco"},
+    "74":{"home":"France","away":"Norway"},
+    "75":{"home":"Spain","away":"Ecuador"},
+    "76":{"home":"Germany","away":"Switzerland"},
+    "77":{"home":"Argentina","away":"Mexico"},
+    "78":{"home":"Netherlands","away":"Senegal"},
+    "79":{"home":"England","away":"Ivory Coast"},
+    "80":{"home":"Portugal","away":"Colombia"},
+    "81":{"home":"Belgium","away":"United States"},
+    "82":{"home":"Croatia","away":"Japan"},
+    "83":{"home":"South Korea","away":"Saudi Arabia"},
+    "84":{"home":"Uruguay","away":"Egypt"},
+    "85":{"home":"Turkey","away":"Canada"},
+    "86":{"home":"Austria","away":"Sweden"},
+    "87":{"home":"Tunisia","away":"Ghana"},
+    "88":{"home":"Panama","away":"Australia"}
+  }
+};
 // ─────────────────────────────────────────────────────────
 
 // ── Match data ────────────────────────────────────────────
@@ -796,6 +951,354 @@ function parseResults(csvText) {
   return results;
 }
 
+// ── KO match points ──────────────────────────────────────
+const KO_POINTS = {
+  73:4,74:4,75:4,76:4,77:4,78:4,79:4,80:4,
+  81:4,82:4,83:4,84:4,85:4,86:4,87:4,88:4,
+  89:8,90:8,91:8,92:8,93:8,94:8,95:8,96:8,
+  97:12,98:12,99:12,100:12,
+  101:16,102:16,103:12,104:24,
+};
+
+// ── Parse KO results CSV ──────────────────────────────────
+// CSV format: match,winner (with header row)
+// Returns { matchNum: winnerName } as strings
+function parseKoResults(csvText) {
+  const results = {};
+  if (!csvText || !csvText.trim()) return results;
+  csvText.trim().split('\n').slice(1).forEach(line => {
+    const parts = line.split(',');
+    const num = parseInt(parts[0]);
+    const winner = parts[1] ? parts[1].trim() : null;
+    if (num && winner) {
+      results[num] = winner;
+    }
+  });
+  return results;
+}
+
+// ── Compute combined standings ────────────────────────────
+function computeCombinedStandings(groupStandings, koPicksData, koResults, bracketData) {
+  const KO_MATCH_NUMS = [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,
+                         89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104];
+
+  // ── Cascade helpers ───────────────────────────────────────
+  // Round number of a KO match (used to track when a team was eliminated).
+  function matchRound(m) {
+    if (m >= 73 && m <= 88)  return 1;  // R32
+    if (m >= 89 && m <= 96)  return 2;  // R16
+    if (m >= 97 && m <= 100) return 3;  // QF
+    if (m === 101 || m === 102) return 4; // SF
+    return 5; // M103 (3rd) and M104 (Final)
+  }
+
+  // A pick for match m is "cascaded" if the picked team's eliminatedInRound
+  // is strictly less than this threshold.
+  // M103 (3rd place): SF losers (elim round 4) are valid → threshold is 4 (must be < 4 to cascade).
+  // M104 (Final): SF winners are valid → any earlier elimination cascades (threshold 5).
+  function cascadeThreshold(m) {
+    if (m >= 73 && m <= 88)  return 0;  // R32: first round, never cascaded
+    if (m >= 89 && m <= 96)  return 2;  // R16: cascaded if out in round 1
+    if (m >= 97 && m <= 100) return 3;  // QF: cascaded if out in rounds 1–2
+    if (m === 101 || m === 102) return 4; // SF: cascaded if out in rounds 1–3
+    if (m === 103) return 4; // 3rd: SF losers (round 4) are valid; cascaded if out in rounds 1–3
+    if (m === 104) return 5; // Final: cascaded if out before winning SF
+    return 0;
+  }
+
+  // ── Build eliminated map: team → round they were knocked out ──
+  // Iterates in match order so team names resolve via getKoTeams() correctly.
+  const eliminatedInRound = {};
+  for (const m of KO_MATCH_NUMS) {
+    const winner = koResults[m];
+    if (!winner || !bracketData) continue;
+    try {
+      const [t1, t2] = getKoTeams(m, bracketData, koResults);
+      const loser = (t1 === winner) ? t2 : (t2 === winner) ? t1 : null;
+      if (loser && !isTbd(loser) && !(loser in eliminatedInRound)) {
+        eliminatedInRound[loser] = matchRound(m);
+      }
+    } catch (e) { /* bracket not yet fully resolved */ }
+  }
+
+  // ── Evaluate picks for one participant ────────────────────
+  function evalKoPicks(koPicks) {
+    let koPts = 0, totalCorrect = 0, correctChampion = false;
+    const koPickResults = {};
+
+    for (const m of KO_MATCH_NUMS) {
+      const pick      = koPicks[String(m)];
+      const winner    = koResults[m];
+      const threshold = cascadeThreshold(m);
+      const isCascaded = pick && threshold > 0 &&
+                         eliminatedInRound[pick] !== undefined &&
+                         eliminatedInRound[pick] < threshold;
+
+      if (!pick) {
+        koPickResults[m] = { status: 'empty', pick: null, winner: winner || null };
+      } else if (winner) {
+        if (isCascaded) {
+          // Team was knocked out before reaching this match — no points
+          koPickResults[m] = { status: 'cascaded', pick, winner };
+        } else {
+          const isCorrect = pick === winner;
+          if (isCorrect) {
+            koPts += KO_POINTS[m] || 0;
+            totalCorrect++;
+            if (m === 104) correctChampion = true;
+          }
+          koPickResults[m] = { status: isCorrect ? 'correct' : 'wrong', pick, winner };
+        }
+      } else {
+        // Match not yet played
+        koPickResults[m] = { status: isCascaded ? 'cascaded' : 'pending', pick, winner: null };
+      }
+    }
+
+    // Max possible KO pts = earned so far + points for every still-pending pick
+    let koPossiblePts = koPts;
+    for (const m of KO_MATCH_NUMS) {
+      if (koPickResults[m].status === 'pending') {
+        koPossiblePts += KO_POINTS[m] || 0;
+      }
+    }
+
+    return { koPts, koPossiblePts, totalCorrect, correctChampion, koPickResults };
+  }
+
+  // ── Build combined list ───────────────────────────────────
+  const combined = groupStandings.map(p => {
+    const { koPts, koPossiblePts, totalCorrect: koCorrect, correctChampion, koPickResults } =
+      evalKoPicks(koPicksData[p.name] || {});
+    const grpCorrect = Object.values(p.pickResults || {}).filter(pr => pr.status === 'correct').length;
+    return {
+      ...p,
+      groupPts: p.points,
+      koPts,
+      totalPts: p.points + koPts,
+      maxPts: p.points + koPossiblePts,
+      correctChampion,
+      totalCorrect: grpCorrect + koCorrect,
+      koPickResults,
+    };
+  });
+
+  // Add any KO-only participants not in group standings
+  Object.keys(koPicksData).forEach(name => {
+    if (!combined.find(p => p.name === name)) {
+      const { koPts, koPossiblePts, totalCorrect, correctChampion, koPickResults } =
+        evalKoPicks(koPicksData[name]);
+      combined.push({ name, points: 0, groupPts: 0, pickResults: {}, koPts,
+        totalPts: koPts, maxPts: koPossiblePts, correctChampion, totalCorrect, koPickResults });
+    }
+  });
+
+  // Sort: totalPts desc → correctChampion desc → totalCorrect desc → name asc
+  combined.sort((a, b) =>
+    (b.totalPts - a.totalPts) ||
+    ((b.correctChampion ? 1 : 0) - (a.correctChampion ? 1 : 0)) ||
+    (b.totalCorrect - a.totalCorrect) ||
+    a.name.localeCompare(b.name)
+  );
+
+  return combined;
+}
+
+// ── Render KO teaser (group mode) ────────────────────────
+function renderKoTeaser() {
+  document.getElementById('koTeaserSection').innerHTML = `
+    <div class="ko-teaser card">
+      <div class="ko-teaser-icon">🏆</div>
+      <div class="ko-teaser-title">Knockout Stage</div>
+      <div class="ko-teaser-msg">Knockout picks will be collected after Jun 27. Once submitted, the combined standings will appear here.</div>
+    </div>`;
+}
+
+// ── Get KO team names for a match ─────────────────────────
+function getKoTeams(m, bracketData, koResults) {
+  // R32: from bracketData
+  if (m >= 73 && m <= 88) {
+    if (bracketData && bracketData.round_of_32 && bracketData.round_of_32[String(m)]) {
+      const slot = bracketData.round_of_32[String(m)];
+      return [slot.home, slot.away];
+    }
+    return ['TBD', 'TBD'];
+  }
+  // R16
+  if (R16[m]) {
+    const [f1, f2] = R16[m];
+    return [koResults[f1] || `W${f1}`, koResults[f2] || `W${f2}`];
+  }
+  // QF
+  if (QF[m]) {
+    const [f1, f2] = QF[m];
+    return [koResults[f1] || `W${f1}`, koResults[f2] || `W${f2}`];
+  }
+  // SF
+  if (SF[m]) {
+    const [f1, f2] = SF[m];
+    return [koResults[f1] || `W${f1}`, koResults[f2] || `W${f2}`];
+  }
+  // 3rd place: losers of M101 and M102
+  if (m === 103) {
+    // To find losers we need to know the teams in 101 and 102
+    const [sf1h, sf1a] = getKoTeams(101, bracketData, koResults);
+    const [sf2h, sf2a] = getKoTeams(102, bracketData, koResults);
+    const loser1 = koResults[101] ? (koResults[101] === sf1h ? sf1a : sf1h) : `L101`;
+    const loser2 = koResults[102] ? (koResults[102] === sf2h ? sf2a : sf2h) : `L102`;
+    return [loser1, loser2];
+  }
+  // Final: winners of M101 and M102
+  if (m === 104) {
+    return [koResults[101] || `W101`, koResults[102] || `W102`];
+  }
+  return ['TBD', 'TBD'];
+}
+
+// ── Render KO standings (KO mode) ────────────────────────
+function renderKoStandings(combinedStandings, koResults, bracketData) {
+  if (!combinedStandings.length) {
+    document.getElementById('koStandingsSection').innerHTML =
+      '<div class="state-msg"><span class="emoji">📭</span>No standings available yet.</div>';
+    return;
+  }
+
+  const KO_MATCH_ORDER = [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,
+                           89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104];
+
+  let rank = 1, prevPts = null, rows = '';
+  combinedStandings.forEach((p, i) => {
+    if (p.totalPts !== prevPts) { rank = i + 1; prevPts = p.totalPts; }
+    const topClass = rank <= 3 ? ' top3' : '';
+
+    // Group squares (72 matches)
+    const grpSquares = MATCHES.map(([num, , , , t1, t2]) => {
+      const pr = p.pickResults[num] || { status: 'empty', pick: null, result: null };
+      const myPick = pr.pick ? pickLabel(pr.pick, t1, t2) : '—';
+      const res = pr.result
+        ? `${pr.result.home}–${pr.result.away} (${pickLabel(pr.result.outcome, t1, t2)})`
+        : 'Not played yet';
+      return `<span class="sq sq-${pr.status}"
+        data-match="${num}" data-teams="${t1} v ${t2}"
+        data-pick="${myPick}" data-result="${res}" data-status="${pr.status}"></span>`;
+    }).join('');
+
+    // KO squares (32 matches) with round dividers after R32/R16/QF/SF
+    const KO_ROUND_BREAKS = new Set([88, 96, 100, 102, 103]);
+    const koSquareParts = [];
+    for (const m of KO_MATCH_ORDER) {
+      const pr = p.koPickResults[m] || { status: 'empty', pick: null, winner: null };
+      const [t1, t2] = bracketData ? getKoTeams(m, bracketData, koResults) : ['TBD','TBD'];
+      const teamsStr = `${t1} v ${t2}`;
+      const pickStr = pr.pick || '—';
+      const resultStr = pr.winner || 'Not played yet';
+      koSquareParts.push(`<span class="sq sq-${pr.status}"
+        data-match="M${m}" data-teams="${teamsStr}"
+        data-pick="${pickStr}" data-result="${resultStr}" data-status="${pr.status}"></span>`);
+      if (KO_ROUND_BREAKS.has(m)) koSquareParts.push('<span class="sq-divider"></span>');
+    }
+    const koSquares = koSquareParts.join('');
+
+    const champPr = p.koPickResults[104] || { status: 'empty', pick: null };
+    const champName = champPr.pick || '—';
+    const champClass = champPr.status === 'correct'  ? 'champ-correct'
+                     : champPr.status === 'wrong'    ? 'champ-wrong'
+                     : champPr.status === 'cascaded' ? 'champ-cascaded'
+                     : '';
+    const champLabel = `<span class="champ-pick ${champClass}">${champName}</span>`;
+
+    rows += `<tr>
+      <td class="td-rank${topClass}">${rank}</td>
+      <td class="td-name">${p.name}</td>
+      <td class="td-grp-pts">${p.groupPts}</td>
+      <td class="td-ko-pts">${p.koPts}</td>
+      <td class="td-total-pts">${p.totalPts}</td>
+      <td class="td-max-pts">${p.maxPts}</td>
+      <td class="td-squares"><div class="squares-wrap">${koSquares}${champLabel}</div></td>
+    </tr>`;
+  });
+
+  document.getElementById('koStandingsSection').innerHTML = `
+    <p class="section-label">Knockout Standings</p>
+    <div class="section-body">
+      <div class="card">
+        <table class="standings-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Group pts</th>
+              <th>Knockout pts</th>
+              <th>Total</th>
+              <th>Max pts</th>
+              <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · red italic = cascaded void · empty = pending)</span></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ── Render KO bracket (KO mode) ───────────────────────────
+function renderKoBracket(bracketData, koResults) {
+  const el = document.getElementById('koBracketCard');
+  if (!el) return;
+
+  if (!bracketData) {
+    el.innerHTML = '<div class="bracket-pending">Bracket data not available yet.</div>';
+    return;
+  }
+
+  function mkCard(m) {
+    const [h, a] = getKoTeams(m, bracketData, koResults);
+    const winner = koResults[m];
+    let homeCls = '', awayCls = '';
+    if (winner) {
+      homeCls = winner === h ? 'w' : 'l';
+      awayCls = winner === a ? 'w' : 'l';
+    }
+    return matchCard(m, h, a, '', undefined, undefined, homeCls, awayCls);
+  }
+
+  // Determine podium teams
+  const champion  = koResults[104] || null;
+  const finalist1 = koResults[101] ? getKoTeams(101, bracketData, koResults)[0] : null;
+  const finalist2 = koResults[101] ? getKoTeams(101, bracketData, koResults)[1] : null;
+  let runnerUp = null;
+  if (champion && koResults[104]) {
+    const [f1, f2] = getKoTeams(104, bracketData, koResults);
+    runnerUp = champion === f1 ? f2 : f1;
+  }
+  const thirdPlace = koResults[103] || null;
+  const podiumHtml = buildPodiumHtml(champion, runnerUp, thirdPlace);
+
+  el.innerHTML = buildBracketHtml(mkCard, { podiumHtml });
+  requestAnimationFrame(() => requestAnimationFrame(positionAndConnectBracket));
+}
+
+// ── Setup layout based on mode ────────────────────────────
+function setupLayout() {
+  if (knockoutMode) {
+    // Show KO bracket section and divider
+    document.getElementById('koBracketSection').style.display = '';
+    document.getElementById('koSectionDivider').style.display = '';
+    // Group section is flat (no accordion) in KO mode — always visible
+    document.getElementById('groupAccordionHeader').style.display = 'none';
+    // Update labels
+    document.getElementById('groupStandingsLabel').textContent = 'Group standings';
+    // Hide the provisional bracket — superseded by the live KO bracket above
+    document.getElementById('bracketSectionLabel').style.display = 'none';
+    document.getElementById('bracket-body').style.display = 'none';
+    // Update sticky bar label
+    document.getElementById('stageLabel').textContent = 'Knockout stage';
+  } else {
+    // Group mode: render teaser below the bracket
+    renderKoTeaser();
+  }
+}
+
+
 // ── Compute scores ────────────────────────────────────────
 function pickLabel(outcome, t1, t2) {
   if (outcome === 'W1')   return `${t1} win`;
@@ -839,21 +1342,25 @@ function renderStandings(standings, results) {
   standings.forEach((p, i) => {
     if (p.points !== prevPts) { rank = i + 1; prevPts = p.points; }
     const topClass = rank <= 3 ? ' top3' : '';
-    const squares = MATCHES.map(([num, , , , t1, t2]) => {
+    const GRP_ROUND_BREAKS = new Set([24, 48]);
+    const squareParts = [];
+    for (const [num, , , , t1, t2] of MATCHES) {
       const pr = p.pickResults[num] || { status: 'empty', pick: null, result: null };
       const myPick = pr.pick ? pickLabel(pr.pick, t1, t2) : '—';
       const res = pr.result
         ? `${pr.result.home}–${pr.result.away} (${pickLabel(pr.result.outcome, t1, t2)})`
         : 'Not played yet';
-      return `<span class="sq sq-${pr.status}"
+      squareParts.push(`<span class="sq sq-sm sq-${pr.status}"
         data-match="${num}" data-teams="${t1} v ${t2}"
-        data-pick="${myPick}" data-result="${res}" data-status="${pr.status}"></span>`;
-    }).join('');
+        data-pick="${myPick}" data-result="${res}" data-status="${pr.status}"></span>`);
+      if (GRP_ROUND_BREAKS.has(num)) squareParts.push('<span class="sq-divider-sm"></span>');
+    }
+    const squares = squareParts.join('');
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
       <td class="td-name">${p.name}</td>
       <td class="td-points">${p.points}</td>
-      <td class="td-squares"><div class="squares-wrap">${squares}</div></td>
+      <td class="td-squares"><div class="squares-wrap nowrap">${squares}</div></td>
     </tr>`;
   });
 
@@ -1790,9 +2297,10 @@ document.addEventListener('mouseover', e => {
   const result = sq.dataset.result;
   const status = sq.dataset.status;
 
-  const statusText = status === 'correct' ? '✓ Correct'
-                   : status === 'wrong'   ? '✗ Wrong'
-                   : status === 'pending' ? '⏳ Pending'
+  const statusText = status === 'correct'  ? '✓ Correct'
+                   : status === 'wrong'    ? '✗ Wrong'
+                   : status === 'cascaded' ? '⚡ Void — team eliminated earlier'
+                   : status === 'pending'  ? '⏳ Pending'
                    : '—';
 
   tooltip.innerHTML = `
@@ -1817,62 +2325,100 @@ document.addEventListener('mouseout', e => {
 });
 
 // ── Main ──────────────────────────────────────────────────
-async function init() {
+async function init(skipBracket = false) {
   try {
-    let picksData, resultsCSV;
-
+    let picksData, resultsCSV, koPicksData = {}, koResultsCSV = '';
     let bracketData = null;
 
     if (USE_LOCAL_DATA) {
-      picksData  = LOCAL_PICKS;
+      // Show dev override input
+      document.getElementById('devOverride').style.display = '';
+
+      // Read override value (0–32); empty = all 32 played
+      const devInput = document.getElementById('devGamesInput');
+      const koN = devInput.value !== '' ? Math.max(0, Math.min(32, parseInt(devInput.value, 10))) : 32;
+
+      // Group results always fully played
       resultsCSV = LOCAL_RESULTS_CSV;
+
+      // Slice KO results to first koN matches
+      const allKoLines  = LOCAL_KO_RESULTS_CSV.trim().split('\n');
+      const koHeader    = allKoLines[0];
+      const koDataLines = allKoLines.slice(1).slice(0, koN);
+      koResultsCSV = [koHeader, ...koDataLines].join('\n');
+
+      picksData   = LOCAL_PICKS;
+      koPicksData = LOCAL_KO_PICKS;
+      bracketData = LOCAL_BRACKET_DATA;
     } else {
       const ts = Date.now();
-      const [picksResp, resultsResp, bracketResp] = await Promise.all([
+      const [picksResp, resultsResp, bracketResp, koPicksResp, koResultsResp] = await Promise.all([
         fetch(`${PICKS_URL}?t=${ts}`),
         fetch(`${RESULTS_URL}?t=${ts}`),
         fetch(`${BRACKET_URL}?t=${ts}`).catch(() => null),
+        fetch(`${KO_PICKS_URL}?t=${ts}`).catch(() => null),
+        fetch(`${KO_RESULTS_URL}?t=${ts}`).catch(() => null),
       ]);
       if (!picksResp.ok) throw new Error('Could not load picks');
       if (!resultsResp.ok) throw new Error('Could not load results');
       picksData  = await picksResp.json();
       resultsCSV = await resultsResp.text();
-      if (bracketResp && bracketResp.ok) bracketData = await bracketResp.json();
+      if (bracketResp?.ok) bracketData = await bracketResp.json();
+      if (koPicksResp?.ok) koPicksData = await koPicksResp.json();
+      if (koResultsResp?.ok) koResultsCSV = await koResultsResp.text();
     }
 
-    const results = parseResults(resultsCSV);
-    const standings  = computeStandings(picksData, results);
-    const played     = Object.keys(results).length;
+    const results   = parseResults(resultsCSV);
+    const koResults = parseKoResults(koResultsCSV);
+    const standings = computeStandings(picksData, results);
+    const played    = Object.keys(results).length;
+    const koPlayed  = Object.keys(koResults).length;
 
-    document.getElementById('matchesPlayed').textContent =
-      `${played} / 72 matches played`;
-    document.getElementById('progressFill').style.width =
-      `${(played / 72) * 100}%`;
+    // Sticky bar
+    if (knockoutMode) {
+      document.getElementById('stageLabel').textContent = 'Knockout stage';
+      document.getElementById('matchesPlayed').textContent = `${koPlayed} / 32 knockout matches played`;
+      document.getElementById('progressFill').style.width = `${(koPlayed / 32) * 100}%`;
+    } else {
+      document.getElementById('matchesPlayed').textContent = `${played} / 72 matches played`;
+      document.getElementById('progressFill').style.width = `${(played / 72) * 100}%`;
+    }
     document.getElementById('updatedAt').textContent =
       `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
-    // One match per group as a proxy — if all 12 have a result, all groups have started
     const GRP_SAMPLE = {A:1,B:3,C:5,D:4,E:9,F:11,G:15,H:13,I:17,J:19,K:23,L:21};
     const allGrpsStarted = Object.values(GRP_SAMPLE).every(m => results[m]);
-
-    // confirmed=true only when parse_results.py has cross-checked R32 against Wikipedia
     const bracketConfirmed = bracketData ? bracketData.confirmed === true : false;
 
-    renderStandings(standings, results);
+    if (knockoutMode) {
+      const combined = computeCombinedStandings(standings, koPicksData, koResults, bracketData);
+      renderKoStandings(combined, koResults, bracketData);
+      if (!skipBracket) renderKoBracket(bracketData, koResults);
+      renderStandings(standings, results);  // group-only in group section
+    } else {
+      renderStandings(standings, results);
+    }
+
     renderResults(results);
     renderGroupTables(results);
     renderBracket(results, allGrpsStarted, bracketConfirmed);
 
   } catch (err) {
     const msg = `<div class="state-msg"><span class="emoji">⚠️</span>${err.message}</div>`;
-    document.getElementById('standingsCard').innerHTML  = msg;
-    document.getElementById('resultsCard').innerHTML    = msg;
-    document.getElementById('groupTablesCard').innerHTML = msg;
-    document.getElementById('bracketCard').innerHTML    = msg;
+    ['standingsCard','resultsCard','groupTablesCard','bracketCard','koBracketCard'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = msg;
+    });
+    document.getElementById('koStandingsSection').innerHTML = msg;
     document.getElementById('matchesPlayed').textContent = 'Could not load data';
   }
 }
 
+setupLayout();
+
+if (USE_LOCAL_DATA) {
+  document.getElementById('devGamesInput').addEventListener('change', () => init(true));
+}
 init();
 </script>
 </body>
