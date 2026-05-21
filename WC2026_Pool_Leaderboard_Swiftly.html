@@ -635,8 +635,8 @@
     <span class="progress-count" id="matchesPlayed">Loading…</span>
     <span class="updated-at" id="updatedAt"></span>
     <span class="dev-override" id="devOverride" style="display:none">
-      <label for="devGamesInput" style="font-size:0.68rem;color:var(--neutral-dark);margin-right:4px">🧪 games played:</label>
-      <input id="devGamesInput" type="number" min="0" max="104" step="1"
+      <label for="devGamesInput" style="font-size:0.68rem;color:var(--neutral-dark);margin-right:4px">🧪 KO games played:</label>
+      <input id="devGamesInput" type="number" min="0" max="32" step="1"
         style="width:52px;font-size:0.78rem;padding:1px 4px;border:1px solid var(--neutral-light);border-radius:4px;text-align:center">
     </span>
   </div>
@@ -2315,17 +2315,12 @@ async function init() {
       // Show dev override input
       document.getElementById('devOverride').style.display = '';
 
-      // Read override value (0–104); 0 or empty = no results yet
+      // Read override value (0–32); empty = all 32 played
       const devInput = document.getElementById('devGamesInput');
-      const devN = devInput.value !== '' ? Math.max(0, Math.min(104, parseInt(devInput.value, 10))) : 104;
-      const groupN = Math.min(devN, 72);
-      const koN    = Math.max(0, devN - 72);
+      const koN = devInput.value !== '' ? Math.max(0, Math.min(32, parseInt(devInput.value, 10))) : 32;
 
-      // Slice group results to first groupN matches (by match number order)
-      const allGroupLines = LOCAL_RESULTS_CSV.trim().split('\n');
-      const groupHeader   = allGroupLines[0];
-      const groupDataLines = allGroupLines.slice(1).slice(0, groupN);
-      resultsCSV = [groupHeader, ...groupDataLines].join('\n');
+      // Group results always fully played
+      resultsCSV = LOCAL_RESULTS_CSV;
 
       // Slice KO results to first koN matches
       const allKoLines  = LOCAL_KO_RESULTS_CSV.trim().split('\n');
