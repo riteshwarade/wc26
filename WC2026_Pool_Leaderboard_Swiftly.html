@@ -2306,7 +2306,7 @@ document.addEventListener('mouseout', e => {
 });
 
 // ── Main ──────────────────────────────────────────────────
-async function init() {
+async function init(skipBracket = false) {
   try {
     let picksData, resultsCSV, koPicksData = {}, koResultsCSV = '';
     let bracketData = null;
@@ -2374,7 +2374,7 @@ async function init() {
     if (knockoutMode) {
       const combined = computeCombinedStandings(standings, koPicksData, koResults);
       renderKoStandings(combined, koResults, bracketData);
-      renderKoBracket(bracketData, koResults);
+      if (!skipBracket) renderKoBracket(bracketData, koResults);
       renderStandings(standings, results);  // group-only in group section
     } else {
       renderStandings(standings, results);
@@ -2398,7 +2398,7 @@ async function init() {
 setupLayout();
 
 if (USE_LOCAL_DATA) {
-  document.getElementById('devGamesInput').addEventListener('change', () => init());
+  document.getElementById('devGamesInput').addEventListener('change', () => init(true));
 }
 init();
 </script>
