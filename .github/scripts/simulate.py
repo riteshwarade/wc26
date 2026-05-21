@@ -235,6 +235,19 @@ def generate_picks(pool_id, participant_num):
     print(f'  Generated: {filename}')
 
 
+def generate_ko_results(r32_teams):
+    """Write results/knockout_results.csv with simulated winners for all 32 KO matches."""
+    os.makedirs('results', exist_ok=True)
+    path = 'results/knockout_results.csv'
+    winners = simulate_ko_bracket(r32_teams)
+    with open(path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['match', 'winner'])
+        for m in KO_MATCH_ORDER:
+            writer.writerow([m, winners.get(m, '')])
+    print(f'Generated results for all 32 KO matches → {path}')
+
+
 def generate_results():
     os.makedirs('results', exist_ok=True)
     path = 'results/group_results.csv'
@@ -272,5 +285,7 @@ if __name__ == '__main__':
             print(f'\n  Pool: {pool_id}')
             for n in range(1, args.participants + 1):
                 generate_knockout_picks(pool_id, n, R32_SIM_TEAMS)
+        print('\nGenerating results for all 32 KO matches...')
+        generate_ko_results(R32_SIM_TEAMS)
 
     print('\nDone. Run aggregate_picks.py next to update the leaderboard data.')
