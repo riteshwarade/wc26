@@ -1,6 +1,6 @@
 # World Cup 2026 Pool — Master Plan
 
-Last updated: May 21, 2026 (ESPN API results pipeline complete; group + KO scoring documented)
+Last updated: May 21, 2026 (test suite complete; 10-user sim data embedded in leaderboard)
 
 ---
 
@@ -43,7 +43,11 @@ wc26/
 ├── WC2026_Pool_Leaderboard_Swiftly.html       ← leaderboard + knockout bracket (Swiftly)
 ├── WC2026_Pool_Leaderboard_FandF.html         ← leaderboard + knockout bracket (F&F)
 ├── bracket.js                                 ← shared bracket rendering primitives (all variants)
+├── WC2026_Pool_Plan.md                        ← this document
 ├── test_bracket.py                             ← bracket end-to-end test (495 combos verified)
+├── test_leaderboard.js                        ← unit tests: group scoring, KO scoring, cascade rules, tiebreakers (80 tests)
+├── test_e2e.js                                ← 10-user full-tournament simulation + 105 structural invariant checks
+├── gen_sim_data.js                            ← generates embedded LOCAL_* sim data for leaderboard HTML (seeded, reproducible)
 ├── picks/
 │   ├── group/
 │   │   ├── swiftly/                            ← participant CSVs (uploaded manually by Ritesh)
@@ -506,6 +510,7 @@ Same ESPN-style card DNA across all three: flag emoji + team name + score, winne
   - Group section flat in KO mode (no toggle); KO teaser below bracket in group mode
   - Variant 3 results bracket: ESPN cards fill progressively from `knockout_results.csv`
 - [x] ~~**Extend `parse_results.py`** to fetch knockout scores~~ — complete; uses ESPN KO API (Jun 28–Jul 20) → `results/knockout_results.csv` (existing `update.yml` picks it up automatically)
+- [x] ~~**Test suite**~~ — `test_leaderboard.js` (80 unit tests) + `test_e2e.js` (10-user sim, 105 invariants); run with `node test_leaderboard.js` and `node test_e2e.js`
 - [ ] **Duplicate Variant 3 changes to `WC2026_Pool_Leaderboard_FandF.html`**
 
 ---
@@ -667,6 +672,52 @@ Switches from `X / 72 group matches played` to `X / 32 knockout matches played`.
 
 #### `parse_results.py` KO fetch ✅
 Fetches knockout match results from ESPN API (`dates=20260628-20260720`). ESPN returns `competitor.winner = true` on the winning team — no score parsing needed. Results are resolved by walking the bracket topology in order (R32 → R16 → QF → SF → 3rd/Final), propagating actual team names through `W73`-style references in `knockout_bracket.json` as rounds complete. Writes `results/knockout_results.csv` (`match,winner` format, confirmed matches only). Existing `update.yml` already runs every 15 min — no workflow changes needed.
+
+---
+
+## Testing
+
+### Unit tests — `test_leaderboard.js`
+
+Run: `node test_leaderboard.js`
+
+80 tests across 8 sections, exercising the exact scoring functions copied verbatim from `WC2026_Pool_Leaderboard_Swiftly.html`:
+
+- **Group stage scoring** — 2 pts per correct pick, 0 for wrong/empty, pending when result not yet available, alphabetical sort on equal pts
+- **CSV parsing** (`parseKoResults`) — normal, empty, header-only, trailing blank lines
+- **Bracket resolution** (`getKoTeams`) — R32 from bracketData, R16/QF/SF chained forward, M103 computes SF losers, M104 computes SF winners, null bracketData → TBD
+- **KO scoring** — all 32 correct = 244 pts, individual round point values (4/8/12/16/12/24), all statuses correct
+- **Cascade rules** — R32 loser: pick is `wrong` (not cascaded); R16 loser: downstream picks cascade; M103 special: SF losers (round 4) are valid picks (4 < 4 = false); M104: SF loser cascades
+- **Max pts** — pending picks add full KO_POINTS value; cascaded picks add nothing
+- **Tiebreakers** — total pts → correct champion → total correct picks → alphabetical
+- **KO-only participants + sanity** — player with no group picks, KO_POINTS sums to 244, grand total 388
+
+**Important fixture constraint documented in tests:** bracket team names must be internally consistent. A team appearing in two R32 slots will be double-registered in `eliminatedInRound` (once as loser, at round 1). Tests use team names that appear in only one R32 slot.
+
+### End-to-end simulation — `test_e2e.js`
+
+Run: `node test_e2e.js`
+
+Generates a full 104-match tournament (seeded, reproducible — same result every run) with 10 participants (Alice–Jack), then runs the real scoring pipeline and checks 105 structural invariants:
+
+- All 10 participants present, group pts 0–144, KO pts 0–244
+- totalPts = groupPts + koPts for all participants
+- No pending picks when all 104 results provided; maxPts = totalPts
+- All 72 group pick results resolved per participant
+- Sort order satisfies the full 4-tier tiebreaker chain for each consecutive pair
+- koPts = sum of `correct` KO pick points (proves cascaded picks score exactly 0)
+- correctChampion flag consistent with M104 pick status
+- Aggregate point bounds and coverage sanity
+
+Simulated tournament result (seed 20260611): **Belgium wins**, beats Canada in Final, England wins 3rd place.
+
+### Embedded simulation data — `gen_sim_data.js`
+
+Run: `node gen_sim_data.js > /tmp/sim_data.json` (stderr shows summary)
+
+Uses the same seeded PRNG as `test_e2e.js` to generate the `LOCAL_*` constants embedded in `WC2026_Pool_Leaderboard_Swiftly.html`. When `USE_LOCAL_DATA = true`, the leaderboard uses this data and can be opened as a `file://` URL without a server.
+
+To refresh the embedded data: run `gen_sim_data.js`, pipe output to `/tmp/sim_data.json`, then run the Python patcher (see commit history for the one-liner).
 
 ---
 
