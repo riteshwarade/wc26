@@ -1155,7 +1155,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
     }).join('');
 
     // KO squares (32 matches) with round dividers after R32/R16/QF/SF
-    const KO_ROUND_BREAKS = new Set([88, 96, 100, 102]);
+    const KO_ROUND_BREAKS = new Set([88, 96, 100, 102, 103]);
     const koSquareParts = [];
     for (const m of KO_MATCH_ORDER) {
       const pr = p.koPickResults[m] || { status: 'empty', pick: null, winner: null };
