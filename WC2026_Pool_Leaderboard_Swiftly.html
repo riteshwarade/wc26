@@ -611,14 +611,7 @@
     border-radius: 1px;
     flex-shrink: 0;
   }
-  .td-col-divider {
-    width: 1px;
-    padding: 0;
-    background: var(--neutral-light);
-  }
-  .th-champion { text-align: left; padding-left: 12px; }
-  .td-champion { padding-left: 12px; white-space: nowrap; }
-  .champ-pick  { font-size: 0.82rem; color: var(--neutral-dark); }
+  .champ-pick  { font-size: 0.82rem; color: var(--neutral-dark); margin-left: 6px; white-space: nowrap; align-self: center; }
   .champ-correct { color: var(--swiftly-blue); font-weight: 600; }
   .champ-wrong   { color: var(--neutral-medium); text-decoration: line-through; }
 </style>
@@ -1185,6 +1178,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
     const champClass = champPr.status === 'correct' ? 'champ-correct'
                      : champPr.status === 'wrong'   ? 'champ-wrong'
                      : '';
+    const champLabel = `<span class="champ-pick ${champClass}">${champName}</span>`;
 
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
@@ -1192,9 +1186,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
       <td class="td-grp-pts">${p.groupPts}</td>
       <td class="td-ko-pts">${p.koPts}</td>
       <td class="td-total-pts">${p.totalPts}</td>
-      <td class="td-squares"><div class="squares-wrap">${koSquares}</div></td>
-      <td class="td-col-divider"></td>
-      <td class="td-champion"><span class="champ-pick ${champClass}">${champName}</span></td>
+      <td class="td-squares"><div class="squares-wrap">${koSquares}${champLabel}</div></td>
     </tr>`;
   });
 
@@ -1211,8 +1203,6 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
               <th>Knockout pts</th>
               <th>Total</th>
               <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · grey = wrong · empty = pending)</span></th>
-              <th class="td-col-divider"></th>
-              <th class="th-champion">Champion pick</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
