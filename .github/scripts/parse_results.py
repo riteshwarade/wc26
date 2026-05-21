@@ -89,11 +89,10 @@ MATCH_LOOKUP = {
 ESPN_SCOREBOARD_URL = (
     'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard'
 )
-# ESPN caps results at 100 events per request.  Two non-overlapping ranges
-# cover all 104 matches without duplicates:
-#   Group stage  (72 matches): Jun 11 – Jun 27
-#   KO stage     (32 matches): Jun 28 – Jul 20
-ESPN_DATE_RANGES = ['20260611-20260627', '20260628-20260720']
+# ESPN caps results at 100 events per request.  Group stage (72) and KO stage
+# (32) are fetched separately so each request stays well within the cap.
+ESPN_GROUP_DATES = '20260611-20260627'   # M1–M72  (Jun 11 – Jun 27)
+ESPN_KO_DATES    = '20260628-20260720'   # M73–M104 (Jun 28 – Jul 20)
 
 # ESPN uses a handful of team names that differ from our TEAM_CODES values.
 ESPN_TEAM_MAP = {
@@ -105,27 +104,26 @@ ESPN_TEAM_MAP = {
 }
 
 
-def fetch_espn_events():
-    """
-    Return all 104 WC2026 match event dicts from the ESPN scoreboard API.
-    ESPN caps results at 100 per request, so two date-range requests are made
-    and merged (deduplicating by event id).
-    """
-    seen = set()
-    events = []
-    for date_range in ESPN_DATE_RANGES:
-        resp = requests.get(
-            ESPN_SCOREBOARD_URL,
-            params={'dates': date_range},
-            timeout=30,
-            headers={'User-Agent': 'wc26-pool-bot/1.0 (github.com/riteshwarade/wc26)'},
-        )
-        resp.raise_for_status()
-        for evt in resp.json().get('events', []):
-            if evt['id'] not in seen:
-                seen.add(evt['id'])
-                events.append(evt)
-    return events
+def _fetch_events(date_range):
+    """Fetch ESPN scoreboard events for one date range."""
+    resp = requests.get(
+        ESPN_SCOREBOARD_URL,
+        params={'dates': date_range},
+        timeout=30,
+        headers={'User-Agent': 'wc26-pool-bot/1.0 (github.com/riteshwarade/wc26)'},
+    )
+    resp.raise_for_status()
+    return resp.json().get('events', [])
+
+
+def fetch_espn_group_events():
+    """Fetch the 72 group-stage match events (Jun 11–27)."""
+    return _fetch_events(ESPN_GROUP_DATES)
+
+
+def fetch_espn_ko_events():
+    """Fetch the 32 knockout-stage match events (Jun 28–Jul 20)."""
+    return _fetch_events(ESPN_KO_DATES)
 
 
 def espn_team_name(team_dict):
@@ -1338,25 +1336,27 @@ def write_bracket_json(results):
 
 
 if __name__ == '__main__':
-    # ── Fetch all 104 matches in one ESPN API call ─────────────────────────────
-    print('Fetching ESPN events...')
-    events = fetch_espn_events()
-    print(f'Got {len(events)} events')
+    # ── Group stage: results + bracket ────────────────────────────────────────
+    print('Fetching ESPN group-stage events (M1–M72)...')
+    group_events = fetch_espn_group_events()
+    print(f'Got {len(group_events)} group events')
 
-    # ── Group stage results → group_results.csv + knockout_bracket.json ───────
-    print('\nParsing group results...')
-    results = parse_group_results_espn(events)
+    print('Parsing group results...')
+    results = parse_group_results_espn(group_events)
     print(f'Found {len(results)} completed group matches')
     write_csv(results)
     write_bracket_json(results)
 
-    # ── Knockout results → knockout_results.csv ────────────────────────────────
+    # ── Knockout stage: results ────────────────────────────────────────────────
     bracket_path = 'data/knockout_bracket.json'
     if os.path.exists(bracket_path):
         with open(bracket_path, encoding='utf-8') as _f:
             bracket_data = json.load(_f)
-        print('\nParsing knockout results...')
-        ko_results = parse_ko_results_espn(events, bracket_data)
+        print('\nFetching ESPN knockout-stage events (M73–M104)...')
+        ko_events = fetch_espn_ko_events()
+        print(f'Got {len(ko_events)} KO events')
+        print('Parsing knockout results...')
+        ko_results = parse_ko_results_espn(ko_events, bracket_data)
         print(f'Found {len(ko_results)} completed KO matches')
         for m in sorted(ko_results):
             print(f'  M{m}: {ko_results[m]}')
