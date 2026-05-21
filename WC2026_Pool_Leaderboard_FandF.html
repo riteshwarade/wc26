@@ -132,35 +132,11 @@
     text-transform: uppercase;
     letter-spacing: 0.6px;
     margin-bottom: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    user-select: none;
   }
-
-  .section-label:hover { color: var(--swiftly-blue); }
-
-  .section-chevron {
-    font-size: 0.65rem;
-    transition: transform 0.2s ease;
-    display: inline-block;
-  }
-
-  .section-collapsed .section-chevron { transform: rotate(-90deg); }
 
   .section-body {
     overflow: clip; /* clip (not hidden) so position:sticky works inside */
-    transition: max-height 0.25s ease, opacity 0.2s ease;
-    max-height: 9999px;
-    opacity: 1;
     margin-bottom: 32px;
-  }
-
-  .section-body.collapsed {
-    max-height: 0;
-    opacity: 0;
-    margin-bottom: 0;
   }
 
   /* ── Card ── */
@@ -603,9 +579,7 @@
 
 <div class="container">
 
-  <p class="section-label" onclick="toggleSection('standings')">
-    <span class="section-chevron">▼</span> Standings
-  </p>
+  <p class="section-label">Standings</p>
   <div class="section-body" id="standings-body">
     <div class="card" id="standingsCard">
       <div class="state-msg"><span class="emoji">⏳</span>Loading picks and results…</div>
@@ -614,9 +588,7 @@
 
   <div class="side-by-side-layout">
     <div class="side-left">
-      <p class="section-label" onclick="toggleSection('groups')">
-        <span class="section-chevron">▼</span> Group tables
-      </p>
+      <p class="section-label">Group tables</p>
       <div class="section-body" id="groups-body">
         <div id="groupTablesCard">
           <div class="state-msg"><span class="emoji">⏳</span>Loading…</div>
@@ -624,9 +596,7 @@
       </div>
     </div>
     <div class="side-right">
-      <p class="section-label" onclick="toggleSection('results')">
-        <span class="section-chevron">▼</span> Match results
-      </p>
+      <p class="section-label">Match results</p>
       <div class="section-body" id="results-body">
         <div class="card" id="resultsCard">
           <div class="state-msg"><span class="emoji">⏳</span>Loading…</div>
@@ -635,9 +605,7 @@
     </div>
   </div>
 
-  <p class="section-label" onclick="toggleSection('bracket')">
-    <span class="section-chevron">▼</span> Knockout bracket
-  </p>
+  <p class="section-label">Knockout bracket</p>
   <div class="section-body" id="bracket-body">
     <div id="bracketCard">
       <div class="state-msg"><span class="emoji">⏳</span>Loading…</div>
@@ -1114,16 +1082,6 @@ function renderGroupTables(results) {
 
   document.getElementById('groupTablesCard').innerHTML =
     `<div class="group-tables-grid">${cards}</div>${legend}`;
-}
-
-// ── Collapsible sections ──────────────────────────────────
-function toggleSection(id) {
-  const body    = document.getElementById(`${id}-body`);
-  const label   = body.previousElementSibling;
-  const chevron = label.querySelector('.section-chevron');
-  const isOpen  = !body.classList.contains('collapsed');
-  body.classList.toggle('collapsed', isOpen);
-  chevron.style.transform = isOpen ? 'rotate(-90deg)' : '';
 }
 
 // ── Knockout bracket ─────────────────────────────────────
