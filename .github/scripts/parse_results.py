@@ -5,6 +5,7 @@ parses group stage match results, and writes results/group_results.csv.
 """
 
 import csv
+import json
 import os
 import re
 import requests
@@ -98,11 +99,48 @@ def fetch_wikitext():
     return resp.json()['parse']['wikitext']['*']
 
 
+def fetch_ko_wikitext():
+    """Fetch the raw wikitext of the 2026 FIFA World Cup knockout stage Wikipedia article."""
+    resp = requests.get(
+        'https://en.wikipedia.org/w/api.php',
+        params={
+            'action': 'parse',
+            'page': '2026_FIFA_World_Cup_knockout_stage',
+            'prop': 'wikitext',
+            'format': 'json',
+        },
+        timeout=30,
+        headers={'User-Agent': 'wc26-pool-bot/1.0 (github.com/riteshwarade/wc26)'},
+    )
+    resp.raise_for_status()
+    return resp.json()['parse']['wikitext']['*']
+
+
 def extract_team(raw):
-    """Extract team name from a wikitext field containing {{fb|CODE}} or similar."""
-    m = re.search(r'\{\{fb[a-z]*\|([A-Z]{2,3})', raw)
+    """
+    Extract team name from a wikitext field.  Handles several formats:
+      {{fb|ESP}}, {{fb-rt|ESP}}                   (group stage / Copa style)
+      {{#invoke:flag|fb|ESP}}, {{#invoke:flag|fb-rt|ESP}}  (2026 WC KO style)
+      {{#invoke:flagg|main|...|ESP}}               (2022 WC style)
+      [[Spain national football team|Spain]]       (wiki link)
+    Returns the TEAM_CODES display name, or None if not found.
+    """
+    for pat in [
+        r'\{\{fb[a-z\-]*\|([A-Z]{2,3})',                              # {{fb|ESP}}, {{fb-rt|ESP}}
+        r'\{\{#invoke:flag\|fb[a-z\-]*\|([A-Z]{2,3})',               # {{#invoke:flag|fb-rt|ESP}}
+        r'\{\{#invoke:flagg\|[^|]*\|[^|]*\|(?:[^|]*\|)?([A-Z]{2,3})',  # {{#invoke:flagg|main|...|ESP}}
+    ]:
+        m = re.search(pat, raw)
+        if m:
+            result = TEAM_CODES.get(m.group(1))
+            if result:
+                return result
+    # Fallback: wiki link text  [[...|Spain]]
+    m = re.search(r'\[\[[^\]|]*\|([^\]]+)\]\]', raw)
     if m:
-        return TEAM_CODES.get(m.group(1))
+        candidate = m.group(1).strip()
+        if candidate in TEAM_CODES.values():
+            return candidate
     return None
 
 
@@ -166,6 +204,142 @@ def write_csv(results):
             home, away, outcome = results[num]
             w.writerow([num, home, away, outcome])
     print(f'Wrote {len(results)} results → {path}')
+
+
+def parse_ko_results(wikitext, bracket_data):
+    """
+    Parse KO match results from the knockout stage wikitext.
+
+    The 2026 WC KO page uses {{#invoke:football box|main ...}} blocks with
+    scores embedded as {{score link|...|2-1}}.  Older pages (2022 WC, Copa)
+    use {{Football box with plain scores.  Both formats are handled.
+
+    Uses bracket_data (loaded from data/knockout_bracket.json) to map each
+    block's team pair to the correct match number.  Works in bracket order
+    (R32 → R16 → QF → SF → 3rd/Final) so placeholder references like "W73"
+    or "L101" resolve correctly as earlier results become available.
+
+    Returns a dict {match_num (int): winner_name (str)}.
+    """
+    # ── Step 1: split on the correct template name ────────────────────────────
+    pair_to_winner = {}
+
+    # Try the 2026-style Lua module call first; fall back to classic template.
+    blocks = []
+    for pat in (
+        r'\{\{#invoke:football[ _]box\|main',   # 2026 WC KO format
+        r'\{\{[Ff]ootball[ _]box',              # 2022 WC / Copa style
+    ):
+        parts = re.split(pat, wikitext)
+        if len(parts) > 1:
+            blocks = parts[1:]
+            break
+
+    for block in blocks:
+        # Grab the full line for each field — team values may contain '|'
+        # inside nested templates, so we consume the entire line.
+        t1_m    = re.search(r'\|\s*team1\s*=\s*([^\n]+)', block)
+        t2_m    = re.search(r'\|\s*team2\s*=\s*([^\n]+)', block)
+        score_m = re.search(r'\|\s*score\s*=\s*([^\n]+)', block)
+
+        if not (t1_m and t2_m and score_m):
+            continue
+
+        team1 = extract_team(t1_m.group(1))
+        team2 = extract_team(t2_m.group(1))
+        if not (team1 and team2):
+            continue
+
+        # Score may be:
+        #   {{score link|...|2-1}}          → played, score is 2nd param
+        #   {{score link|...|Match 73}}     → not yet played, skip
+        #   2-1  (plain text, older format) → played
+        raw_score = score_m.group(1).strip()
+        sl_m = re.search(r'\{\{score[ _]link\|[^|]+\|([^}|]+)\}\}', raw_score)
+        if sl_m:
+            inner = sl_m.group(1).strip()
+            if re.match(r'^Match\s+\d+$', inner, re.I):
+                continue  # match not yet played
+            actual_score = inner
+        else:
+            actual_score = raw_score
+
+        sm = re.match(r'^(\d+)\s*[–\-]\s*(\d+)', actual_score)
+        if not sm:
+            continue
+        home_g, away_g = int(sm.group(1)), int(sm.group(2))
+
+        if home_g > away_g:
+            winner = team1
+        elif away_g > home_g:
+            winner = team2
+        else:
+            # Draw after 90/120 min — check penalty shootout field.
+            # Wikipedia uses various field names across templates.
+            pen_m = re.search(
+                r'\|\s*(?:penaltyscores?|pen1)\s*=\s*([^\n|]+)', block
+            )
+            if not pen_m:
+                continue  # winner not yet determined
+            pm = re.match(r'^(\d+)\s*[–\-]\s*(\d+)', pen_m.group(1).strip())
+            if not pm or int(pm.group(1)) == int(pm.group(2)):
+                continue  # still undetermined
+            winner = team1 if int(pm.group(1)) > int(pm.group(2)) else team2
+
+        pair_to_winner[frozenset([team1, team2])] = winner
+
+    # ── Step 2: walk bracket sections in order; resolve references & record ──
+    results       = {}
+    match_winners = {}   # match_num → winner name
+    match_losers  = {}   # match_num → loser name
+
+    def resolve(ref):
+        """'W73' → winner of M73, 'L101' → loser of M101, else literal team name."""
+        if not ref:
+            return None
+        if ref.startswith('W'):
+            return match_winners.get(int(ref[1:]))
+        if ref.startswith('L'):
+            return match_losers.get(int(ref[1:]))
+        return ref
+
+    sections_in_order = [
+        bracket_data.get('round_of_32',   {}),
+        bracket_data.get('round_of_16',   {}),
+        bracket_data.get('quarterfinals', {}),
+        bracket_data.get('semifinals',    {}),
+        bracket_data.get('third_place',   {}),
+        bracket_data.get('final',         {}),
+    ]
+
+    for section in sections_in_order:
+        for m_str, info in sorted(section.items(), key=lambda x: int(x[0])):
+            m    = int(m_str)
+            home = resolve(info.get('home'))
+            away = resolve(info.get('away'))
+
+            if not (home and away):
+                continue  # teams not yet determined (bracket not settled)
+
+            winner = pair_to_winner.get(frozenset([home, away]))
+            if winner:
+                results[m]        = winner
+                match_winners[m]  = winner
+                match_losers[m]   = away if winner == home else home
+
+    return results
+
+
+def write_ko_results_csv(results):
+    """Write results/knockout_results.csv with columns: match, winner."""
+    os.makedirs('results', exist_ok=True)
+    path = 'results/knockout_results.csv'
+    with open(path, 'w', newline='', encoding='utf-8') as f:
+        w = csv.writer(f)
+        w.writerow(['match', 'winner'])
+        for num in sorted(results):
+            w.writerow([num, results[num]])
+    print(f'Wrote {len(results)} KO results → {path}')
 
 
 # ── Knockout bracket generation ───────────────────────────────────────────────
@@ -953,7 +1127,7 @@ def write_bracket_json(results):
 
     confirmed = (status == 'confirmed')
 
-    import json, datetime
+    import datetime
     bracket = {
         'generated_at': datetime.datetime.utcnow().isoformat() + 'Z',
         'confirmed': confirmed,
@@ -1015,3 +1189,22 @@ if __name__ == '__main__':
     print(f'Found {len(results)} completed matches')
     write_csv(results)
     write_bracket_json(results)
+
+    # ── Knockout results ───────────────────────────────────────────────────────
+    bracket_path = 'data/knockout_bracket.json'
+    if os.path.exists(bracket_path):
+        with open(bracket_path, encoding='utf-8') as _f:
+            bracket_data = json.load(_f)
+        print('\nFetching knockout stage wikitext...')
+        try:
+            ko_wikitext = fetch_ko_wikitext()
+            print('Parsing knockout results...')
+            ko_results = parse_ko_results(ko_wikitext, bracket_data)
+            print(f'Found {len(ko_results)} completed KO matches')
+            for m in sorted(ko_results):
+                print(f'  M{m}: {ko_results[m]}')
+            write_ko_results_csv(ko_results)
+        except Exception as e:
+            print(f'KO results skipped: {e}')
+    else:
+        print('\nNo knockout_bracket.json yet — KO results will run once bracket is confirmed')
