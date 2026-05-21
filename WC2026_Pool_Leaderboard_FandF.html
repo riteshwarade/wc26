@@ -9,6 +9,7 @@
   :root {
     --swiftly-blue:    #009edf;
     --swiftly-orange:  #ff9e16;
+    --swiftly-red:     #ee0e51;
     --correct-green:   #5ce65c;
     --wrong-red:       #ff6b6b;
     --neutral-lightest:#f7f7f7;
@@ -239,8 +240,8 @@
   }
 
   .sq-correct   { background: var(--swiftly-blue); }
-  .sq-wrong     { background: var(--wrong-red); }
-  .sq-cascaded  { background: var(--wrong-red); }
+  .sq-wrong     { background: var(--swiftly-red); }
+  .sq-cascaded  { background: var(--swiftly-red); }
   .sq-pending   { background: transparent; border: 1px solid var(--neutral-light); }
   .sq-empty     { background: transparent; }
   .sq           { cursor: pointer; }
@@ -266,8 +267,8 @@
   #sq-tooltip .tt-result { margin-bottom: 4px; color: var(--neutral-medium); }
   #sq-tooltip .tt-status { font-weight: 700; }
   #sq-tooltip .tt-status.correct   { color: var(--swiftly-blue); }
-  #sq-tooltip .tt-status.wrong     { color: var(--wrong-red); }
-  #sq-tooltip .tt-status.cascaded  { color: var(--wrong-red); }
+  #sq-tooltip .tt-status.wrong     { color: var(--swiftly-red); }
+  #sq-tooltip .tt-status.cascaded  { color: var(--swiftly-red); }
   #sq-tooltip .tt-status.pending   { color: var(--neutral-medium); }
 
   /* ── Results table ── */
@@ -609,8 +610,8 @@
   }
   .champ-pick  { font-size: 0.82rem; color: var(--neutral-dark); margin-left: 6px; white-space: nowrap; align-self: center; }
   .champ-correct   { color: var(--swiftly-blue); font-weight: 600; }
-  .champ-wrong     { color: var(--wrong-red); text-decoration: line-through; }
-  .champ-cascaded  { color: var(--wrong-red); text-decoration: line-through; font-style: italic; }
+  .champ-wrong     { color: var(--swiftly-red); text-decoration: line-through; }
+  .champ-cascaded  { color: var(--swiftly-red); text-decoration: line-through; font-style: italic; }
 </style>
 <script src="bracket.js"></script>
 </head>
