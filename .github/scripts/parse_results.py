@@ -82,6 +82,162 @@ MATCH_LOOKUP = {
 }
 
 
+# ── ESPN API (primary data source) ───────────────────────────────────────────
+# ESPN's hidden scoreboard API returns clean JSON for all 104 WC2026 matches.
+# No API key required.  Full tournament: group stage + all KO rounds.
+
+ESPN_SCOREBOARD_URL = (
+    'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard'
+)
+# ESPN caps results at 100 events per request.  Two non-overlapping ranges
+# cover all 104 matches without duplicates:
+#   Group stage  (72 matches): Jun 11 – Jun 27
+#   KO stage     (32 matches): Jun 28 – Jul 20
+ESPN_DATE_RANGES = ['20260611-20260627', '20260628-20260720']
+
+# ESPN uses a handful of team names that differ from our TEAM_CODES values.
+ESPN_TEAM_MAP = {
+    'Czechia':            'Czech Republic',
+    'Türkiye':            'Turkey',
+    'Bosnia-Herzegovina': 'Bosnia and Herzegovina',
+    'Congo DR':           'DR Congo',
+    'Curacao':            'Curaçao',
+}
+
+
+def fetch_espn_events():
+    """
+    Return all 104 WC2026 match event dicts from the ESPN scoreboard API.
+    ESPN caps results at 100 per request, so two date-range requests are made
+    and merged (deduplicating by event id).
+    """
+    seen = set()
+    events = []
+    for date_range in ESPN_DATE_RANGES:
+        resp = requests.get(
+            ESPN_SCOREBOARD_URL,
+            params={'dates': date_range},
+            timeout=30,
+            headers={'User-Agent': 'wc26-pool-bot/1.0 (github.com/riteshwarade/wc26)'},
+        )
+        resp.raise_for_status()
+        for evt in resp.json().get('events', []):
+            if evt['id'] not in seen:
+                seen.add(evt['id'])
+                events.append(evt)
+    return events
+
+
+def espn_team_name(team_dict):
+    """Normalise an ESPN team object's displayName to our internal team name."""
+    raw = team_dict.get('displayName', '')
+    return ESPN_TEAM_MAP.get(raw, raw)
+
+
+def parse_group_results_espn(events):
+    """
+    Extract completed group-stage results from ESPN event list.
+    Returns dict {match_num: (home_score, away_score, outcome)}.
+    """
+    results = {}
+    for evt in events:
+        if evt.get('season', {}).get('slug') != 'group-stage':
+            continue
+        comp = evt['competitions'][0]
+        if not comp['status']['type'].get('completed'):
+            continue
+        competitors = comp.get('competitors', [])
+        home_c = next((c for c in competitors if c['homeAway'] == 'home'), None)
+        away_c = next((c for c in competitors if c['homeAway'] == 'away'), None)
+        if not (home_c and away_c):
+            continue
+        home_name  = espn_team_name(home_c.get('team', {}))
+        away_name  = espn_team_name(away_c.get('team', {}))
+        home_score = int(home_c.get('score', 0))
+        away_score = int(away_c.get('score', 0))
+        match_num  = MATCH_LOOKUP.get((home_name, away_name))
+        if not match_num:
+            print(f'  Warning: no group match found for {home_name} vs {away_name}')
+            continue
+        if home_score > away_score:
+            outcome = 'W1'
+        elif away_score > home_score:
+            outcome = 'W2'
+        else:
+            outcome = 'Draw'
+        results[match_num] = (home_score, away_score, outcome)
+    return results
+
+
+def parse_ko_results_espn(events, bracket_data):
+    """
+    Extract completed KO match results from ESPN event list.
+
+    Uses the same bracket-walking logic as parse_ko_results(): iterates
+    sections in order (R32 → R16 → QF → SF → 3rd/Final), resolving
+    'W73'/'L101'-style references as earlier winners become known.
+
+    Returns dict {match_num (int): winner_name (str)}.
+    """
+    KO_SLUGS = {
+        'round-of-32', 'round-of-16', 'quarterfinals',
+        'semifinals', '3rd-place-match', 'final',
+    }
+
+    # Build {frozenset(team1, team2): winner} from completed KO events.
+    # ESPN sets competitor.winner=True for the winning side.
+    pair_to_winner = {}
+    for evt in events:
+        if evt.get('season', {}).get('slug') not in KO_SLUGS:
+            continue
+        comp = evt['competitions'][0]
+        if not comp['status']['type'].get('completed'):
+            continue
+        competitors = comp.get('competitors', [])
+        teams  = [espn_team_name(c.get('team', {})) for c in competitors]
+        winner = next(
+            (espn_team_name(c.get('team', {})) for c in competitors if c.get('winner')),
+            None,
+        )
+        if winner and len(teams) == 2:
+            pair_to_winner[frozenset(teams)] = winner
+
+    # Walk bracket sections in order to assign our match numbers.
+    results       = {}
+    match_winners = {}
+    match_losers  = {}
+
+    def resolve(ref):
+        if not ref:             return None
+        if ref.startswith('W'): return match_winners.get(int(ref[1:]))
+        if ref.startswith('L'): return match_losers.get(int(ref[1:]))
+        return ref
+
+    for section in [
+        bracket_data.get('round_of_32',   {}),
+        bracket_data.get('round_of_16',   {}),
+        bracket_data.get('quarterfinals', {}),
+        bracket_data.get('semifinals',    {}),
+        bracket_data.get('third_place',   {}),
+        bracket_data.get('final',         {}),
+    ]:
+        for m_str, info in sorted(section.items(), key=lambda x: int(x[0])):
+            m    = int(m_str)
+            home = resolve(info.get('home'))
+            away = resolve(info.get('away'))
+            if not (home and away):
+                continue
+            winner = pair_to_winner.get(frozenset([home, away]))
+            if winner:
+                results[m]       = winner
+                match_winners[m] = winner
+                match_losers[m]  = away if winner == home else home
+
+    return results
+
+
+# ── Wikipedia fetch helpers (kept for verify_r32_against_wikipedia) ───────────
+
 def fetch_wikitext():
     """Fetch the raw wikitext of the 2026 FIFA World Cup Wikipedia article."""
     resp = requests.get(
@@ -1182,29 +1338,28 @@ def write_bracket_json(results):
 
 
 if __name__ == '__main__':
-    print('Fetching Wikipedia wikitext...')
-    wikitext = fetch_wikitext()
-    print('Parsing match results...')
-    results = parse_results(wikitext)
-    print(f'Found {len(results)} completed matches')
+    # ── Fetch all 104 matches in one ESPN API call ─────────────────────────────
+    print('Fetching ESPN events...')
+    events = fetch_espn_events()
+    print(f'Got {len(events)} events')
+
+    # ── Group stage results → group_results.csv + knockout_bracket.json ───────
+    print('\nParsing group results...')
+    results = parse_group_results_espn(events)
+    print(f'Found {len(results)} completed group matches')
     write_csv(results)
     write_bracket_json(results)
 
-    # ── Knockout results ───────────────────────────────────────────────────────
+    # ── Knockout results → knockout_results.csv ────────────────────────────────
     bracket_path = 'data/knockout_bracket.json'
     if os.path.exists(bracket_path):
         with open(bracket_path, encoding='utf-8') as _f:
             bracket_data = json.load(_f)
-        print('\nFetching knockout stage wikitext...')
-        try:
-            ko_wikitext = fetch_ko_wikitext()
-            print('Parsing knockout results...')
-            ko_results = parse_ko_results(ko_wikitext, bracket_data)
-            print(f'Found {len(ko_results)} completed KO matches')
-            for m in sorted(ko_results):
-                print(f'  M{m}: {ko_results[m]}')
-            write_ko_results_csv(ko_results)
-        except Exception as e:
-            print(f'KO results skipped: {e}')
+        print('\nParsing knockout results...')
+        ko_results = parse_ko_results_espn(events, bracket_data)
+        print(f'Found {len(ko_results)} completed KO matches')
+        for m in sorted(ko_results):
+            print(f'  M{m}: {ko_results[m]}')
+        write_ko_results_csv(ko_results)
     else:
         print('\nNo knockout_bracket.json yet — KO results will run once bracket is confirmed')
