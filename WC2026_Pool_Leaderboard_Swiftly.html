@@ -9,6 +9,7 @@
   :root {
     --swiftly-blue:    #009edf;
     --swiftly-orange:  #ff9e16;
+    --swiftly-red:     #ee0e51;
     --correct-green:   #5ce65c;
     --wrong-red:       #ff6b6b;
     --neutral-lightest:#f7f7f7;
@@ -228,12 +229,22 @@
     border-radius: 2px;
     flex-shrink: 0;
   }
+  .sq.sq-sm {
+    width: 9px;
+    height: 9px;
+    border-radius: 1px;
+  }
+  .squares-wrap.nowrap {
+    flex-wrap: nowrap;
+    gap: 1.5px;
+  }
 
-  .sq-correct { background: var(--swiftly-blue); }
-  .sq-wrong   { background: var(--neutral-light); }
-  .sq-pending { background: transparent; border: 1px solid var(--neutral-light); }
-  .sq-empty   { background: transparent; }
-  .sq         { cursor: pointer; }
+  .sq-correct   { background: var(--swiftly-blue); }
+  .sq-wrong     { background: var(--swiftly-red); }
+  .sq-cascaded  { background: var(--swiftly-red); }
+  .sq-pending   { background: transparent; border: 1px solid var(--neutral-light); }
+  .sq-empty     { background: transparent; }
+  .sq           { cursor: pointer; }
 
   /* ── Tooltip ── */
   #sq-tooltip {
@@ -255,9 +266,10 @@
   #sq-tooltip .tt-pick   { margin-bottom: 2px; }
   #sq-tooltip .tt-result { margin-bottom: 4px; color: var(--neutral-medium); }
   #sq-tooltip .tt-status { font-weight: 700; }
-  #sq-tooltip .tt-status.correct { color: var(--correct-green); }
-  #sq-tooltip .tt-status.wrong   { color: var(--wrong-red); }
-  #sq-tooltip .tt-status.pending { color: var(--neutral-medium); }
+  #sq-tooltip .tt-status.correct   { color: var(--swiftly-blue); }
+  #sq-tooltip .tt-status.wrong     { color: var(--swiftly-red); }
+  #sq-tooltip .tt-status.cascaded  { color: var(--swiftly-red); }
+  #sq-tooltip .tt-status.pending   { color: var(--neutral-medium); }
 
   /* ── Results table ── */
   .results-table {
@@ -553,32 +565,6 @@
 
   .state-msg .emoji { font-size: 2rem; display: block; margin-bottom: 12px; }
 
-  /* ── Group accordion (KO mode) ── */
-  #groupAccordionHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    padding: 14px 0 10px;
-    border-top: 2px solid var(--neutral-light);
-    margin-top: 8px;
-    user-select: none;
-  }
-  #groupAccordionHeader:hover .accordion-title { color: var(--swiftly-blue); }
-  .accordion-title {
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: var(--neutral-dark);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-  }
-  .accordion-chevron {
-    font-size: 0.65rem;
-    color: var(--neutral-medium);
-    transition: transform 0.2s ease;
-    display: inline-block;
-  }
-  .group-body-collapsed { display: none; }
 
   /* ── KO teaser ── */
   .ko-teaser {
@@ -597,10 +583,11 @@
   .ko-teaser-msg { font-size: 0.78rem; color: var(--neutral-dark); }
 
   /* ── Combined standings columns ── */
-  .td-grp-pts, .td-ko-pts, .td-total-pts { width: 64px; min-width: 64px; text-align: center; }
+  .td-grp-pts, .td-ko-pts, .td-total-pts, .td-max-pts { width: 64px; min-width: 64px; text-align: center; }
   .td-grp-pts   { color: var(--neutral-dark); font-weight: 400; }
   .td-ko-pts    { color: var(--neutral-dark); font-weight: 400; }
   .td-total-pts { font-weight: 700; color: var(--neutral-darkest); }
+  .td-max-pts   { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
   .sq-divider {
     display: inline-block;
     width: 1.5px;
@@ -611,9 +598,20 @@
     border-radius: 1px;
     flex-shrink: 0;
   }
+  .sq-divider-sm {
+    display: inline-block;
+    width: 1.5px;
+    height: 10px;
+    background: var(--neutral-medium);
+    margin: 0 4px;
+    vertical-align: middle;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
   .champ-pick  { font-size: 0.82rem; color: var(--neutral-dark); margin-left: 6px; white-space: nowrap; align-self: center; }
-  .champ-correct { color: var(--swiftly-blue); font-weight: 600; }
-  .champ-wrong   { color: var(--neutral-medium); text-decoration: line-through; }
+  .champ-correct   { color: var(--swiftly-blue); font-weight: 600; }
+  .champ-wrong     { color: var(--swiftly-red); text-decoration: line-through; }
+  .champ-cascaded  { color: var(--swiftly-red); text-decoration: line-through; font-style: italic; }
 </style>
 <script src="bracket.js"></script>
 </head>
@@ -657,7 +655,10 @@
     </div>
   </div>
 
-  <!-- Group section: flat in group mode, accordion in KO mode -->
+  <!-- Divider between KO and group sections (shown in KO mode only) -->
+  <div id="koSectionDivider" style="display:none;border-top:2px solid var(--neutral-light);margin:8px 0 20px"></div>
+
+  <!-- Group section: flat in group mode, no toggle in KO mode -->
   <div id="groupSection">
     <div id="groupAccordionHeader" style="display:none">
       <!-- rendered by JS in KO mode -->
@@ -685,6 +686,8 @@
       <div class="section-body" id="bracket-body">
         <div id="bracketCard"><div class="state-msg"><span class="emoji">⏳</span>Loading…</div></div>
       </div>
+      <!-- KO teaser rendered here in group mode -->
+      <div id="koTeaserSection"></div>
     </div>
   </div>
 
@@ -709,7 +712,7 @@ const KO_PICKS_URL  = `https://raw.githubusercontent.com/riteshwarade/wc26/main/
 const KO_RESULTS_URL = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/results/knockout_results.csv';
 
 // ── Mode detection ────────────────────────────────────────
-const knockoutMode = true;
+const knockoutMode = new Date() >= new Date('2026-06-28T00:00:00Z');
 
 // ── Embedded simulation data (used when USE_LOCAL_DATA = true) ────────────────
 const LOCAL_PICKS = {"Simulation 1":{"1":"Draw","2":"Draw","3":"Draw","4":"W2","5":"W1","6":"W1","7":"Draw","8":"W2","9":"W1","10":"W1","11":"Draw","12":"W1","13":"Draw","14":"W1","15":"W1","16":"Draw","17":"W1","18":"W1","19":"Draw","20":"Draw","21":"W2","22":"W2","23":"Draw","24":"Draw","25":"W1","26":"W2","27":"W1","28":"Draw","29":"Draw","30":"Draw","31":"W2","32":"Draw","33":"W1","34":"Draw","35":"W1","36":"Draw","37":"W2","38":"W1","39":"Draw","40":"W2","41":"Draw","42":"W1","43":"W2","44":"W2","45":"W2","46":"W2","47":"Draw","48":"Draw","49":"W2","50":"W2","51":"W2","52":"W2","53":"W1","54":"W1","55":"W1","56":"W1","57":"W1","58":"W2","59":"W1","60":"W1","61":"W1","62":"Draw","63":"Draw","64":"W1","65":"Draw","66":"W2","67":"W2","68":"W1","69":"Draw","70":"W1","71":"W1","72":"W1"},"Simulation 2":{"1":"Draw","2":"W1","3":"W2","4":"W1","5":"W1","6":"W2","7":"Draw","8":"W1","9":"Draw","10":"W1","11":"W1","12":"Draw","13":"W2","14":"W1","15":"W1","16":"W2","17":"W1","18":"W2","19":"W1","20":"W1","21":"W1","22":"Draw","23":"Draw","24":"W2","25":"W1","26":"Draw","27":"Draw","28":"W2","29":"W2","30":"Draw","31":"W1","32":"W2","33":"Draw","34":"W1","35":"W1","36":"W1","37":"Draw","38":"W1","39":"W1","40":"W1","41":"Draw","42":"W1","43":"Draw","44":"Draw","45":"W2","46":"W1","47":"W1","48":"W1","49":"Draw","50":"W2","51":"W2","52":"W1","53":"Draw","54":"W2","55":"Draw","56":"Draw","57":"Draw","58":"W1","59":"W1","60":"W1","61":"W2","62":"W1","63":"W2","64":"W1","65":"Draw","66":"W2","67":"Draw","68":"Draw","69":"Draw","70":"Draw","71":"Draw","72":"Draw"},"Simulation 3":{"1":"W1","2":"W1","3":"W2","4":"W1","5":"W2","6":"W1","7":"W2","8":"W2","9":"Draw","10":"Draw","11":"Draw","12":"W2","13":"Draw","14":"Draw","15":"Draw","16":"W2","17":"W1","18":"W1","19":"W2","20":"Draw","21":"W2","22":"W2","23":"Draw","24":"Draw","25":"Draw","26":"W1","27":"W2","28":"W1","29":"Draw","30":"Draw","31":"Draw","32":"Draw","33":"W2","34":"W2","35":"W2","36":"Draw","37":"Draw","38":"Draw","39":"Draw","40":"W2","41":"W2","42":"W2","43":"W2","44":"W1","45":"W2","46":"W1","47":"Draw","48":"W1","49":"W1","50":"Draw","51":"W1","52":"Draw","53":"Draw","54":"W1","55":"Draw","56":"W2","57":"Draw","58":"Draw","59":"Draw","60":"Draw","61":"Draw","62":"W2","63":"Draw","64":"Draw","65":"W1","66":"W1","67":"W2","68":"Draw","69":"Draw","70":"W2","71":"W1","72":"W2"},"Simulation 4":{"1":"Draw","2":"Draw","3":"W1","4":"W2","5":"W2","6":"W2","7":"W2","8":"W1","9":"W2","10":"W2","11":"W1","12":"W1","13":"Draw","14":"W1","15":"W2","16":"W1","17":"Draw","18":"Draw","19":"W2","20":"Draw","21":"Draw","22":"W2","23":"Draw","24":"W1","25":"Draw","26":"W2","27":"W2","28":"W2","29":"Draw","30":"W1","31":"W1","32":"Draw","33":"Draw","34":"W2","35":"Draw","36":"Draw","37":"W1","38":"W2","39":"W2","40":"W1","41":"W2","42":"Draw","43":"W2","44":"W1","45":"W2","46":"W1","47":"Draw","48":"W1","49":"W2","50":"Draw","51":"W2","52":"W1","53":"W1","54":"W2","55":"W2","56":"W2","57":"Draw","58":"W1","59":"W1","60":"W1","61":"W1","62":"W2","63":"Draw","64":"W1","65":"W1","66":"W2","67":"W2","68":"W1","69":"W2","70":"W1","71":"W2","72":"Draw"},"Simulation 5":{"1":"Draw","2":"W1","3":"Draw","4":"W2","5":"W2","6":"W2","7":"W2","8":"W2","9":"W2","10":"W2","11":"Draw","12":"W1","13":"Draw","14":"W1","15":"Draw","16":"Draw","17":"Draw","18":"Draw","19":"W2","20":"W1","21":"Draw","22":"Draw","23":"Draw","24":"Draw","25":"W2","26":"W1","27":"W1","28":"W2","29":"W2","30":"W1","31":"W2","32":"W2","33":"W1","34":"W2","35":"W1","36":"W1","37":"W2","38":"W1","39":"W2","40":"Draw","41":"W1","42":"Draw","43":"W1","44":"Draw","45":"W1","46":"W2","47":"W2","48":"Draw","49":"Draw","50":"W1","51":"W2","52":"W1","53":"W1","54":"Draw","55":"Draw","56":"W2","57":"Draw","58":"W2","59":"W1","60":"W1","61":"W1","62":"W1","63":"W1","64":"W2","65":"W2","66":"W2","67":"Draw","68":"W2","69":"Draw","70":"W1","71":"Draw","72":"W1"}};
@@ -1001,47 +1004,107 @@ function parseKoResults(csvText) {
 }
 
 // ── Compute combined standings ────────────────────────────
-function computeCombinedStandings(groupStandings, koPicksData, koResults) {
+function computeCombinedStandings(groupStandings, koPicksData, koResults, bracketData) {
   const KO_MATCH_NUMS = [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,
                          89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104];
 
-  // Start with group standings entries
-  const combined = groupStandings.map(p => {
-    const koPicks = koPicksData[p.name] || {};
-    let koPts = 0;
-    let totalCorrect = 0;
-    let correctChampion = false;
+  // ── Cascade helpers ───────────────────────────────────────
+  // Round number of a KO match (used to track when a team was eliminated).
+  function matchRound(m) {
+    if (m >= 73 && m <= 88)  return 1;  // R32
+    if (m >= 89 && m <= 96)  return 2;  // R16
+    if (m >= 97 && m <= 100) return 3;  // QF
+    if (m === 101 || m === 102) return 4; // SF
+    return 5; // M103 (3rd) and M104 (Final)
+  }
+
+  // A pick for match m is "cascaded" if the picked team's eliminatedInRound
+  // is strictly less than this threshold.
+  // M103 (3rd place): SF losers (elim round 4) are valid → threshold is 4 (must be < 4 to cascade).
+  // M104 (Final): SF winners are valid → any earlier elimination cascades (threshold 5).
+  function cascadeThreshold(m) {
+    if (m >= 73 && m <= 88)  return 0;  // R32: first round, never cascaded
+    if (m >= 89 && m <= 96)  return 2;  // R16: cascaded if out in round 1
+    if (m >= 97 && m <= 100) return 3;  // QF: cascaded if out in rounds 1–2
+    if (m === 101 || m === 102) return 4; // SF: cascaded if out in rounds 1–3
+    if (m === 103) return 4; // 3rd: SF losers (round 4) are valid; cascaded if out in rounds 1–3
+    if (m === 104) return 5; // Final: cascaded if out before winning SF
+    return 0;
+  }
+
+  // ── Build eliminated map: team → round they were knocked out ──
+  // Iterates in match order so team names resolve via getKoTeams() correctly.
+  const eliminatedInRound = {};
+  for (const m of KO_MATCH_NUMS) {
+    const winner = koResults[m];
+    if (!winner || !bracketData) continue;
+    try {
+      const [t1, t2] = getKoTeams(m, bracketData, koResults);
+      const loser = (t1 === winner) ? t2 : (t2 === winner) ? t1 : null;
+      if (loser && !isTbd(loser) && !(loser in eliminatedInRound)) {
+        eliminatedInRound[loser] = matchRound(m);
+      }
+    } catch (e) { /* bracket not yet fully resolved */ }
+  }
+
+  // ── Evaluate picks for one participant ────────────────────
+  function evalKoPicks(koPicks) {
+    let koPts = 0, totalCorrect = 0, correctChampion = false;
     const koPickResults = {};
 
-    KO_MATCH_NUMS.forEach(m => {
-      const pick = koPicks[String(m)];
-      const winner = koResults[m];
-      if (pick && winner) {
-        const isCorrect = pick === winner;
-        if (isCorrect) {
-          koPts += KO_POINTS[m] || 0;
-          totalCorrect++;
-          if (m === 104) correctChampion = true;
+    for (const m of KO_MATCH_NUMS) {
+      const pick      = koPicks[String(m)];
+      const winner    = koResults[m];
+      const threshold = cascadeThreshold(m);
+      const isCascaded = pick && threshold > 0 &&
+                         eliminatedInRound[pick] !== undefined &&
+                         eliminatedInRound[pick] < threshold;
+
+      if (!pick) {
+        koPickResults[m] = { status: 'empty', pick: null, winner: winner || null };
+      } else if (winner) {
+        if (isCascaded) {
+          // Team was knocked out before reaching this match — no points
+          koPickResults[m] = { status: 'cascaded', pick, winner };
+        } else {
+          const isCorrect = pick === winner;
+          if (isCorrect) {
+            koPts += KO_POINTS[m] || 0;
+            totalCorrect++;
+            if (m === 104) correctChampion = true;
+          }
+          koPickResults[m] = { status: isCorrect ? 'correct' : 'wrong', pick, winner };
         }
-        koPickResults[m] = { status: isCorrect ? 'correct' : 'wrong', pick, winner };
-      } else if (pick) {
-        koPickResults[m] = { status: 'pending', pick, winner: null };
       } else {
-        koPickResults[m] = { status: 'empty', pick: null, winner: null };
+        // Match not yet played
+        koPickResults[m] = { status: isCascaded ? 'cascaded' : 'pending', pick, winner: null };
       }
-    });
+    }
 
-    // Count group correct picks too
+    // Max possible KO pts = earned so far + points for every still-pending pick
+    let koPossiblePts = koPts;
+    for (const m of KO_MATCH_NUMS) {
+      if (koPickResults[m].status === 'pending') {
+        koPossiblePts += KO_POINTS[m] || 0;
+      }
+    }
+
+    return { koPts, koPossiblePts, totalCorrect, correctChampion, koPickResults };
+  }
+
+  // ── Build combined list ───────────────────────────────────
+  const combined = groupStandings.map(p => {
+    const { koPts, koPossiblePts, totalCorrect: koCorrect, correctChampion, koPickResults } =
+      evalKoPicks(koPicksData[p.name] || {});
     const grpCorrect = Object.values(p.pickResults || {}).filter(pr => pr.status === 'correct').length;
-    totalCorrect += grpCorrect;
-
     return {
       ...p,
       groupPts: p.points,
       koPts,
       totalPts: p.points + koPts,
+      maxPts: p.points + koPossiblePts,
       correctChampion,
-      totalCorrect,
+      totalCorrect: grpCorrect + koCorrect,
       koPickResults,
     };
   });
@@ -1049,26 +1112,10 @@ function computeCombinedStandings(groupStandings, koPicksData, koResults) {
   // Add any KO-only participants not in group standings
   Object.keys(koPicksData).forEach(name => {
     if (!combined.find(p => p.name === name)) {
-      const koPicks = koPicksData[name];
-      let koPts = 0;
-      let totalCorrect = 0;
-      let correctChampion = false;
-      const koPickResults = {};
-      KO_MATCH_NUMS.forEach(m => {
-        const pick = koPicks[String(m)];
-        const winner = koResults[m];
-        if (pick && winner) {
-          const isCorrect = pick === winner;
-          if (isCorrect) { koPts += KO_POINTS[m] || 0; totalCorrect++; if (m === 104) correctChampion = true; }
-          koPickResults[m] = { status: isCorrect ? 'correct' : 'wrong', pick, winner };
-        } else if (pick) {
-          koPickResults[m] = { status: 'pending', pick, winner: null };
-        } else {
-          koPickResults[m] = { status: 'empty', pick: null, winner: null };
-        }
-      });
-      combined.push({ name, points: 0, groupPts: 0, pickResults: {}, koPts, totalPts: koPts,
-        correctChampion, totalCorrect, koPickResults });
+      const { koPts, koPossiblePts, totalCorrect, correctChampion, koPickResults } =
+        evalKoPicks(koPicksData[name]);
+      combined.push({ name, points: 0, groupPts: 0, pickResults: {}, koPts,
+        totalPts: koPts, maxPts: koPossiblePts, correctChampion, totalCorrect, koPickResults });
     }
   });
 
@@ -1085,7 +1132,7 @@ function computeCombinedStandings(groupStandings, koPicksData, koResults) {
 
 // ── Render KO teaser (group mode) ────────────────────────
 function renderKoTeaser() {
-  document.getElementById('koStandingsSection').innerHTML = `
+  document.getElementById('koTeaserSection').innerHTML = `
     <div class="ko-teaser card">
       <div class="ko-teaser-icon">🏆</div>
       <div class="ko-teaser-title">Knockout Stage</div>
@@ -1180,8 +1227,9 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
 
     const champPr = p.koPickResults[104] || { status: 'empty', pick: null };
     const champName = champPr.pick || '—';
-    const champClass = champPr.status === 'correct' ? 'champ-correct'
-                     : champPr.status === 'wrong'   ? 'champ-wrong'
+    const champClass = champPr.status === 'correct'  ? 'champ-correct'
+                     : champPr.status === 'wrong'    ? 'champ-wrong'
+                     : champPr.status === 'cascaded' ? 'champ-cascaded'
                      : '';
     const champLabel = `<span class="champ-pick ${champClass}">${champName}</span>`;
 
@@ -1191,6 +1239,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
       <td class="td-grp-pts">${p.groupPts}</td>
       <td class="td-ko-pts">${p.koPts}</td>
       <td class="td-total-pts">${p.totalPts}</td>
+      <td class="td-max-pts">${p.maxPts}</td>
       <td class="td-squares"><div class="squares-wrap">${koSquares}${champLabel}</div></td>
     </tr>`;
   });
@@ -1207,7 +1256,8 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
               <th>Group pts</th>
               <th>Knockout pts</th>
               <th>Total</th>
-              <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · grey = wrong · empty = pending)</span></th>
+              <th>Max pts</th>
+              <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · red italic = cascaded void · empty = pending)</span></th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -1256,34 +1306,24 @@ function renderKoBracket(bracketData, koResults) {
 // ── Setup layout based on mode ────────────────────────────
 function setupLayout() {
   if (knockoutMode) {
-    // Show KO bracket section
+    // Show KO bracket section and divider
     document.getElementById('koBracketSection').style.display = '';
-    // Setup group accordion
-    const accordionHeader = document.getElementById('groupAccordionHeader');
-    accordionHeader.style.display = '';
-    accordionHeader.innerHTML = `<div class="accordion-title">Group stage (locked)</div><span class="accordion-chevron">▼</span>`;
-    accordionHeader.addEventListener('click', toggleGroupAccordion);
-    // Collapse group body by default
-    document.getElementById('groupSectionBody').classList.add('group-body-collapsed');
+    document.getElementById('koSectionDivider').style.display = '';
+    // Group section is flat (no accordion) in KO mode — always visible
+    document.getElementById('groupAccordionHeader').style.display = 'none';
     // Update labels
     document.getElementById('groupStandingsLabel').textContent = 'Group standings';
-    document.getElementById('bracketSectionLabel').textContent = 'Provisional bracket';
+    // Hide the provisional bracket — superseded by the live KO bracket above
+    document.getElementById('bracketSectionLabel').style.display = 'none';
+    document.getElementById('bracket-body').style.display = 'none';
     // Update sticky bar label
     document.getElementById('stageLabel').textContent = 'Knockout stage';
   } else {
-    // Group mode: render teaser
+    // Group mode: render teaser below the bracket
     renderKoTeaser();
   }
 }
 
-// ── Accordion toggle ──────────────────────────────────────
-function toggleGroupAccordion() {
-  const body = document.getElementById('groupSectionBody');
-  const chevron = document.querySelector('#groupAccordionHeader .accordion-chevron');
-  const isOpen = !body.classList.contains('group-body-collapsed');
-  body.classList.toggle('group-body-collapsed', isOpen);
-  if (chevron) chevron.style.transform = isOpen ? 'rotate(-90deg)' : '';
-}
 
 // ── Compute scores ────────────────────────────────────────
 function pickLabel(outcome, t1, t2) {
@@ -1328,21 +1368,25 @@ function renderStandings(standings, results) {
   standings.forEach((p, i) => {
     if (p.points !== prevPts) { rank = i + 1; prevPts = p.points; }
     const topClass = rank <= 3 ? ' top3' : '';
-    const squares = MATCHES.map(([num, , , , t1, t2]) => {
+    const GRP_ROUND_BREAKS = new Set([24, 48]);
+    const squareParts = [];
+    for (const [num, , , , t1, t2] of MATCHES) {
       const pr = p.pickResults[num] || { status: 'empty', pick: null, result: null };
       const myPick = pr.pick ? pickLabel(pr.pick, t1, t2) : '—';
       const res = pr.result
         ? `${pr.result.home}–${pr.result.away} (${pickLabel(pr.result.outcome, t1, t2)})`
         : 'Not played yet';
-      return `<span class="sq sq-${pr.status}"
+      squareParts.push(`<span class="sq sq-sm sq-${pr.status}"
         data-match="${num}" data-teams="${t1} v ${t2}"
-        data-pick="${myPick}" data-result="${res}" data-status="${pr.status}"></span>`;
-    }).join('');
+        data-pick="${myPick}" data-result="${res}" data-status="${pr.status}"></span>`);
+      if (GRP_ROUND_BREAKS.has(num)) squareParts.push('<span class="sq-divider-sm"></span>');
+    }
+    const squares = squareParts.join('');
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
       <td class="td-name">${p.name}</td>
       <td class="td-points">${p.points}</td>
-      <td class="td-squares"><div class="squares-wrap">${squares}</div></td>
+      <td class="td-squares"><div class="squares-wrap nowrap">${squares}</div></td>
     </tr>`;
   });
 
@@ -2279,9 +2323,10 @@ document.addEventListener('mouseover', e => {
   const result = sq.dataset.result;
   const status = sq.dataset.status;
 
-  const statusText = status === 'correct' ? '✓ Correct'
-                   : status === 'wrong'   ? '✗ Wrong'
-                   : status === 'pending' ? '⏳ Pending'
+  const statusText = status === 'correct'  ? '✓ Correct'
+                   : status === 'wrong'    ? '✗ Wrong'
+                   : status === 'cascaded' ? '⚡ Void — team eliminated earlier'
+                   : status === 'pending'  ? '⏳ Pending'
                    : '—';
 
   tooltip.innerHTML = `
@@ -2372,7 +2417,7 @@ async function init(skipBracket = false) {
     const bracketConfirmed = bracketData ? bracketData.confirmed === true : false;
 
     if (knockoutMode) {
-      const combined = computeCombinedStandings(standings, koPicksData, koResults);
+      const combined = computeCombinedStandings(standings, koPicksData, koResults, bracketData);
       renderKoStandings(combined, koResults, bracketData);
       if (!skipBracket) renderKoBracket(bracketData, koResults);
       renderStandings(standings, results);  // group-only in group section
