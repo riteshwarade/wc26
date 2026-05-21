@@ -1170,7 +1170,7 @@ function runShortcut(mode) {
 
 function downloadCSV(name) {
   const escape = v => (String(v).includes(',') ? `"${v}"` : v);
-  const rows = [];
+  const rows = [['match', 'result']];
   MATCHES.forEach(m => {
     const [num, , , , t1, t2] = m;
     const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
