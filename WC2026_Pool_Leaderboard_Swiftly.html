@@ -223,8 +223,8 @@
   }
 
   .sq {
-    width: 8px;
-    height: 8px;
+    width: 12px;
+    height: 12px;
     border-radius: 2px;
     flex-shrink: 0;
   }
@@ -597,17 +597,19 @@
   .ko-teaser-msg { font-size: 0.78rem; color: var(--neutral-dark); }
 
   /* ── Combined standings columns ── */
-  .td-grp-pts { color: var(--neutral-dark); font-weight: 400; }
-  .td-ko-pts  { color: var(--neutral-dark); font-weight: 400; }
+  .td-grp-pts, .td-ko-pts, .td-total-pts { width: 64px; min-width: 64px; text-align: center; }
+  .td-grp-pts   { color: var(--neutral-dark); font-weight: 400; }
+  .td-ko-pts    { color: var(--neutral-dark); font-weight: 400; }
   .td-total-pts { font-weight: 700; color: var(--neutral-darkest); }
   .sq-divider {
     display: inline-block;
     width: 1.5px;
-    height: 10px;
+    height: 14px;
     background: var(--neutral-medium);
-    margin: 0 4px;
+    margin: 0 5px;
     vertical-align: middle;
     border-radius: 1px;
+    flex-shrink: 0;
   }
 </style>
 <script src="bracket.js"></script>
@@ -1152,17 +1154,21 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
         data-pick="${myPick}" data-result="${res}" data-status="${pr.status}"></span>`;
     }).join('');
 
-    // KO squares (32 matches)
-    const koSquares = KO_MATCH_ORDER.map(m => {
+    // KO squares (32 matches) with round dividers after R32/R16/QF/SF
+    const KO_ROUND_BREAKS = new Set([88, 96, 100, 102]);
+    const koSquareParts = [];
+    for (const m of KO_MATCH_ORDER) {
       const pr = p.koPickResults[m] || { status: 'empty', pick: null, winner: null };
       const [t1, t2] = bracketData ? getKoTeams(m, bracketData, koResults) : ['TBD','TBD'];
       const teamsStr = `${t1} v ${t2}`;
       const pickStr = pr.pick || '—';
       const resultStr = pr.winner || 'Not played yet';
-      return `<span class="sq sq-${pr.status}"
+      koSquareParts.push(`<span class="sq sq-${pr.status}"
         data-match="M${m}" data-teams="${teamsStr}"
-        data-pick="${pickStr}" data-result="${resultStr}" data-status="${pr.status}"></span>`;
-    }).join('');
+        data-pick="${pickStr}" data-result="${resultStr}" data-status="${pr.status}"></span>`);
+      if (KO_ROUND_BREAKS.has(m)) koSquareParts.push('<span class="sq-divider"></span>');
+    }
+    const koSquares = koSquareParts.join('');
 
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
