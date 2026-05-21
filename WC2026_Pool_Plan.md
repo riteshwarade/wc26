@@ -1,6 +1,6 @@
 # World Cup 2026 Pool — Master Plan
 
-Last updated: May 21, 2026 (test suite complete; 10-user sim data embedded in leaderboard)
+Last updated: May 21, 2026 (FandF leaderboard fully synced to Swiftly canonical; header polish)
 
 ---
 
@@ -511,7 +511,7 @@ Same ESPN-style card DNA across all three: flag emoji + team name + score, winne
   - Variant 3 results bracket: ESPN cards fill progressively from `knockout_results.csv`
 - [x] ~~**Extend `parse_results.py`** to fetch knockout scores~~ — complete; uses ESPN KO API (Jun 28–Jul 20) → `results/knockout_results.csv` (existing `update.yml` picks it up automatically)
 - [x] ~~**Test suite**~~ — `test_leaderboard.js` (80 unit tests) + `test_e2e.js` (10-user sim, 105 invariants); run with `node test_leaderboard.js` and `node test_e2e.js`
-- [ ] **Duplicate Variant 3 changes to `WC2026_Pool_Leaderboard_FandF.html`**
+- [x] ~~**Duplicate Variant 3 changes to `WC2026_Pool_Leaderboard_FandF.html`**~~ — FandF is now regenerated directly from Swiftly; the two files are byte-for-byte identical except 5 lines (title, header text, `POOL_ID`, `POOL_NAME`, `USE_LOCAL_DATA`)
 
 ---
 
@@ -830,7 +830,9 @@ Both leaderboard pages have a `USE_LOCAL_DATA` flag near the top of the `<script
 1. Set `USE_LOCAL_DATA = true` in `WC2026_Pool_Leaderboard_Swiftly.html`
 2. Open file in Chrome directly (`file://` URL)
 3. Edit CSS/JS in editor → save → ⌘R in browser (instant feedback, no push needed)
-4. When done: set `USE_LOCAL_DATA = false`, copy changes to FandF file, push via GitHub Desktop
+4. When done: set `USE_LOCAL_DATA = false`, regenerate FandF from Swiftly (run `make_fandf.py` — swaps the 5 pool-identity lines), push via GitHub Desktop
+
+**FandF sync rule:** never edit `WC2026_Pool_Leaderboard_FandF.html` directly. Always edit Swiftly, then regenerate FandF. The two files are intentionally identical except: `<title>`, header text, `POOL_ID`, `POOL_NAME`, `USE_LOCAL_DATA`.
 
 ---
 
