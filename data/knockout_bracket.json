@@ -1,1 +1,69 @@
-Simulation bracket cleared
+{
+  "confirmed": true,
+  "round_of_32": {
+    "73": {
+      "home": "Brazil",
+      "away": "Morocco"
+    },
+    "74": {
+      "home": "France",
+      "away": "Norway"
+    },
+    "75": {
+      "home": "Spain",
+      "away": "Ecuador"
+    },
+    "76": {
+      "home": "Germany",
+      "away": "Switzerland"
+    },
+    "77": {
+      "home": "Argentina",
+      "away": "Mexico"
+    },
+    "78": {
+      "home": "Netherlands",
+      "away": "Senegal"
+    },
+    "79": {
+      "home": "England",
+      "away": "Ivory Coast"
+    },
+    "80": {
+      "home": "Portugal",
+      "away": "Colombia"
+    },
+    "81": {
+      "home": "Belgium",
+      "away": "United States"
+    },
+    "82": {
+      "home": "Croatia",
+      "away": "Japan"
+    },
+    "83": {
+      "home": "South Korea",
+      "away": "Saudi Arabia"
+    },
+    "84": {
+      "home": "Uruguay",
+      "away": "Egypt"
+    },
+    "85": {
+      "home": "Turkey",
+      "away": "Canada"
+    },
+    "86": {
+      "home": "Austria",
+      "away": "Sweden"
+    },
+    "87": {
+      "home": "Tunisia",
+      "away": "Ghana"
+    },
+    "88": {
+      "home": "Panama",
+      "away": "Australia"
+    }
+  }
+}
