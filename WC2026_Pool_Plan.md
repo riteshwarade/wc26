@@ -1,6 +1,6 @@
 # World Cup 2026 Pool — Master Plan
 
-Last updated: May 21, 2026 (FandF leaderboard fully synced to Swiftly canonical; header polish)
+Last updated: May 22, 2026 (scoring.js extracted; tests updated; make_fandf.py added)
 
 ---
 
@@ -43,10 +43,12 @@ wc26/
 ├── WC2026_Pool_Leaderboard_Swiftly.html       ← leaderboard + knockout bracket (Swiftly)
 ├── WC2026_Pool_Leaderboard_FandF.html         ← leaderboard + knockout bracket (F&F)
 ├── bracket.js                                 ← shared bracket rendering primitives (all variants)
+├── scoring.js                                 ← shared scoring module (browser + Node); single source of truth for MATCHES, KO_POINTS, scoring fns
+├── make_fandf.py                              ← regenerate FandF from Swiftly (5 substitutions); never edit FandF directly
 ├── WC2026_Pool_Plan.md                        ← this document
 ├── test_bracket.py                             ← bracket end-to-end test (495 combos verified)
-├── test_leaderboard.js                        ← unit tests: group scoring, KO scoring, cascade rules, tiebreakers (80 tests)
-├── test_e2e.js                                ← 10-user full-tournament simulation + 105 structural invariant checks
+├── test_leaderboard.js                        ← unit tests: group scoring, KO scoring, cascade rules, tiebreakers (80 tests); imports scoring.js
+├── test_e2e.js                                ← 10-user full-tournament simulation + 105 structural invariant checks; imports scoring.js
 ├── gen_sim_data.js                            ← generates embedded LOCAL_* sim data for leaderboard HTML (seeded, reproducible)
 ├── picks/
 │   ├── group/
@@ -681,7 +683,7 @@ Fetches knockout match results from ESPN API (`dates=20260628-20260720`). ESPN r
 
 Run: `node test_leaderboard.js`
 
-80 tests across 8 sections, exercising the exact scoring functions copied verbatim from `WC2026_Pool_Leaderboard_Swiftly.html`:
+80 tests across 8 sections, exercising scoring functions imported from `scoring.js`:
 
 - **Group stage scoring** — 2 pts per correct pick, 0 for wrong/empty, pending when result not yet available, alphabetical sort on equal pts
 - **CSV parsing** (`parseKoResults`) — normal, empty, header-only, trailing blank lines
