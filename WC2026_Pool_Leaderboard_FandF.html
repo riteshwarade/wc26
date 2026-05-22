@@ -702,9 +702,19 @@ const KO_PICKS_URL  = `https://raw.githubusercontent.com/riteshwarade/wc26/main/
 const KO_RESULTS_URL = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/results/knockout_results.csv';
 
 // ── Mode detection ────────────────────────────────────────
-// Add ?ko=1 to the URL to force knockout mode for testing.
-const knockoutMode = new URLSearchParams(window.location.search).get('ko') === '1'
+// ?games=N  simulates the leaderboard at match N (0–104):
+//   0–72  → group stage, first N results shown
+//   73–104 → knockout stage, all 72 group + first (N-72) KO results shown
+// Omit for normal date-driven behaviour.
+const _gamesParam = new URLSearchParams(window.location.search).get('games');
+const _gamesN     = _gamesParam !== null ? Math.max(0, Math.min(104, parseInt(_gamesParam, 10))) : null;
+const knockoutMode = (_gamesN !== null ? _gamesN >= 73 : false)
   || new Date() >= new Date('2026-06-28T00:00:00Z');
+
+function _sliceCsv(csv, n) {
+  const lines = csv.trim().split('\n');
+  return [lines[0], ...lines.slice(1, n + 1)].join('\n');
+}
 
 
 // ── Render KO teaser (group mode) ────────────────────────
@@ -1886,6 +1896,12 @@ async function init(skipBracket = false) {
       if (bracketResp?.ok) bracketData = await bracketResp.json();
       if (koPicksResp?.ok) koPicksData = await koPicksResp.json();
       if (koResultsResp?.ok) koResultsCSV = await koResultsResp.text();
+
+    // Apply ?games=N slicing
+    if (_gamesN !== null) {
+      resultsCSV   = _sliceCsv(resultsCSV, Math.min(_gamesN, 72));
+      koResultsCSV = _gamesN >= 73 ? _sliceCsv(koResultsCSV, _gamesN - 72) : '';
+    }
 
     const results   = parseResults(resultsCSV);
     const koResults = parseKoResults(koResultsCSV);
