@@ -316,8 +316,8 @@ def parse_results(wikitext):
 
     for block in blocks[1:]:
         # Extract relevant fields
-        t1_m     = re.search(r'\|\s*team1\s*=\s*([^\n|]+)', block)
-        t2_m     = re.search(r'\|\s*team2\s*=\s*([^\n|]+)', block)
+        t1_m     = re.search(r'\|\s*team1\s*=\s*([^\n]+)', block)
+        t2_m     = re.search(r'\|\s*team2\s*=\s*([^\n]+)', block)
         score_m  = re.search(r'\|\s*score\s*=\s*([^\n|]+)', block)
 
         if not (t1_m and t2_m and score_m):
