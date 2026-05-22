@@ -303,29 +303,35 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.25em;
     padding: 4px 8px;
     border-radius: 5px;
     border: 1.5px solid var(--neutral-light);
     font-family: 'Inter', sans-serif;
     font-size: 0.78rem;
-    font-weight: 700;
+    font-weight: 400;
     cursor: pointer;
     transition: all 0.14s;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
-    color: var(--neutral-dark);
+    color: var(--neutral-darkest);
     background: #ffffff;
     user-select: none;
     line-height: 1;
   }
+
+  /* rank muted relative to team name, matching group table style */
+  .pick-btn .team-rank { color: var(--neutral-dark); }
 
   .pick-btn:hover {
     border-color: var(--swiftly-blue);
     color: var(--swiftly-blue);
     background: var(--blue-lightest);
   }
+
+  .pick-btn:hover .team-rank { color: var(--swiftly-blue); }
 
   /* All picks — blue when selected */
   input[type="radio"].win1-radio:checked + .pick-btn,
@@ -334,6 +340,12 @@
     border-color: var(--swiftly-blue);
     background: var(--swiftly-blue);
     color: #ffffff;
+  }
+
+  /* rank stays readable on blue background */
+  input[type="radio"].win1-radio:checked + .pick-btn .team-rank,
+  input[type="radio"].win2-radio:checked + .pick-btn .team-rank {
+    color: rgba(255, 255, 255, 0.75);
   }
 
   /* ── Submit section ──────────────────────────────────────── */
@@ -854,13 +866,13 @@ function buildForm() {
       <div class="match-time">${time.replace(' ET', '')}</div>
       <div class="pick-group">
         <input type="radio" name="m${num}" id="m${num}_w1" value="w1" class="win1-radio" onchange="onPick(${num})">
-        <label class="pick-btn" for="m${num}_w1">${t1} win</label>
+        <label class="pick-btn" for="m${num}_w1">${teamHtml(t1)}</label>
 
         <input type="radio" name="m${num}" id="m${num}_d" value="draw" class="draw-radio" onchange="onPick(${num})">
         <label class="pick-btn" for="m${num}_d">Draw</label>
 
         <input type="radio" name="m${num}" id="m${num}_w2" value="w2" class="win2-radio" onchange="onPick(${num})">
-        <label class="pick-btn" for="m${num}_w2">${t2} win</label>
+        <label class="pick-btn" for="m${num}_w2">${teamHtml(t2)}</label>
       </div>
     `;
 
@@ -1020,14 +1032,14 @@ function showSummary(name) {
     const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
     let pickLabel = '', badgeClass = '';
 
-    if (val === 'w1')   { pickLabel = t1;     badgeClass = 'badge-w1';   w1++; }
-    if (val === 'draw') { pickLabel = 'Draw';  badgeClass = 'badge-draw'; draws++; }
-    if (val === 'w2')   { pickLabel = t2;     badgeClass = 'badge-w2';   w2++; }
+    if (val === 'w1')   { pickLabel = teamHtml(t1, false);  badgeClass = 'badge-w1';   w1++; }
+    if (val === 'draw') { pickLabel = 'Draw';                badgeClass = 'badge-draw'; draws++; }
+    if (val === 'w2')   { pickLabel = teamHtml(t2, false);  badgeClass = 'badge-w2';   w2++; }
 
     rows += `<tr>
       <td style="color:var(--neutral-medium);font-size:0.78rem">#${num}</td>
       <td>
-        ${t1} vs ${t2}
+        ${teamHtml(t1, false)} vs ${teamHtml(t2, false)}
         <br><span style="font-size:0.72rem;color:var(--neutral-dark)">Group ${grp} · ${date}</span>
       </td>
       <td><span class="pick-badge ${badgeClass}">${pickLabel}</span></td>
@@ -1175,7 +1187,7 @@ function downloadCSV(name) {
     const [num, , , , t1, t2] = m;
     const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
     const match = escape(`${t1} v ${t2}`);
-    const label = val === 'w1' ? `${t1} win` : val === 'draw' ? 'Draw' : `${t2} win`;
+    const label = val === 'w1' ? t1 : val === 'draw' ? 'Draw' : t2;
     rows.push([num, match, escape(label)]);
   });
   const csv  = rows.map(r => r.join(',')).join('\n');
