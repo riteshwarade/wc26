@@ -308,24 +308,29 @@
     border: 1.5px solid var(--neutral-light);
     font-family: 'Inter', sans-serif;
     font-size: 0.78rem;
-    font-weight: 700;
+    font-weight: 400;
     cursor: pointer;
     transition: all 0.14s;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
-    color: var(--neutral-dark);
+    color: var(--neutral-darkest);
     background: #ffffff;
     user-select: none;
     line-height: 1;
   }
+
+  /* rank muted relative to team name, matching group table style */
+  .pick-btn .team-rank { color: var(--neutral-dark); }
 
   .pick-btn:hover {
     border-color: var(--swiftly-blue);
     color: var(--swiftly-blue);
     background: var(--blue-lightest);
   }
+
+  .pick-btn:hover .team-rank { color: var(--swiftly-blue); }
 
   /* All picks — blue when selected */
   input[type="radio"].win1-radio:checked + .pick-btn,
@@ -334,6 +339,12 @@
     border-color: var(--swiftly-blue);
     background: var(--swiftly-blue);
     color: #ffffff;
+  }
+
+  /* rank stays readable on blue background */
+  input[type="radio"].win1-radio:checked + .pick-btn .team-rank,
+  input[type="radio"].win2-radio:checked + .pick-btn .team-rank {
+    color: rgba(255, 255, 255, 0.75);
   }
 
   /* ── Submit section ──────────────────────────────────────── */
