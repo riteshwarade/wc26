@@ -702,7 +702,9 @@ const KO_PICKS_URL  = `https://raw.githubusercontent.com/riteshwarade/wc26/main/
 const KO_RESULTS_URL = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/results/knockout_results.csv';
 
 // ── Mode detection ────────────────────────────────────────
-const knockoutMode = new Date() >= new Date('2026-06-28T00:00:00Z');
+// Add ?ko=1 to the URL to force knockout mode for testing.
+const knockoutMode = new URLSearchParams(window.location.search).get('ko') === '1'
+  || new Date() >= new Date('2026-06-28T00:00:00Z');
 
 
 // ── Render KO teaser (group mode) ────────────────────────
