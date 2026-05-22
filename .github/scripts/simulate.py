@@ -204,9 +204,9 @@ def random_outcome():
 
 
 def outcome_label(outcome, t1, t2):
-    if outcome == 'W1':   return f'{t1} win'
+    if outcome == 'W1':   return t1
     if outcome == 'Draw': return 'Draw'
-    return f'{t2} win'
+    return t2
 
 
 def random_score(outcome):

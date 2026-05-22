@@ -82,9 +82,9 @@ def load_picks_csv(filepath, match_teams):
                 t1, t2 = match_teams.get(match_num, ('', ''))
                 if label == 'Draw':
                     outcome = 'Draw'
-                elif label == f'{t1} win':
+                elif label == t1:
                     outcome = 'W1'
-                elif label == f'{t2} win':
+                elif label == t2:
                     outcome = 'W2'
                 else:
                     continue
