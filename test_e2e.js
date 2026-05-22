@@ -16,130 +16,27 @@ const {
   computeStandings, computeCombinedStandings,
 } = require('./scoring.js');
 
-// ─────────────────────────────────────────────────────────────
-// § 1  Seeded PRNG (xorshift32) — reproducible output
-// ─────────────────────────────────────────────────────────────
-
-let _seed = 20260611;
-function rand() {
-  _seed ^= _seed << 13;
-  _seed ^= _seed >> 17;
-  _seed ^= _seed << 5;
-  return (_seed >>> 0) / 0xFFFFFFFF;
-}
-function randInt(n)   { return Math.floor(rand() * n); }
-function randChoice(arr) { return arr[randInt(arr.length)]; }
+const {
+  randInt, randChoice, R32_TEAMS,
+  generateKoTournament, generateGroupPicks, generateKoPicks,
+} = require('./sim_core.js');
 
 // ─────────────────────────────────────────────────────────────
-// § 2  Simulation constants — KO bracket topology + R32 teams
+// § 1  Local data generators (test_e2e-specific formats)
 // ─────────────────────────────────────────────────────────────
 
-// Bracket topology (used by generateKoResults/generateKoPicks)
-const R16 = {
-   89:[74,77],  90:[73,75],  91:[76,78],  92:[79,80],
-   93:[83,84],  94:[81,82],  95:[86,88],  96:[85,87],
-};
-const QF = {
-   97:[89,90],  98:[93,94],  99:[91,92], 100:[95,96],
-};
-const SF = {
-  101:[97,98], 102:[99,100],
-};
-
-// R32 simulated teams (same as simulate.py — representative names only)
-const R32_TEAMS = {
-  73:['Brazil','Morocco'],      74:['France','Norway'],
-  75:['Spain','Ecuador'],       76:['Germany','Switzerland'],
-  77:['Argentina','Mexico'],    78:['Netherlands','Senegal'],
-  79:['England','Ivory Coast'], 80:['Portugal','Colombia'],
-  81:['Belgium','United States'], 82:['Croatia','Japan'],
-  83:['South Korea','Saudi Arabia'], 84:['Uruguay','Egypt'],
-  85:['Turkey','Canada'],       86:['Austria','Sweden'],
-  87:['Tunisia','Ghana'],       88:['Panama','Australia'],
-};
-
-// ─────────────────────────────────────────────────────────────
-// § 3  Data generation
-// ─────────────────────────────────────────────────────────────
-
+// Group results as { matchNum: { home, away, outcome } } (object format, not CSV)
 function generateGroupResults() {
-  // Returns { matchNum: { home, away, outcome } } for all 72 matches
   const results = {};
-  for (const [num, , , , t1, t2] of MATCHES) {
+  for (const [num] of MATCHES) {
     const outcome = randChoice(['W1', 'W2', 'Draw']);
     let home, away;
-    if (outcome === 'W1') { home = randInt(3) + 1; away = randInt(home); }
+    if (outcome === 'W1')      { home = randInt(3) + 1; away = randInt(home); }
     else if (outcome === 'W2') { away = randInt(3) + 1; home = randInt(away); }
-    else { const s = randInt(3); home = s; away = s; }
+    else                       { const s = randInt(3); home = s; away = s; }
     results[num] = { home, away, outcome };
   }
   return results;
-}
-
-function generateKoResults() {
-  // Simulate round-by-round knockout. Returns { matchNum: winnerName }.
-  const winners = {};
-  const matchTeams = { ...R32_TEAMS };
-
-  for (const [m, [home, away]] of Object.entries(R32_TEAMS)) {
-    winners[+m] = randChoice([home, away]);
-  }
-  for (const feeds of [R16, QF, SF]) {
-    for (const [m, [f1, f2]] of Object.entries(feeds)) {
-      matchTeams[+m] = [winners[f1], winners[f2]];
-      winners[+m] = randChoice([winners[f1], winners[f2]]);
-    }
-  }
-  // 3rd place: SF losers
-  const [sf1h, sf1a] = matchTeams[101];
-  const [sf2h, sf2a] = matchTeams[102];
-  const loser101 = winners[101] === sf1h ? sf1a : sf1h;
-  const loser102 = winners[102] === sf2h ? sf2a : sf2h;
-  matchTeams[103] = [loser101, loser102];
-  winners[103] = randChoice([loser101, loser102]);
-  // Final
-  matchTeams[104] = [winners[101], winners[102]];
-  winners[104] = randChoice([winners[101], winners[102]]);
-
-  return { winners, matchTeams };
-}
-
-function generateGroupPicks() {
-  // Returns { '1': 'W1', '2': 'Draw', ... } for all 72 matches
-  const picks = {};
-  for (const [num] of MATCHES) {
-    picks[String(num)] = randChoice(['W1', 'W2', 'Draw']);
-  }
-  return picks;
-}
-
-function generateKoPicks(koWinners, koMatchTeams) {
-  // Simulate a participant who picks random winners round by round,
-  // but from the actual teams in each match (not always correct).
-  const picks = {};
-  const myWinners = {};
-  const myTeams = { ...R32_TEAMS };
-
-  for (const [m, [home, away]] of Object.entries(R32_TEAMS)) {
-    myWinners[+m] = randChoice([home, away]);
-    picks[String(m)] = myWinners[+m];
-  }
-  for (const feeds of [R16, QF, SF]) {
-    for (const [m, [f1, f2]] of Object.entries(feeds)) {
-      myTeams[+m] = [myWinners[f1], myWinners[f2]];
-      myWinners[+m] = randChoice([myWinners[f1], myWinners[f2]]);
-      picks[String(m)] = myWinners[+m];
-    }
-  }
-  // 3rd place: pick from participants' own SF losers (valid picks for M103)
-  const [sf1h, sf1a] = myTeams[101];
-  const [sf2h, sf2a] = myTeams[102];
-  const loser101 = myWinners[101] === sf1h ? sf1a : sf1h;
-  const loser102 = myWinners[102] === sf2h ? sf2a : sf2h;
-  picks['103'] = randChoice([loser101, loser102]);
-  // Final
-  picks['104'] = myWinners[101] || myWinners[102];  // pick one SF winner
-  return picks;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -165,7 +62,7 @@ console.log('Generating tournament data...\n');
 
 // Generate results (shared for all participants)
 const groupResults = generateGroupResults();
-const { winners: koWinners, matchTeams: koMatchTeams } = generateKoResults();
+const { winners: koWinners, matchTeams: koMatchTeams } = generateKoTournament();
 
 // bracketData mirrors knockout_bracket.json format
 const bracketData = {
@@ -178,9 +75,10 @@ const bracketData = {
 // Generate each participant's picks
 const allGroupPicks = {};
 const allKoPicks    = {};
+const matchNums = MATCHES.map(m => m[0]);
 for (const name of PARTICIPANT_NAMES) {
-  allGroupPicks[name] = generateGroupPicks();
-  allKoPicks[name]    = generateKoPicks(koWinners, koMatchTeams);
+  allGroupPicks[name] = generateGroupPicks(matchNums);
+  allKoPicks[name]    = generateKoPicks();
 }
 
 // Print tournament summary
