@@ -854,13 +854,13 @@ function buildForm() {
       <div class="match-time">${time.replace(' ET', '')}</div>
       <div class="pick-group">
         <input type="radio" name="m${num}" id="m${num}_w1" value="w1" class="win1-radio" onchange="onPick(${num})">
-        <label class="pick-btn" for="m${num}_w1">${teamHtml(t1, false)} win</label>
+        <label class="pick-btn" for="m${num}_w1">${teamHtml(t1)}</label>
 
         <input type="radio" name="m${num}" id="m${num}_d" value="draw" class="draw-radio" onchange="onPick(${num})">
         <label class="pick-btn" for="m${num}_d">Draw</label>
 
         <input type="radio" name="m${num}" id="m${num}_w2" value="w2" class="win2-radio" onchange="onPick(${num})">
-        <label class="pick-btn" for="m${num}_w2">${teamHtml(t2, false)} win</label>
+        <label class="pick-btn" for="m${num}_w2">${teamHtml(t2)}</label>
       </div>
     `;
 
