@@ -2,238 +2,17 @@
  * test_leaderboard.js
  *
  * End-to-end tests for leaderboard scoring calculations.
- * Exercises the exact functions from WC2026_Pool_Leaderboard_Swiftly.html
- * (copied verbatim) plus the bracket helpers from bracket.js.
+ * Imports scoring functions from scoring.js (the shared module).
  *
  * Run: node test_leaderboard.js
  */
 
 'use strict';
 
-// ─────────────────────────────────────────────────────────────
-// § 1  Dependencies from bracket.js (verbatim)
-// ─────────────────────────────────────────────────────────────
-
-const R16 = {
-   89:[74,77],  90:[73,75],  91:[76,78],  92:[79,80],
-   93:[83,84],  94:[81,82],  95:[86,88],  96:[85,87],
-};
-const QF = {
-   97:[89,90],  98:[93,94],  99:[91,92], 100:[95,96],
-};
-const SF = {
-  101:[97,98], 102:[99,100],
-};
-
-function isTbd(name) {
-  return !name || name === 'TBD' || /^[WL]\d+$/.test(name) || /^[12][A-L]$/.test(name) || /^3M\d+$/.test(name);
-}
-
-// ─────────────────────────────────────────────────────────────
-// § 2  Stub MATCHES — 6 matches from 3 groups (enough for
-//       group-stage scoring tests without loading all 72)
-// ─────────────────────────────────────────────────────────────
-
-const MATCHES = [
-  [1,  'A', 'Jun 12', '14:00', 'Mexico',  'South Africa'],
-  [2,  'A', 'Jun 12', '17:00', 'South Korea', 'Czech Republic'],
-  [3,  'B', 'Jun 13', '14:00', 'Canada',  'Bosnia and Herzegovina'],
-  [4,  'B', 'Jun 13', '17:00', 'Qatar',   'Switzerland'],
-  [5,  'C', 'Jun 14', '14:00', 'Brazil',  'Morocco'],
-  [6,  'C', 'Jun 14', '17:00', 'Haiti',   'Scotland'],
-];
-
-// ─────────────────────────────────────────────────────────────
-// § 3  Functions from WC2026_Pool_Leaderboard_Swiftly.html
-//      (verbatim — do NOT edit these; edit the source HTML)
-// ─────────────────────────────────────────────────────────────
-
-const KO_POINTS = {
-  73:4,74:4,75:4,76:4,77:4,78:4,79:4,80:4,
-  81:4,82:4,83:4,84:4,85:4,86:4,87:4,88:4,
-  89:8,90:8,91:8,92:8,93:8,94:8,95:8,96:8,
-  97:12,98:12,99:12,100:12,
-  101:16,102:16,103:12,104:24,
-};
-
-function parseKoResults(csvText) {
-  const results = {};
-  if (!csvText || !csvText.trim()) return results;
-  csvText.trim().split('\n').slice(1).forEach(line => {
-    const parts = line.split(',');
-    const num = parseInt(parts[0]);
-    const winner = parts[1] ? parts[1].trim() : null;
-    if (num && winner) {
-      results[num] = winner;
-    }
-  });
-  return results;
-}
-
-function getKoTeams(m, bracketData, koResults) {
-  if (m >= 73 && m <= 88) {
-    if (bracketData && bracketData.round_of_32 && bracketData.round_of_32[String(m)]) {
-      const slot = bracketData.round_of_32[String(m)];
-      return [slot.home, slot.away];
-    }
-    return ['TBD', 'TBD'];
-  }
-  if (R16[m]) {
-    const [f1, f2] = R16[m];
-    return [koResults[f1] || `W${f1}`, koResults[f2] || `W${f2}`];
-  }
-  if (QF[m]) {
-    const [f1, f2] = QF[m];
-    return [koResults[f1] || `W${f1}`, koResults[f2] || `W${f2}`];
-  }
-  if (SF[m]) {
-    const [f1, f2] = SF[m];
-    return [koResults[f1] || `W${f1}`, koResults[f2] || `W${f2}`];
-  }
-  if (m === 103) {
-    const [sf1h, sf1a] = getKoTeams(101, bracketData, koResults);
-    const [sf2h, sf2a] = getKoTeams(102, bracketData, koResults);
-    const loser1 = koResults[101] ? (koResults[101] === sf1h ? sf1a : sf1h) : `L101`;
-    const loser2 = koResults[102] ? (koResults[102] === sf2h ? sf2a : sf2h) : `L102`;
-    return [loser1, loser2];
-  }
-  if (m === 104) {
-    return [koResults[101] || `W101`, koResults[102] || `W102`];
-  }
-  return ['TBD', 'TBD'];
-}
-
-function computeStandings(picksData, results) {
-  return Object.entries(picksData).map(([name, picks]) => {
-    let points = 0;
-    const pickResults = {};
-    MATCHES.forEach(([num, , , , t1, t2]) => {
-      const result  = results[num];
-      const pick    = picks[String(num)];
-      if (result && pick) {
-        const correct = pick === result.outcome;
-        if (correct) points += 2;
-        pickResults[num] = { status: correct ? 'correct' : 'wrong', pick, result };
-      } else if (pick) {
-        pickResults[num] = { status: 'pending', pick, result: null };
-      } else {
-        pickResults[num] = { status: 'empty', pick: null, result: null };
-      }
-    });
-    return { name, points, pickResults };
-  }).sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
-}
-
-function computeCombinedStandings(groupStandings, koPicksData, koResults, bracketData) {
-  const KO_MATCH_NUMS = [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,
-                         89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104];
-
-  function matchRound(m) {
-    if (m >= 73 && m <= 88)  return 1;
-    if (m >= 89 && m <= 96)  return 2;
-    if (m >= 97 && m <= 100) return 3;
-    if (m === 101 || m === 102) return 4;
-    return 5;
-  }
-
-  function cascadeThreshold(m) {
-    if (m >= 73 && m <= 88)  return 0;
-    if (m >= 89 && m <= 96)  return 2;
-    if (m >= 97 && m <= 100) return 3;
-    if (m === 101 || m === 102) return 4;
-    if (m === 103) return 4;
-    if (m === 104) return 5;
-    return 0;
-  }
-
-  const eliminatedInRound = {};
-  for (const m of KO_MATCH_NUMS) {
-    const winner = koResults[m];
-    if (!winner || !bracketData) continue;
-    try {
-      const [t1, t2] = getKoTeams(m, bracketData, koResults);
-      const loser = (t1 === winner) ? t2 : (t2 === winner) ? t1 : null;
-      if (loser && !isTbd(loser) && !(loser in eliminatedInRound)) {
-        eliminatedInRound[loser] = matchRound(m);
-      }
-    } catch (e) {}
-  }
-
-  function evalKoPicks(koPicks) {
-    let koPts = 0, totalCorrect = 0, correctChampion = false;
-    const koPickResults = {};
-
-    for (const m of KO_MATCH_NUMS) {
-      const pick      = koPicks[String(m)];
-      const winner    = koResults[m];
-      const threshold = cascadeThreshold(m);
-      const isCascaded = pick && threshold > 0 &&
-                         eliminatedInRound[pick] !== undefined &&
-                         eliminatedInRound[pick] < threshold;
-
-      if (!pick) {
-        koPickResults[m] = { status: 'empty', pick: null, winner: winner || null };
-      } else if (winner) {
-        if (isCascaded) {
-          koPickResults[m] = { status: 'cascaded', pick, winner };
-        } else {
-          const isCorrect = pick === winner;
-          if (isCorrect) {
-            koPts += KO_POINTS[m] || 0;
-            totalCorrect++;
-            if (m === 104) correctChampion = true;
-          }
-          koPickResults[m] = { status: isCorrect ? 'correct' : 'wrong', pick, winner };
-        }
-      } else {
-        koPickResults[m] = { status: isCascaded ? 'cascaded' : 'pending', pick, winner: null };
-      }
-    }
-
-    let koPossiblePts = koPts;
-    for (const m of KO_MATCH_NUMS) {
-      if (koPickResults[m].status === 'pending') {
-        koPossiblePts += KO_POINTS[m] || 0;
-      }
-    }
-
-    return { koPts, koPossiblePts, totalCorrect, correctChampion, koPickResults };
-  }
-
-  const combined = groupStandings.map(p => {
-    const { koPts, koPossiblePts, totalCorrect: koCorrect, correctChampion, koPickResults } =
-      evalKoPicks(koPicksData[p.name] || {});
-    const grpCorrect = Object.values(p.pickResults || {}).filter(pr => pr.status === 'correct').length;
-    return {
-      ...p,
-      groupPts: p.points,
-      koPts,
-      totalPts: p.points + koPts,
-      maxPts: p.points + koPossiblePts,
-      correctChampion,
-      totalCorrect: grpCorrect + koCorrect,
-      koPickResults,
-    };
-  });
-
-  Object.keys(koPicksData).forEach(name => {
-    if (!combined.find(p => p.name === name)) {
-      const { koPts, koPossiblePts, totalCorrect, correctChampion, koPickResults } =
-        evalKoPicks(koPicksData[name]);
-      combined.push({ name, points: 0, groupPts: 0, pickResults: {}, koPts,
-        totalPts: koPts, maxPts: koPossiblePts, correctChampion, totalCorrect, koPickResults });
-    }
-  });
-
-  combined.sort((a, b) =>
-    (b.totalPts - a.totalPts) ||
-    ((b.correctChampion ? 1 : 0) - (a.correctChampion ? 1 : 0)) ||
-    (b.totalCorrect - a.totalCorrect) ||
-    a.name.localeCompare(b.name)
-  );
-
-  return combined;
-}
+const {
+  KO_POINTS, parseKoResults, getKoTeams,
+  computeStandings, computeCombinedStandings,
+} = require('./scoring.js');
 
 // ─────────────────────────────────────────────────────────────
 // § 4  Test harness
@@ -315,14 +94,17 @@ section('Group stage — basic scoring');
   assert('Carol scores 4 pts (2 correct × 2, 1 wrong)', byName.Carol.points === 4);
   assert('Dave scores 0 pts (no picks)', byName.Dave.points === 0);
 
-  assert('Alice: all 6 statuses correct', Object.values(byName.Alice.pickResults).every(r => r.status === 'correct'));
-  assert('Bob: all 6 statuses wrong', Object.values(byName.Bob.pickResults).every(r => r.status === 'wrong'));
+  // scoring.js uses all 72 MATCHES; picks for matches 7–72 are 'empty' for these players
+  assert('Alice: matches 1–6 all correct',
+    [1,2,3,4,5,6].every(n => byName.Alice.pickResults[n].status === 'correct'));
+  assert('Bob: matches 1–6 all wrong',
+    [1,2,3,4,5,6].every(n => byName.Bob.pickResults[n].status === 'wrong'));
 
   const carolStatuses = Object.values(byName.Carol.pickResults).map(r => r.status);
-  assert('Carol: 2 correct, 1 wrong, 3 empty',
+  assert('Carol: 2 correct, 1 wrong, rest empty',
     carolStatuses.filter(s => s === 'correct').length === 2 &&
     carolStatuses.filter(s => s === 'wrong').length === 1 &&
-    carolStatuses.filter(s => s === 'empty').length === 3
+    carolStatuses.filter(s => s === 'empty').length === carolStatuses.length - 3
   );
 }
 
