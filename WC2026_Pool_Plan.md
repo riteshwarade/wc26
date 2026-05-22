@@ -1,6 +1,6 @@
 # World Cup 2026 Pool — Master Plan
 
-Last updated: May 22, 2026 (USE_LOCAL_DATA + LOCAL_* constants removed; gen_sim_data.js deleted; simulate.py is canonical local dev workflow)
+Last updated: May 22, 2026 (USE_LOCAL_DATA removed; ?games=N + ?ko=1 URL params added; 🥇 champion icon; actions upgraded to v6)
 
 ---
 
@@ -245,8 +245,9 @@ const knockoutMode = new Date() >= new Date('2026-06-28T00:00:00Z');
 - `wrong` = team was in the match but lost → 0 pts, red square
 - Max pts = current total + sum of `KO_POINTS[m]` for all `pending` picks
 
-**Dev workflow flag** (remove before Jun 11/28):
-- `knockoutMode = true` — forces KO layout regardless of date (set to date expression for production)
+**URL testing params** (no code changes needed, no cleanup required):
+- `?games=N` — simulates leaderboard at match N (0–72 = group stage, 73–104 = knockout stage); slices results CSVs client-side
+- `?ko=1` — shortcut to force knockout mode without specifying a game count
 
 ---
 
@@ -491,9 +492,10 @@ Same ESPN-style card DNA across all three: flag emoji + team name + score, winne
 - [x] ~~Rebuild bracket with new design~~ — Variant 1 complete in both leaderboard pages
 - [x] ~~Font size consistency~~ — `0.78rem` body / `0.68rem` headers across all 4 pages
 - [x] ~~Pick form polish~~ — shortcuts, name field, progress bar, reset, qualification logic, flag emojis, header consistency
-- [x] ~~**Remove `USE_LOCAL_DATA`**~~ — `USE_LOCAL_DATA` and all embedded `LOCAL_*` sim data removed from both leaderboard pages; leaderboard always fetches live from GitHub. Use `simulate.py` + local server for testing.
-- [ ] **Remove `knockoutMode = true`** from both leaderboard pages (set to date expression) before Jun 11
-- [ ] Clear simulation data (`Actions → Clear simulation data`) before Jun 11
+- [x] ~~**Remove `USE_LOCAL_DATA`**~~ — removed; leaderboard always fetches live from GitHub. Use `simulate.py` + `?games=N` for testing.
+- [x] ~~**`knockoutMode` date expression**~~ — already date-driven (`>= 2026-06-28`); no manual flag to remove
+- [x] ~~**Testing URL params**~~ — `?games=N` (0–104) and `?ko=1` added; no code cleanup needed before tournament
+- [ ] Clear simulation data (`Actions → Clear simulation data`) before Jun 11 — or auto-clear fires at 1pm ET Jun 11
 - [ ] Share pick page links with participants, collect CSVs
 - [ ] Upload real participant CSVs to `picks/group/swiftly/` and `picks/group/fandf/`
 
@@ -862,8 +864,11 @@ The leaderboard always fetches live data from GitHub — there is no embedded si
 2. `python .github/scripts/aggregate_picks.py` — builds the aggregated JSON files the leaderboard fetches
 3. `python -m http.server 8000` from the repo root
 4. Open `http://localhost:8000/WC2026_Pool_Leaderboard_Swiftly.html` in Chrome
-5. Edit CSS/JS in editor → save → ⌘R in browser
-6. When done: regenerate FandF from Swiftly (`python3 make_fandf.py`), push via GitHub Desktop
+5. Append `?games=N` to the URL to simulate any point in the tournament (e.g. `?games=88` = R32 complete)
+6. Edit CSS/JS in editor → save → ⌘R in browser
+7. When done: regenerate FandF from Swiftly (`python3 make_fandf.py`), push via GitHub Desktop
+
+**Or without touching your machine:** trigger **Actions → Simulate picks and results** (participants=10, stage=all) on GitHub, then browse the live GitHub Pages URL with `?games=N`.
 
 **FandF sync rule:** never edit `WC2026_Pool_Leaderboard_FandF.html` directly. Always edit Swiftly, then regenerate FandF. The two files are intentionally identical except 4 lines: `<title>`, header text, `POOL_ID`, `POOL_NAME`.
 
