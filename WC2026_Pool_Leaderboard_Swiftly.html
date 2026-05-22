@@ -1953,32 +1953,17 @@ setupLayout();
 
 // ── Auto-refresh every 15 minutes ────────────────────────
 const REFRESH_MS = 15 * 60 * 1000;
-let _lastUpdated  = null;
-let _nextRefresh  = null;
+let _lastUpdated = null;
 
 function _updateTimestamp() {
   const el = document.getElementById('updatedAt');
   if (!el || !_lastUpdated) return;
-  const time = _lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  if (_nextRefresh) {
-    const secsLeft = Math.max(0, Math.round((_nextRefresh - Date.now()) / 1000));
-    const mm = String(Math.floor(secsLeft / 60)).padStart(2, '0');
-    const ss = String(secsLeft % 60).padStart(2, '0');
-    el.textContent = `Updated ${time} · refreshing in ${mm}:${ss}`;
-  } else {
-    el.textContent = `Updated ${time}`;
-  }
+  el.textContent = `Updated ${_lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
 
-setInterval(_updateTimestamp, 1000);
-
-setInterval(() => {
-  init();
-  _nextRefresh = Date.now() + REFRESH_MS;
-}, REFRESH_MS);
+setInterval(() => { init(); }, REFRESH_MS);
 
 init();
-_nextRefresh = Date.now() + REFRESH_MS;
 </script>
 </body>
 </html>
