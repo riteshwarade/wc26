@@ -1,6 +1,6 @@
 # World Cup 2026 Pool — Master Plan
 
-Last updated: May 21, 2026 (FandF leaderboard fully synced to Swiftly canonical; header polish)
+Last updated: May 22, 2026 (scoring.js + sim_core.js extracted; test_partial.js + test_parse_results.py added; parse_results() wikitext bug fixed)
 
 ---
 
@@ -43,10 +43,14 @@ wc26/
 ├── WC2026_Pool_Leaderboard_Swiftly.html       ← leaderboard + knockout bracket (Swiftly)
 ├── WC2026_Pool_Leaderboard_FandF.html         ← leaderboard + knockout bracket (F&F)
 ├── bracket.js                                 ← shared bracket rendering primitives (all variants)
+├── scoring.js                                 ← shared scoring module (browser + Node); single source of truth for MATCHES, KO_POINTS, scoring fns
+├── make_fandf.py                              ← regenerate FandF from Swiftly (5 substitutions); never edit FandF directly
 ├── WC2026_Pool_Plan.md                        ← this document
 ├── test_bracket.py                             ← bracket end-to-end test (495 combos verified)
-├── test_leaderboard.js                        ← unit tests: group scoring, KO scoring, cascade rules, tiebreakers (80 tests)
-├── test_e2e.js                                ← 10-user full-tournament simulation + 105 structural invariant checks
+├── test_leaderboard.js                        ← unit tests: group scoring, KO scoring, cascade rules, tiebreakers (80 tests); imports scoring.js
+├── test_e2e.js                                ← 10-user full-tournament simulation + 105 structural invariant checks; imports scoring.js + sim_core.js
+├── test_partial.js                            ← mid-tournament state tests: pending/cascaded picks, maxPts at each phase (84 tests); imports scoring.js
+├── test_parse_results.py                      ← Python unit tests for parse_results.py: ESPN + wikitext parsers, CSV writers, MATCH_LOOKUP (61 tests)
 ├── gen_sim_data.js                            ← generates embedded LOCAL_* sim data for leaderboard HTML (seeded, reproducible)
 ├── picks/
 │   ├── group/
@@ -510,7 +514,7 @@ Same ESPN-style card DNA across all three: flag emoji + team name + score, winne
   - Group section flat in KO mode (no toggle); KO teaser below bracket in group mode
   - Variant 3 results bracket: ESPN cards fill progressively from `knockout_results.csv`
 - [x] ~~**Extend `parse_results.py`** to fetch knockout scores~~ — complete; uses ESPN KO API (Jun 28–Jul 20) → `results/knockout_results.csv` (existing `update.yml` picks it up automatically)
-- [x] ~~**Test suite**~~ — `test_leaderboard.js` (80 unit tests) + `test_e2e.js` (10-user sim, 105 invariants); run with `node test_leaderboard.js` and `node test_e2e.js`
+- [x] ~~**Test suite**~~ — `test_leaderboard.js` (80 unit tests) + `test_e2e.js` (105 invariants) + `test_partial.js` (84 mid-tournament state tests) + `test_parse_results.py` (61 Python tests); all import shared `scoring.js` / `sim_core.js`
 - [x] ~~**Duplicate Variant 3 changes to `WC2026_Pool_Leaderboard_FandF.html`**~~ — FandF is now regenerated directly from Swiftly; the two files are byte-for-byte identical except 5 lines (title, header text, `POOL_ID`, `POOL_NAME`, `USE_LOCAL_DATA`)
 
 ---
@@ -681,7 +685,7 @@ Fetches knockout match results from ESPN API (`dates=20260628-20260720`). ESPN r
 
 Run: `node test_leaderboard.js`
 
-80 tests across 8 sections, exercising the exact scoring functions copied verbatim from `WC2026_Pool_Leaderboard_Swiftly.html`:
+80 tests across 8 sections, exercising scoring functions imported from `scoring.js`:
 
 - **Group stage scoring** — 2 pts per correct pick, 0 for wrong/empty, pending when result not yet available, alphabetical sort on equal pts
 - **CSV parsing** (`parseKoResults`) — normal, empty, header-only, trailing blank lines
@@ -710,6 +714,38 @@ Generates a full 104-match tournament (seeded, reproducible — same result ever
 - Aggregate point bounds and coverage sanity
 
 Simulated tournament result (seed 20260611): **Belgium wins**, beats Canada in Final, England wins 3rd place.
+
+### Mid-tournament state tests — `test_partial.js`
+
+Run: `node test_partial.js`
+
+84 tests across 5 tournament phases verifying correct behaviour when only some results are in:
+
+- **Phase 0** — no results yet: all picks pending/empty, 0 pts, participants sorted alphabetically
+- **Phase 1** — partial group results (M1–M3 only): correct/wrong/pending/empty status per pick, partial groupPts accumulate correctly
+- **Phase 2** — all 72 group results, no KO bracket yet: maxPts includes pending KO upside; koPts = 0 (no bracket → no KO scoring)
+- **Phase 3** — R32 in progress (M73 played, Spain eliminated): **cascade fires immediately** — all of Spain's downstream picks (R16, QF, SF, Final) flip to 'cascaded' even before those matches are played; maxPts drops to 0 for picks that are already eliminated
+- **Phase 4** — R16 in progress: cascade continues, maxPts = groupPts + koPts + pendingKoPts at every step
+
+Key insight documented: cascade is not gated on the downstream match being played. A team eliminated in R32 immediately voids all downstream picks, even unplayed ones.
+
+### Python unit tests — `test_parse_results.py`
+
+Run: `python3 test_parse_results.py`
+
+61 tests across 9 classes covering every testable function in `.github/scripts/parse_results.py`:
+
+- `TestEspnTeamName` (9) — ESPN display-name normalisation: Czechia→Czech Republic, Türkiye→Turkey, Curaçao, Bosnia, passthrough, missing field
+- `TestParseGroupResultsEspn` (10) — home win, away win, draw, incomplete skip, non-group-stage skip, ESPN name mapping, multiple matches, unknown matchup skip, empty events, match lookup coverage
+- `TestParseKoResultsEspn` (8) — single R32, away win, R16 resolves after R32 winner known, R16 not resolved without R32, incomplete skip, non-KO slug skip, empty, multiple rounds
+- `TestWriteCsv` (2) — output format (sorted by match number, correct columns), empty results
+- `TestWriteKoResultsCsv` (1) — output format
+- `TestExtractTeam` (10) — `{{fb|...}}`, `{{fb-rt|...}}`, `{{#invoke:flag|fb|...}}`, `{{#invoke:flagg|...}}`, wiki-link fallback, unknown code, empty, all 44 TEAM_CODES parseable
+- `TestExtractScore` (9) — dash, en-dash, 0-0, high score, whitespace, text, empty, partial
+- `TestParseResultsWikitext` (10) — home win, away win, draw, unplayed (no score field), placeholder score, multiple blocks, lowercase `{{football box}}`, unknown team, empty wikitext, `{{#invoke:flag|...}}` format
+- `TestMatchLookupIntegrity` (3) — exactly 72 entries, all numbers 1–72 present, all team names in TEAM_CODES
+
+Also fixed a bug in `parse_results()`: the team1/team2 regex used `([^\n|]+)` which stopped at the pipe inside `{{fb|ESP}}`, making the entire wikitext parser silently produce empty results. Fixed to `([^\n]+)` (consistent with `parse_ko_results()`).
 
 ### Embedded simulation data — `gen_sim_data.js`
 
