@@ -1,6 +1,6 @@
 # World Cup 2026 Pool — Master Plan
 
-Last updated: May 22, 2026 (scoring.js + sim_core.js extracted; test_partial.js + test_parse_results.py added; parse_results() wikitext bug fixed)
+Last updated: May 22, 2026 (USE_LOCAL_DATA + LOCAL_* constants removed; gen_sim_data.js deleted; simulate.py is canonical local dev workflow)
 
 ---
 
@@ -51,7 +51,6 @@ wc26/
 ├── test_e2e.js                                ← 10-user full-tournament simulation + 105 structural invariant checks; imports scoring.js + sim_core.js
 ├── test_partial.js                            ← mid-tournament state tests: pending/cascaded picks, maxPts at each phase (84 tests); imports scoring.js
 ├── test_parse_results.py                      ← Python unit tests for parse_results.py: ESPN + wikitext parsers, CSV writers, MATCH_LOOKUP (61 tests)
-├── gen_sim_data.js                            ← generates embedded LOCAL_* sim data for leaderboard HTML (seeded, reproducible)
 ├── picks/
 │   ├── group/
 │   │   ├── swiftly/                            ← participant CSVs (uploaded manually by Ritesh)
@@ -246,8 +245,7 @@ const knockoutMode = new Date() >= new Date('2026-06-28T00:00:00Z');
 - `wrong` = team was in the match but lost → 0 pts, red square
 - Max pts = current total + sum of `KO_POINTS[m]` for all `pending` picks
 
-**Dev workflow flags** (remove before Jun 11/28):
-- `USE_LOCAL_DATA = true` — uses embedded sim data; shows KO games played input
+**Dev workflow flag** (remove before Jun 11/28):
 - `knockoutMode = true` — forces KO layout regardless of date (set to date expression for production)
 
 ---
@@ -493,7 +491,8 @@ Same ESPN-style card DNA across all three: flag emoji + team name + score, winne
 - [x] ~~Rebuild bracket with new design~~ — Variant 1 complete in both leaderboard pages
 - [x] ~~Font size consistency~~ — `0.78rem` body / `0.68rem` headers across all 4 pages
 - [x] ~~Pick form polish~~ — shortcuts, name field, progress bar, reset, qualification logic, flag emojis, header consistency
-- [ ] **Remove `USE_LOCAL_DATA = true` and `knockoutMode = true` from both leaderboard pages** (set to date expression) before Jun 11
+- [x] ~~**Remove `USE_LOCAL_DATA`**~~ — `USE_LOCAL_DATA` and all embedded `LOCAL_*` sim data removed from both leaderboard pages; leaderboard always fetches live from GitHub. Use `simulate.py` + local server for testing.
+- [ ] **Remove `knockoutMode = true`** from both leaderboard pages (set to date expression) before Jun 11
 - [ ] Clear simulation data (`Actions → Clear simulation data`) before Jun 11
 - [ ] Share pick page links with participants, collect CSVs
 - [ ] Upload real participant CSVs to `picks/group/swiftly/` and `picks/group/fandf/`
@@ -515,7 +514,7 @@ Same ESPN-style card DNA across all three: flag emoji + team name + score, winne
   - Variant 3 results bracket: ESPN cards fill progressively from `knockout_results.csv`
 - [x] ~~**Extend `parse_results.py`** to fetch knockout scores~~ — complete; uses ESPN KO API (Jun 28–Jul 20) → `results/knockout_results.csv` (existing `update.yml` picks it up automatically)
 - [x] ~~**Test suite**~~ — `test_leaderboard.js` (80 unit tests) + `test_e2e.js` (105 invariants) + `test_partial.js` (84 mid-tournament state tests) + `test_parse_results.py` (61 Python tests); all import shared `scoring.js` / `sim_core.js`
-- [x] ~~**Duplicate Variant 3 changes to `WC2026_Pool_Leaderboard_FandF.html`**~~ — FandF is now regenerated directly from Swiftly; the two files are byte-for-byte identical except 5 lines (title, header text, `POOL_ID`, `POOL_NAME`, `USE_LOCAL_DATA`)
+- [x] ~~**Duplicate Variant 3 changes to `WC2026_Pool_Leaderboard_FandF.html`**~~ — FandF is now regenerated directly from Swiftly; the two files are byte-for-byte identical except 4 lines (title, header text, `POOL_ID`, `POOL_NAME`)
 
 ---
 
@@ -747,13 +746,11 @@ Run: `python3 test_parse_results.py`
 
 Also fixed a bug in `parse_results()`: the team1/team2 regex used `([^\n|]+)` which stopped at the pipe inside `{{fb|ESP}}`, making the entire wikitext parser silently produce empty results. Fixed to `([^\n]+)` (consistent with `parse_ko_results()`).
 
-### Embedded simulation data — `gen_sim_data.js`
+### Simulation data for local testing — `simulate.py`
 
-Run: `node gen_sim_data.js > /tmp/sim_data.json` (stderr shows summary)
+Run: `python .github/scripts/simulate.py --participants 10 --stage all && python .github/scripts/aggregate_picks.py`
 
-Uses the same seeded PRNG as `test_e2e.js` to generate the `LOCAL_*` constants embedded in `WC2026_Pool_Leaderboard_Swiftly.html`. When `USE_LOCAL_DATA = true`, the leaderboard uses this data and can be opened as a `file://` URL without a server.
-
-To refresh the embedded data: run `gen_sim_data.js`, pipe output to `/tmp/sim_data.json`, then run the Python patcher (see commit history for the one-liner).
+Generates realistic picks CSVs for N simulated participants in both pools, plus group and KO results, plus the confirmed bracket JSON. The leaderboard fetches these files via HTTP — serve with `python -m http.server 8000`. This is the canonical local dev workflow; see the Local Dev Workflow section above.
 
 ---
 
@@ -858,17 +855,17 @@ All 48 teams have flag emojis in the `FLAGS` JS object on every page. Render as 
 
 ## Local Dev Workflow (rapid design iteration)
 
-Both leaderboard pages have a `USE_LOCAL_DATA` flag near the top of the `<script>` block:
-- `USE_LOCAL_DATA = true` → uses embedded simulation data (no network, works as `file://`)
-- `USE_LOCAL_DATA = false` → fetches live data from GitHub (production default)
+The leaderboard always fetches live data from GitHub — there is no embedded sim data or `USE_LOCAL_DATA` flag. For local testing, use `simulate.py` to populate the CSV files, then serve the repo with a local HTTP server:
 
 **Workflow:**
-1. Set `USE_LOCAL_DATA = true` in `WC2026_Pool_Leaderboard_Swiftly.html`
-2. Open file in Chrome directly (`file://` URL)
-3. Edit CSS/JS in editor → save → ⌘R in browser (instant feedback, no push needed)
-4. When done: set `USE_LOCAL_DATA = false`, regenerate FandF from Swiftly (run `make_fandf.py` — swaps the 5 pool-identity lines), push via GitHub Desktop
+1. `python .github/scripts/simulate.py --participants 10 --stage all` — writes picks + results CSVs
+2. `python .github/scripts/aggregate_picks.py` — builds the aggregated JSON files the leaderboard fetches
+3. `python -m http.server 8000` from the repo root
+4. Open `http://localhost:8000/WC2026_Pool_Leaderboard_Swiftly.html` in Chrome
+5. Edit CSS/JS in editor → save → ⌘R in browser
+6. When done: regenerate FandF from Swiftly (`python3 make_fandf.py`), push via GitHub Desktop
 
-**FandF sync rule:** never edit `WC2026_Pool_Leaderboard_FandF.html` directly. Always edit Swiftly, then regenerate FandF. The two files are intentionally identical except: `<title>`, header text, `POOL_ID`, `POOL_NAME`, `USE_LOCAL_DATA`.
+**FandF sync rule:** never edit `WC2026_Pool_Leaderboard_FandF.html` directly. Always edit Swiftly, then regenerate FandF. The two files are intentionally identical except 4 lines: `<title>`, header text, `POOL_ID`, `POOL_NAME`.
 
 ---
 

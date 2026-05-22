@@ -28,10 +28,6 @@ SUBSTITUTIONS = [
         "const POOL_NAME = 'Swiftly';",
         "const POOL_NAME = 'Friends & Family';",
     ),
-    (
-        'const USE_LOCAL_DATA = true;',
-        'const USE_LOCAL_DATA = false;',
-    ),
 ]
 
 with open(SRC, 'r') as f:
