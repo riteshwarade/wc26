@@ -27,7 +27,7 @@ jobs:
 
       - name: Check out repo
         if: steps.check.outputs.run == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.0.2
 
       - name: Delete simulation pick files
         if: steps.check.outputs.run == 'true'
