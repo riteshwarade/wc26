@@ -854,13 +854,13 @@ function buildForm() {
       <div class="match-time">${time.replace(' ET', '')}</div>
       <div class="pick-group">
         <input type="radio" name="m${num}" id="m${num}_w1" value="w1" class="win1-radio" onchange="onPick(${num})">
-        <label class="pick-btn" for="m${num}_w1">${t1} win</label>
+        <label class="pick-btn" for="m${num}_w1">${teamHtml(t1, false)} win</label>
 
         <input type="radio" name="m${num}" id="m${num}_d" value="draw" class="draw-radio" onchange="onPick(${num})">
         <label class="pick-btn" for="m${num}_d">Draw</label>
 
         <input type="radio" name="m${num}" id="m${num}_w2" value="w2" class="win2-radio" onchange="onPick(${num})">
-        <label class="pick-btn" for="m${num}_w2">${t2} win</label>
+        <label class="pick-btn" for="m${num}_w2">${teamHtml(t2, false)} win</label>
       </div>
     `;
 
@@ -1020,14 +1020,14 @@ function showSummary(name) {
     const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
     let pickLabel = '', badgeClass = '';
 
-    if (val === 'w1')   { pickLabel = t1;     badgeClass = 'badge-w1';   w1++; }
-    if (val === 'draw') { pickLabel = 'Draw';  badgeClass = 'badge-draw'; draws++; }
-    if (val === 'w2')   { pickLabel = t2;     badgeClass = 'badge-w2';   w2++; }
+    if (val === 'w1')   { pickLabel = teamHtml(t1, false);  badgeClass = 'badge-w1';   w1++; }
+    if (val === 'draw') { pickLabel = 'Draw';                badgeClass = 'badge-draw'; draws++; }
+    if (val === 'w2')   { pickLabel = teamHtml(t2, false);  badgeClass = 'badge-w2';   w2++; }
 
     rows += `<tr>
       <td style="color:var(--neutral-medium);font-size:0.78rem">#${num}</td>
       <td>
-        ${t1} vs ${t2}
+        ${teamHtml(t1, false)} vs ${teamHtml(t2, false)}
         <br><span style="font-size:0.72rem;color:var(--neutral-dark)">Group ${grp} · ${date}</span>
       </td>
       <td><span class="pick-badge ${badgeClass}">${pickLabel}</span></td>
