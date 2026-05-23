@@ -543,6 +543,10 @@
     font-style: italic;
     font-weight: 400;
   }
+  .bk-mob-team.bk-mob-win { font-weight: 700; color: #042C53; }
+  .bk-mob-team.bk-mob-los { font-weight: 400; color: var(--neutral-medium); }
+  .bk-mob-team.bk-mob-los .team-rank { color: var(--neutral-medium); }
+  .bk-mob-match.bk-mob-upcoming { opacity: 0.45; }
 
   /* ── Podium / final results (Variants 2 & 3; shown in Variant 1 for now) ── */
   .bk-float .bk-podium { position: absolute; left: 0; right: 0; }
@@ -915,7 +919,47 @@ function renderKoBracket(bracketData, koResults) {
   const thirdPlace = koResults[103] || null;
   const podiumHtml = buildPodiumHtml(champion, runnerUp, thirdPlace);
 
-  el.innerHTML = buildBracketHtml(mkCard, { podiumHtml });
+  // ── Mobile tab view (Variant 3) ─────────────────────────
+  const KO_MOB_ROUNDS = [
+    { id: 'r32', label: 'R32',   matches: [74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87] },
+    { id: 'r16', label: 'R16',   matches: [89,90,93,94,91,92,95,96] },
+    { id: 'qf',  label: 'QF',    matches: [97,98,99,100] },
+    { id: 'sf',  label: 'SF',    matches: [101,102] },
+    { id: '3rd', label: '3rd',   matches: [103] },
+    { id: 'fin', label: 'Final', matches: [104] },
+  ];
+  // Auto-open the first round with any unplayed matches
+  let koActiveRound = KO_MOB_ROUNDS[KO_MOB_ROUNDS.length - 1].id;
+  for (const r of KO_MOB_ROUNDS) {
+    if (r.matches.some(m => !koResults[m])) { koActiveRound = r.id; break; }
+  }
+  function koMobMatchCard(m) {
+    const [h, a] = getKoTeams(m, bracketData, koResults);
+    const winner = koResults[m];
+    const hTbd   = isTbd(h), aTbd = isTbd(a);
+    const hCls   = winner ? (winner === h ? ' bk-mob-win' : ' bk-mob-los') : '';
+    const aCls   = winner ? (winner === a ? ' bk-mob-win' : ' bk-mob-los') : '';
+    const date   = KO_SCHEDULE[m] ? ` · ${KO_SCHEDULE[m]}` : '';
+    const hHtml  = hTbd ? `<span class="bk-mob-tbd">${h}</span>` : teamHtml(h);
+    const aHtml  = aTbd ? `<span class="bk-mob-tbd">${a}</span>` : teamHtml(a);
+    const upCls  = !winner ? ' bk-mob-upcoming' : '';
+    return `<div class="bk-mob-match${upCls}">
+      <div class="bk-mob-meta">M${m}${date}</div>
+      <div class="bk-mob-teams">
+        <div class="bk-mob-team${hTbd ? ' tbd' : hCls}">${hHtml}</div>
+        <div class="bk-mob-team${aTbd ? ' tbd' : aCls}">${aHtml}</div>
+      </div>
+    </div>`;
+  }
+  const koMobTabBarHtml = KO_MOB_ROUNDS.map(r =>
+    `<button class="bk-tab${r.id === koActiveRound ? ' active' : ''}" onclick="switchBracketTab('${r.id}')" data-round="${r.id}">${r.label}</button>`
+  ).join('');
+  const koMobPanelsHtml = KO_MOB_ROUNDS.map(r =>
+    `<div class="bk-tab-panel${r.id === koActiveRound ? ' active' : ''}" id="bk-panel-${r.id}">${r.matches.map(koMobMatchCard).join('')}</div>`
+  ).join('');
+  const koMobTabHtml = `<div class="bk-mobile-tabs"><div class="bk-tab-bar">${koMobTabBarHtml}</div>${koMobPanelsHtml}</div>`;
+
+  el.innerHTML = buildBracketHtml(mkCard, { podiumHtml }) + koMobTabHtml;
   requestAnimationFrame(() => requestAnimationFrame(positionAndConnectBracket));
 }
 
