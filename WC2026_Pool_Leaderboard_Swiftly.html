@@ -498,6 +498,52 @@
     font-style: italic;
   }
 
+  /* ── Mobile bracket tabs (Variant 1) ── */
+  .bk-mobile-tabs { display: none; }
+  .bk-tab-bar {
+    display: flex;
+    border-bottom: 1.5px solid var(--neutral-light);
+    background: var(--neutral-lightest);
+  }
+  .bk-tab {
+    flex: 1;
+    padding: 9px 2px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--neutral-dark);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1.5px;
+    letter-spacing: 0.2px;
+  }
+  .bk-tab.active { color: #185FA5; border-bottom-color: #185FA5; }
+  .bk-tab-panel { display: none; }
+  .bk-tab-panel.active { display: block; }
+  .bk-mob-match {
+    padding: 7px 12px;
+    border-bottom: 0.5px solid var(--neutral-light);
+  }
+  .bk-mob-match:last-child { border-bottom: none; }
+  .bk-mob-meta {
+    font-size: 0.65rem;
+    color: var(--neutral-dark);
+    margin-bottom: 3px;
+  }
+  .bk-mob-teams { display: flex; flex-direction: column; gap: 2px; }
+  .bk-mob-team {
+    font-size: 0.82rem;
+    color: var(--neutral-darkest);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .bk-mob-team.tbd {
+    color: var(--neutral-medium);
+    font-style: italic;
+    font-weight: 400;
+  }
+
   /* ── Podium / final results (Variants 2 & 3; shown in Variant 1 for now) ── */
   .bk-float .bk-podium { position: absolute; left: 0; right: 0; }
   .bk-podium {
@@ -623,11 +669,9 @@
     .results-table { table-layout: auto; }
     #results-body .card { overflow-x: auto; }
 
-    /* Bracket: tighter column padding + smaller min-width */
-    .bk-col { min-width: 90px; padding: 0 6px; }
-
-    /* Bracket team rows: taller touch targets */
-    .bk-team { padding: 7px 8px; }
+    /* Bracket: hide 5-column desktop layout, show tab view on phones */
+    .bk-outer { display: none; }
+    .bk-mobile-tabs { display: block; }
   }
 </style>
 <script src="bracket.js"></script>
@@ -1846,13 +1890,51 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed) {
     return matchCard(m, h, a, '');
   }
 
+  // ── Mobile tab view ──────────────────────────────────────
+  const MOB_ROUNDS = [
+    { id: 'r32', label: 'R32',   matches: [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88] },
+    { id: 'r16', label: 'R16',   matches: [89,90,91,92,93,94,95,96] },
+    { id: 'qf',  label: 'QF',    matches: [97,98,99,100] },
+    { id: 'sf',  label: 'SF',    matches: [101,102] },
+    { id: 'fin', label: 'Final', matches: [103,104] },
+  ];
+  function mobMatchCard(m) {
+    const [h, a] = slotTeams(m);
+    const date  = KO_SCHEDULE[m] ? ` · ${KO_SCHEDULE[m]}` : '';
+    const hTbd  = isTbd(h), aTbd = isTbd(a);
+    const hHtml = hTbd ? `<span class="bk-mob-tbd">${h}</span>` : teamHtml(h);
+    const aHtml = aTbd ? `<span class="bk-mob-tbd">${a}</span>` : teamHtml(a);
+    return `<div class="bk-mob-match">
+      <div class="bk-mob-meta">M${m}${date}</div>
+      <div class="bk-mob-teams">
+        <div class="bk-mob-team${hTbd ? ' tbd' : ''}">${hHtml}</div>
+        <div class="bk-mob-team${aTbd ? ' tbd' : ''}">${aHtml}</div>
+      </div>
+    </div>`;
+  }
+  const mobTabBarHtml = MOB_ROUNDS.map((r, i) =>
+    `<button class="bk-tab${i===0 ? ' active' : ''}" onclick="switchBracketTab('${r.id}')" data-round="${r.id}">${r.label}</button>`
+  ).join('');
+  const mobPanelsHtml = MOB_ROUNDS.map((r, i) =>
+    `<div class="bk-tab-panel${i===0 ? ' active' : ''}" id="bk-panel-${r.id}">${r.matches.map(mobMatchCard).join('')}</div>`
+  ).join('');
+  const mobTabHtml = `<div class="bk-mobile-tabs"><div class="bk-tab-bar">${mobTabBarHtml}</div>${mobPanelsHtml}</div>`;
+
   // Podium: shown here temporarily for preview — will be Variant 2/3 only once built.
   // champion/runnerUp/thirdPlace come from knockout results (not yet available in Variant 1).
   // All three pass null until knockout results are wired up.
   const podiumHtml = buildPodiumHtml(null, null, null); // TODO: pass actual KO results (Variant 3)
 
-  el.innerHTML = buildBracketHtml(mkCard, { podiumHtml });
+  el.innerHTML = buildBracketHtml(mkCard, { podiumHtml }) + mobTabHtml;
   requestAnimationFrame(() => requestAnimationFrame(positionAndConnectBracket));
+}
+
+// ── Mobile bracket tab switcher ───────────────────────────
+function switchBracketTab(roundId) {
+  document.querySelectorAll('.bk-tab').forEach(b =>
+    b.classList.toggle('active', b.dataset.round === roundId));
+  document.querySelectorAll('.bk-tab-panel').forEach(p =>
+    p.classList.toggle('active', p.id === 'bk-panel-' + roundId));
 }
 
 // ── Tooltip ───────────────────────────────────────────────
