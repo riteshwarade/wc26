@@ -316,10 +316,11 @@
   .td-grp       { color: var(--swiftly-blue); font-weight: 700; }
   .td-result-cell { min-width: 160px; }
 
-  .res-winner { font-weight: 700; color: var(--neutral-darkest); white-space: nowrap; }
-  .res-loser  { color: var(--neutral-dark); white-space: nowrap; }
-  .res-verb   { font-size: 0.75rem; font-style: italic; color: var(--neutral-dark); margin: 0 5px; }
-  .td-score   { font-weight: 700; color: var(--neutral-dark); white-space: nowrap; width: 1%; }
+  .res-winner   { font-weight: 700; color: var(--neutral-darkest); white-space: nowrap; }
+  .res-loser    { color: var(--neutral-dark); white-space: nowrap; }
+  .res-verb     { font-size: 0.75rem; font-style: italic; color: var(--neutral-dark); margin: 0 5px; }
+  .res-row-upcoming { opacity: 0.45; }
+  .td-score     { font-weight: 700; color: var(--neutral-dark); white-space: nowrap; width: 1%; }
 
   /* ── Side-by-side layout ── */
   .side-by-side-layout {
@@ -948,17 +949,13 @@ function renderStandings(standings, results) {
 
 // ── Render match results ──────────────────────────────────
 function renderResults(results) {
-  const completed = MATCHES.filter(([num]) => results[num]);
-  if (!completed.length) {
-    document.getElementById('resultsCard').innerHTML =
-      '<div class="state-msg"><span class="emoji">⚽</span>No matches completed yet. Check back after kick-off on Jun 12.</div>';
-    return;
-  }
-
-  const rows = completed.map(([num, grp, date, time, t1, t2]) => {
+  const rows = MATCHES.map(([num, grp, date, time, t1, t2]) => {
     const r = results[num];
     let resultCell, scoreCell;
-    if (r.outcome === 'Draw') {
+    if (!r) {
+      resultCell = `${teamHtml(t1)} v ${teamHtml(t2)}`;
+      scoreCell  = `–`;
+    } else if (r.outcome === 'Draw') {
       resultCell = `<span class="res-loser">${teamHtml(t1)}</span>`
                  + `<span class="res-verb">drew</span>`
                  + `<span class="res-loser">${teamHtml(t2)}</span>`;
@@ -970,9 +967,10 @@ function renderResults(results) {
                  + `<span class="res-loser">${teamHtml(loser)}</span>`;
       scoreCell  = r.outcome === 'W2' ? `${r.away} – ${r.home}` : `${r.home} – ${r.away}`;
     }
-    return `<tr>
+    return `<tr class="${r ? '' : 'res-row-upcoming'}">
       <td class="td-match-num">${num}</td>
       <td class="td-date">${date}</td>
+      <td class="td-time">${time.replace(' ET','')}</td>
       <td class="td-grp">${grp}</td>
       <td class="td-result-cell">${resultCell}</td>
       <td class="td-score">${scoreCell}</td>
@@ -985,6 +983,7 @@ function renderResults(results) {
         <tr>
           <th>#</th>
           <th class="th-date">Date</th>
+          <th class="th-time">Time (ET)</th>
           <th>Grp</th>
           <th>Result</th>
           <th>Score</th>
