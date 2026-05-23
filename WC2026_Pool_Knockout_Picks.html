@@ -263,6 +263,23 @@
   .bk-podium-row.gold   { background: #fffbeb; }
   .bk-podium-row.silver { background: var(--neutral-lightest); }
   .bk-podium-row.bronze { background: #fff6f0; }
+
+  /* ── Mobile responsive (≤ 640 px — phones) ── */
+  @media (max-width: 640px) {
+    /* Header */
+    header { padding: 16px 0 14px; }
+    .header-title { font-size: 1.2rem; }
+
+    /* Shortcuts bar: wrap onto multiple lines */
+    .shortcuts-bar { flex-wrap: wrap; }
+    .shortcut-btn  { padding: 6px 10px; min-height: 36px; }
+
+    /* Bracket columns: tighter padding + smaller min-width */
+    .bk-col { min-width: 90px; padding: 0 6px; }
+
+    /* Bracket team rows: taller touch targets */
+    .bk-team { padding: 7px 8px; }
+  }
 </style>
 </head>
 <body>

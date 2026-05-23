@@ -612,6 +612,33 @@
   .champ-correct   { color: var(--swiftly-blue); font-weight: 600; }
   .champ-wrong     { color: var(--swiftly-red); text-decoration: line-through; }
   .champ-cascaded  { color: var(--swiftly-red); text-decoration: line-through; font-style: italic; }
+
+  /* ── Mobile responsive (≤ 640 px — phones) ── */
+  @media (max-width: 640px) {
+    /* Header */
+    header { padding: 16px 0 14px; }
+    .header-title { font-size: 1.2rem; }
+
+    /* Sticky bar: hide timestamp to keep it single-line */
+    .updated-at { display: none; }
+
+    /* Stack group tables and match results vertically */
+    .side-by-side-layout { flex-direction: column; }
+    .side-left { width: 100%; }
+
+    /* Standings: hide per-match squares and max-pts — too wide for phones */
+    .th-squares, .td-squares   { display: none; }
+    .th-max-pts, .td-max-pts   { display: none; }
+
+    /* Results table: hide date & time columns */
+    .th-date, .td-date, .th-time, .td-time { display: none; }
+
+    /* Bracket: tighter column padding + smaller min-width */
+    .bk-col { min-width: 90px; padding: 0 6px; }
+
+    /* Bracket team rows: taller touch targets */
+    .bk-team { padding: 7px 8px; }
+  }
 </style>
 <script src="bracket.js"></script>
 <script src="scoring.js"></script>
@@ -811,7 +838,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
               <th>Group pts</th>
               <th>Knockout pts</th>
               <th>Total</th>
-              <th>Max pts</th>
+              <th class="th-max-pts">Max pts</th>
               <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · red italic = cascaded void · empty = pending)</span></th>
             </tr>
           </thead>
@@ -962,9 +989,9 @@ function renderResults(results) {
       <thead>
         <tr>
           <th>#</th>
-          <th>Date</th>
+          <th class="th-date">Date</th>
           <th>Grp</th>
-          <th>Time (ET)</th>
+          <th class="th-time">Time (ET)</th>
           <th>Match</th>
           <th>Score</th>
           <th>Result</th>

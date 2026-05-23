@@ -576,13 +576,34 @@
 
   .csv-btn:hover { background: #2a3f52; }
 
-  /* ── Responsive ──────────────────────────────────────────── */
-  @media (max-width: 480px) {
-    header { padding: 20px 18px 18px; }
-    .header-title { font-size: 1.35rem; }
-    .pick-btn { padding: 4px 5px; font-size: 0.78rem; }
+  /* ── Responsive (≤ 640 px — phones) ─────────────────────── */
+  @media (max-width: 640px) {
+    /* Header */
+    header { padding: 16px 0 14px; }
+    .header-title { font-size: 1.2rem; }
+
+    /* Reorder: pick form appears before group tables on mobile */
     .pick-layout { flex-direction: column; }
+    .pick-main   { order: -1; }
     .pick-sidebar { width: 100%; position: static; }
+
+    /* Match table: drop Date & Time columns; keep #, Grp, picks */
+    .col-layout { grid-template-columns: 30px 26px 1fr; }
+    .match-date, .match-time, .ch-date, .ch-time { display: none; }
+
+    /* Shortcuts bar: wrap to second line if needed */
+    .shortcuts-bar { flex-wrap: wrap; }
+    .shortcut-btn  { padding: 6px 10px; min-height: 36px; }
+
+    /* Pick buttons: taller touch target */
+    .pick-btn { padding: 6px 4px; min-height: 36px; }
+
+    /* Modal: full-width with less padding on small screens */
+    .modal { max-height: 96vh; border-radius: 10px; }
+    .modal-header { padding: 14px 18px; }
+    .modal-body   { padding: 14px 16px; }
+    .modal-actions { flex-direction: column; align-items: stretch; }
+    .copy-btn, .csv-btn { text-align: center; }
   }
 
   /* ── Pick page two-column layout ── */
