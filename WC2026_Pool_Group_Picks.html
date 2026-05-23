@@ -216,7 +216,7 @@
   /* Column layout: # | date | grp | time | picks */
   .col-layout {
     display: grid;
-    grid-template-columns: 30px 88px 28px 72px auto;
+    grid-template-columns: 30px 88px 72px 28px auto;
     align-items: center;
     column-gap: 12px;
   }
@@ -587,16 +587,37 @@
     .pick-main   { order: -1; }
     .pick-sidebar { width: 100%; position: static; }
 
-    /* Match table: drop Date & Time columns; keep #, Grp, picks */
-    .col-layout { grid-template-columns: 30px 26px 1fr; }
-    .match-date, .match-time, .ch-date, .ch-time { display: none; }
+    /* Column header row is redundant in 2-row layout — hide it */
+    .col-header { display: none; }
 
-    /* Shortcuts bar: wrap to second line if needed */
-    .shortcuts-bar { flex-wrap: wrap; }
-    .shortcut-btn  { padding: 6px 10px; min-height: 36px; }
+    /* Shortcuts: hide label (obvious from context), wrap buttons */
+    .shortcuts-label { display: none; }
+    .shortcuts-bar   { flex-wrap: wrap; }
+    .shortcut-btn    { padding: 6px 10px; min-height: 36px; }
+
+    /* Match row: 2-row grid
+       Row 1 — meta: # · date · group · time (ET), all left-aligned
+       Row 2 — pick buttons spanning full width
+       5 columns: 4 auto items + 1fr filler so row 1 stays left-anchored */
+    .match-row.col-layout {
+      display: grid;
+      grid-template-columns: auto auto auto auto 1fr;
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      row-gap: 5px;
+      padding: 7px 12px 9px;
+    }
+    .match-num  { grid-column: 1; grid-row: 1; align-self: center; }
+    .match-date { grid-column: 2; grid-row: 1; display: block;
+                  font-size: 0.72rem; color: var(--neutral-dark); font-weight: 400; align-self: center; }
+    .match-time { grid-column: 3; grid-row: 1; display: block;
+                  font-size: 0.72rem; color: var(--neutral-dark); font-weight: 400; align-self: center; }
+    .match-grp  { grid-column: 4; grid-row: 1; display: block;
+                  font-size: 0.72rem; align-self: center; }
+    .pick-group { grid-column: 1 / -1; grid-row: 2; padding: 0; }
 
     /* Pick buttons: taller touch target */
-    .pick-btn { padding: 6px 4px; min-height: 36px; }
+    .pick-btn   { padding: 7px 6px; min-height: 38px; }
 
     /* Modal: full-width with less padding on small screens */
     .modal { max-height: 96vh; border-radius: 10px; }
@@ -867,8 +888,8 @@ function buildForm() {
   hdr.innerHTML = `
     <span>#</span>
     <span class="ch-date">Date</span>
-    <span>Grp</span>
     <span class="ch-time">Time (ET)</span>
+    <span>Grp</span>
     <span style="text-align:center">Your pick</span>
   `;
   table.appendChild(hdr);
@@ -883,17 +904,17 @@ function buildForm() {
     row.innerHTML = `
       <div class="match-num">${num}</div>
       <div class="match-date">${date}</div>
-      <div class="match-grp">${grp}</div>
       <div class="match-time">${time.replace(' ET', '')}</div>
+      <div class="match-grp">${grp}</div>
       <div class="pick-group">
         <input type="radio" name="m${num}" id="m${num}_w1" value="w1" class="win1-radio" onchange="onPick(${num})">
-        <label class="pick-btn" for="m${num}_w1">${teamHtml(t1)}</label>
+        <label class="pick-btn" for="m${num}_w1">${teamHtmlPick(t1)}</label>
 
         <input type="radio" name="m${num}" id="m${num}_d" value="draw" class="draw-radio" onchange="onPick(${num})">
         <label class="pick-btn" for="m${num}_d">Draw</label>
 
         <input type="radio" name="m${num}" id="m${num}_w2" value="w2" class="win2-radio" onchange="onPick(${num})">
-        <label class="pick-btn" for="m${num}_w2">${teamHtml(t2)}</label>
+        <label class="pick-btn" for="m${num}_w2">${teamHtmlPick(t2)}</label>
       </div>
     `;
 
@@ -1143,6 +1164,20 @@ function teamHtml(name, showRank=true) {
   const rank = showRank ? (RANKINGS[name] || null) : null;
   const rankHtml = rank ? ` <span class="team-rank">(${rank})</span>` : '';
   return `${flag ? flag + ' ' : ''}${name}${rankHtml}`;
+}
+
+// Shortened names used only inside pick buttons on narrow screens (≤ 640 px)
+const SHORT_NAMES = {
+  'Bosnia and Herzegovina': 'Bosnia…',
+  'Czech Republic':         'Czech…',
+};
+function teamHtmlPick(name) {
+  if (!name) return '';
+  const flag  = FLAGS[name] || '';
+  const rank  = RANKINGS[name] || null;
+  const rankHtml = rank ? ` <span class="team-rank">(${rank})</span>` : '';
+  const display  = (window.innerWidth <= 640 && SHORT_NAMES[name]) ? SHORT_NAMES[name] : name;
+  return `${flag ? flag + ' ' : ''}${display}${rankHtml}`;
 }
 
 const RANKINGS = {
