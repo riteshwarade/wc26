@@ -1,6 +1,6 @@
 # World Cup 2026 Pool — Master Plan
 
-Last updated: May 22, 2026 (USE_LOCAL_DATA removed; ?games=N + ?ko=1 URL params added; 🥇 champion icon; actions upgraded to v6)
+Last updated: May 23, 2026 (mobile-friendly all 4 pages; leaderboard results table redesign)
 
 ---
 
@@ -314,11 +314,19 @@ Each page provides its own `renderBracket()` that calls the shared functions bel
 - Matchday dividers after M24 and M48; `nowrap` layout
 - Tooltip on hover: match, your pick, result, correct/wrong
 - Group tables via `renderGroupTableCard` template (with GF/GA/GD): flag + name + rank, tighter padding on numeric columns
-- Match results table: score + outcome pill
+- Match results table: all 72 matches shown (completed + upcoming); see below for format
 - Qualification status: blue (top 2), green (3rd qualified), yellow (3rd pending), red (eliminated)
 - Progress bar in sticky bar: "GROUP STAGE" · fill bar · "X / 72 matches played" · last updated
 - Collapsible sections
 - **Live knockout bracket** (collapsible section at bottom) — see below
+
+#### Match results table (group stage)
+- Columns: # · Date · Time (ET) · Grp · Result · Score
+- On mobile: # hidden, Date/Time hidden; result + score remain
+- **Completed matches:** `[Winner bold] beat [loser muted] · score` or `[A muted] drew [B muted] · score`; winner's score always listed first (score flipped for away wins so winner's goals appear on the left)
+- **Upcoming matches:** team names shown as `A v B` with slight opacity (0.45) — muted but readable
+- Team names use `teamHtml()`: flag + name + (rank); `white-space: nowrap` prevents name/rank from splitting across lines
+- On mobile the result cell wraps between the verb and the second team when names are long; score column stays pinned right
 
 ### Knockout bracket (leaderboard pages — Variant 1)
 - 5-column horizontal layout: R32 → R16 → QF → SF → Final/3rd
@@ -792,6 +800,23 @@ Fonts: **Inter** (400, 700) for all body/UI text; **Poppins** (600) for page tit
 | Column headers | `0.68rem` | 700 Inter | Uppercase letter-spaced labels (TEAM, PTS, etc.) |
 | Small labels | `0.65rem` | 700 Inter | Chevrons, bracket separators |
 | Name input | `1.1rem` | 700 Inter | Pick form name field only |
+
+### Mobile (≤ 640px breakpoint)
+
+All 4 pages are mobile-friendly. Breakpoint: `@media (max-width: 640px)`.
+
+| Element | Mobile behaviour |
+|---|---|
+| `.header-title` | `font-size: clamp(0.82rem, 3.6vw, 1.2rem); white-space: nowrap` — fits on one line |
+| Group picks match rows | 2-row CSS grid: meta (# date time grp) on row 1, pick buttons on row 2 spanning full width |
+| Pick buttons | `padding: 7px 6px; min-height: 38px`; long team names use `SHORT_NAMES` map (e.g. Bosnia → Bosnia…) |
+| Leaderboard: squares column | Hidden (`display: none`) |
+| Leaderboard: max pts column | Hidden |
+| Leaderboard: group tables | Appear below match results (CSS `order` swap on `.side-left`/`.side-right`) |
+| Leaderboard: results table | # column hidden; Date/Time hidden; result + score remain; score pinned right |
+| KO bracket | Tighter column padding (`min-width: 90px`, `padding: 0 6px`) and team row padding |
+
+**FandF rule:** `make_fandf.py` regenerates FandF from Swiftly — all mobile CSS propagates automatically. Never edit FandF directly.
 
 ### Layout
 
