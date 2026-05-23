@@ -760,11 +760,12 @@ const POOL_NAME = 'Swiftly';
 // ──────────────────────────────────────────────────────────
 
 
-const PICKS_URL   = `https://raw.githubusercontent.com/riteshwarade/wc26/main/data/group_${POOL_ID}_picks.json`;
-const RESULTS_URL   = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/results/group_results.csv';
-const BRACKET_URL   = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/data/knockout_bracket.json';
-const KO_PICKS_URL  = `https://raw.githubusercontent.com/riteshwarade/wc26/main/data/knockout_${POOL_ID}_picks.json`;
-const KO_RESULTS_URL = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/results/knockout_results.csv';
+const _CDN = 'https://cdn.jsdelivr.net/gh/riteshwarade/wc26@main';
+const PICKS_URL      = `${_CDN}/data/group_${POOL_ID}_picks.json`;
+const RESULTS_URL    = `${_CDN}/results/group_results.csv`;
+const BRACKET_URL    = `${_CDN}/data/knockout_bracket.json`;
+const KO_PICKS_URL   = `${_CDN}/data/knockout_${POOL_ID}_picks.json`;
+const KO_RESULTS_URL = `${_CDN}/results/knockout_results.csv`;
 
 // ── Mode detection ────────────────────────────────────────
 // ?games=N  simulates the leaderboard at match N (0–104):
