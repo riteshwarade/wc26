@@ -1003,16 +1003,10 @@ function renderKoBracket(bracketData, koResults, koScores) {
 // ── Setup layout based on mode ────────────────────────────
 function setupLayout() {
   if (knockoutMode) {
-    // Show KO bracket section and divider
+    // Show KO bracket section only; hide everything group-stage related
     document.getElementById('koBracketSection').style.display = '';
-    document.getElementById('koSectionDivider').style.display = '';
-    // Group section is flat (no accordion) in KO mode — always visible
-    document.getElementById('groupAccordionHeader').style.display = 'none';
-    // Update labels
-    document.getElementById('groupStandingsLabel').textContent = 'Group standings';
-    // Hide the provisional bracket — superseded by the live KO bracket above
-    document.getElementById('bracketSectionLabel').style.display = 'none';
-    document.getElementById('bracket-body').style.display = 'none';
+    document.getElementById('koSectionDivider').style.display = 'none';
+    document.getElementById('groupSection').style.display = 'none';
     // Update sticky bar label
     document.getElementById('stageLabel').textContent = 'Knockout stage';
   } else {
