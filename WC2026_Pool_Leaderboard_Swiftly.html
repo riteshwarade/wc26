@@ -767,12 +767,16 @@ const POOL_NAME = 'Swiftly';
 // ──────────────────────────────────────────────────────────
 
 
+// Static files (picks, bracket) → jsDelivr CDN (set once, fast)
+// Result CSVs → raw.githubusercontent.com + cache buster (updated frequently)
 const _CDN = 'https://cdn.jsdelivr.net/gh/riteshwarade/wc26@main';
+const _RAW = 'https://raw.githubusercontent.com/riteshwarade/wc26/main';
+const _T   = Date.now();
 const PICKS_URL      = `${_CDN}/data/group_${POOL_ID}_picks.json`;
-const RESULTS_URL    = `${_CDN}/results/group_results.csv`;
+const RESULTS_URL    = `${_RAW}/results/group_results.csv?t=${_T}`;
 const BRACKET_URL    = `${_CDN}/data/knockout_bracket.json`;
 const KO_PICKS_URL   = `${_CDN}/data/knockout_${POOL_ID}_picks.json`;
-const KO_RESULTS_URL = `${_CDN}/results/knockout_results.csv`;
+const KO_RESULTS_URL = `${_RAW}/results/knockout_results.csv?t=${_T}`;
 
 // ── Mode detection ────────────────────────────────────────
 // ?games=N  simulates the leaderboard at match N (0–104):
