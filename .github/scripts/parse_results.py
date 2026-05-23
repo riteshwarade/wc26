@@ -185,6 +185,7 @@ def parse_ko_results_espn(events, bracket_data):
     # Build {frozenset(team1, team2): winner} from completed KO events.
     # ESPN sets competitor.winner=True for the winning side.
     pair_to_winner = {}
+    pair_to_scores = {}
     for evt in events:
         if evt.get('season', {}).get('slug') not in KO_SLUGS:
             continue
@@ -199,9 +200,17 @@ def parse_ko_results_espn(events, bracket_data):
         )
         if winner and len(teams) == 2:
             pair_to_winner[frozenset(teams)] = winner
+            home_c = next((c for c in competitors if c.get('homeAway') == 'home'), None)
+            away_c = next((c for c in competitors if c.get('homeAway') == 'away'), None)
+            if home_c and away_c:
+                pair_to_scores[frozenset(teams)] = (
+                    int(home_c.get('score', 0) or 0),
+                    int(away_c.get('score', 0) or 0),
+                )
 
     # Walk bracket sections in order to assign our match numbers.
     results       = {}
+    scores        = {}
     match_winners = {}
     match_losers  = {}
 
@@ -230,8 +239,11 @@ def parse_ko_results_espn(events, bracket_data):
                 results[m]       = winner
                 match_winners[m] = winner
                 match_losers[m]  = away if winner == home else home
+                sc = pair_to_scores.get(frozenset([home, away]))
+                if sc:
+                    scores[m] = sc
 
-    return results
+    return results, scores
 
 
 # ── Wikipedia fetch helpers (kept for verify_r32_against_wikipedia) ───────────
@@ -484,15 +496,21 @@ def parse_ko_results(wikitext, bracket_data):
     return results
 
 
-def write_ko_results_csv(results):
-    """Write results/knockout_results.csv with columns: match, winner."""
+def write_ko_results_csv(results, scores=None):
+    """Write results/knockout_results.csv."""
     os.makedirs('results', exist_ok=True)
     path = 'results/knockout_results.csv'
     with open(path, 'w', newline='', encoding='utf-8') as f:
         w = csv.writer(f)
-        w.writerow(['match', 'winner'])
-        for num in sorted(results):
-            w.writerow([num, results[num]])
+        if scores:
+            w.writerow(['match', 'winner', 'home_score', 'away_score'])
+            for num in sorted(results):
+                sc = scores.get(num, ('', ''))
+                w.writerow([num, results[num], sc[0], sc[1]])
+        else:
+            w.writerow(['match', 'winner'])
+            for num in sorted(results):
+                w.writerow([num, results[num]])
     print(f'Wrote {len(results)} KO results → {path}')
 
 
@@ -1356,10 +1374,10 @@ if __name__ == '__main__':
         ko_events = fetch_espn_ko_events()
         print(f'Got {len(ko_events)} KO events')
         print('Parsing knockout results...')
-        ko_results = parse_ko_results_espn(ko_events, bracket_data)
+        ko_results, ko_scores = parse_ko_results_espn(ko_events, bracket_data)
         print(f'Found {len(ko_results)} completed KO matches')
         for m in sorted(ko_results):
             print(f'  M{m}: {ko_results[m]}')
-        write_ko_results_csv(ko_results)
+        write_ko_results_csv(ko_results, ko_scores)
     else:
         print('\nNo knockout_bracket.json yet — KO results will run once bracket is confirmed')

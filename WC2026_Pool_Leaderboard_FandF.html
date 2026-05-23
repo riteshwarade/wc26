@@ -887,7 +887,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
 }
 
 // ── Render KO bracket (KO mode) ───────────────────────────
-function renderKoBracket(bracketData, koResults) {
+function renderKoBracket(bracketData, koResults, koScores) {
   const el = document.getElementById('koBracketCard');
   if (!el) return;
 
@@ -936,15 +936,22 @@ function renderKoBracket(bracketData, koResults) {
   function koMobMatchCard(m) {
     const [h, a] = getKoTeams(m, bracketData, koResults);
     const winner = koResults[m];
+    const sc     = koScores ? koScores[m] : null;
     const hTbd   = isTbd(h), aTbd = isTbd(a);
     const hCls   = winner ? (winner === h ? ' bk-mob-win' : ' bk-mob-los') : '';
     const aCls   = winner ? (winner === a ? ' bk-mob-win' : ' bk-mob-los') : '';
     const date   = KO_SCHEDULE[m] ? ` · ${KO_SCHEDULE[m]}` : '';
+    let scoreText = '';
+    if (winner && sc) {
+      const wSc = winner === h ? sc.home : sc.away;
+      const lSc = winner === h ? sc.away : sc.home;
+      scoreText = ` · ${wSc}–${lSc}`;
+    }
     const hHtml  = hTbd ? `<span class="bk-mob-tbd">${h}</span>` : teamHtml(h);
     const aHtml  = aTbd ? `<span class="bk-mob-tbd">${a}</span>` : teamHtml(a);
     const upCls  = !winner ? ' bk-mob-upcoming' : '';
     return `<div class="bk-mob-match${upCls}">
-      <div class="bk-mob-meta">M${m}${date}</div>
+      <div class="bk-mob-meta">M${m}${date}${scoreText}</div>
       <div class="bk-mob-teams">
         <div class="bk-mob-team${hTbd ? ' tbd' : hCls}">${hHtml}</div>
         <div class="bk-mob-team${aTbd ? ' tbd' : aCls}">${aHtml}</div>
@@ -2053,6 +2060,7 @@ async function init(skipBracket = false) {
 
     const results   = parseResults(resultsCSV);
     const koResults = parseKoResults(koResultsCSV);
+    const koScores  = parseKoScores(koResultsCSV);
     const standings = computeStandings(picksData, results);
     const played    = Object.keys(results).length;
     const koPlayed  = Object.keys(koResults).length;
@@ -2075,7 +2083,7 @@ async function init(skipBracket = false) {
     if (knockoutMode) {
       const combined = computeCombinedStandings(standings, koPicksData, koResults, bracketData);
       renderKoStandings(combined, koResults, bracketData);
-      if (!skipBracket) renderKoBracket(bracketData, koResults);
+      if (!skipBracket) renderKoBracket(bracketData, koResults, koScores);
       renderStandings(standings, results);  // group-only in group section
     } else {
       renderStandings(standings, results);

@@ -6,7 +6,7 @@
  * and via require('./scoring.js') in Node test files.
  *
  * Exports (Node only): MATCHES, KO_POINTS, parseResults, parseKoResults,
- *   getKoTeams, computeStandings, computeCombinedStandings
+ *   parseKoScores, getKoTeams, computeStandings, computeCombinedStandings
  */
 
 'use strict';
@@ -142,6 +142,28 @@ function parseKoResults(csvText) {
     if (num && winner) results[num] = winner;
   });
   return results;
+}
+
+// ── Parse KO scores CSV ───────────────────────────────────────────────────────
+// Format: match,winner,home_score,away_score  (optional score columns)
+// Returns { matchNum: { home: N, away: N } } — only for rows with score data
+function parseKoScores(csvText) {
+  const scores = {};
+  if (!csvText || !csvText.trim()) return scores;
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) return scores;
+  const header   = lines[0].split(',').map(s => s.trim());
+  const homeIdx  = header.indexOf('home_score');
+  const awayIdx  = header.indexOf('away_score');
+  if (homeIdx === -1 || awayIdx === -1) return scores;
+  lines.slice(1).forEach(line => {
+    const parts = line.split(',');
+    const num   = parseInt(parts[0]);
+    const home  = parseInt(parts[homeIdx]);
+    const away  = parseInt(parts[awayIdx]);
+    if (num && !isNaN(home) && !isNaN(away)) scores[num] = { home, away };
+  });
+  return scores;
 }
 
 // ── Resolve KO team names for a match ────────────────────────────────────────
@@ -324,6 +346,7 @@ if (typeof module !== 'undefined') {
     KO_POINTS,
     parseResults,
     parseKoResults,
+    parseKoScores,
     getKoTeams,
     computeStandings,
     computeCombinedStandings,

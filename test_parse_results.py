@@ -220,13 +220,14 @@ class TestParseKoResultsEspn(unittest.TestCase):
     def test_single_r32_match(self):
         bracket = make_ko_bracket()
         events = [self._ko_event('Spain', 'France', home_wins=True)]
-        results = parse_ko_results_espn(events, bracket)
+        results, scores = parse_ko_results_espn(events, bracket)
         self.assertEqual(results[73], 'Spain')
+        self.assertEqual(scores[73], (1, 0))
 
     def test_away_team_wins_r32(self):
         bracket = make_ko_bracket()
         events = [self._ko_event('Spain', 'France', home_wins=False)]
-        results = parse_ko_results_espn(events, bracket)
+        results, scores = parse_ko_results_espn(events, bracket)
         self.assertEqual(results[73], 'France')
 
     def test_r16_resolves_after_r32(self):
@@ -238,7 +239,7 @@ class TestParseKoResultsEspn(unittest.TestCase):
             self._ko_event('Argentina', 'England',   home_wins=True,  slug='round-of-32'),  # M75
             self._ko_event('Spain',     'Argentina', home_wins=True,  slug='round-of-16'),  # M90
         ]
-        results = parse_ko_results_espn(events, bracket)
+        results, scores = parse_ko_results_espn(events, bracket)
         self.assertEqual(results[73], 'Spain')
         self.assertEqual(results[75], 'Argentina')
         self.assertEqual(results[90], 'Spain')
@@ -250,7 +251,7 @@ class TestParseKoResultsEspn(unittest.TestCase):
         events = [
             self._ko_event('Spain', 'Argentina', home_wins=True, slug='round-of-16'),
         ]
-        results = parse_ko_results_espn(events, bracket)
+        results, scores = parse_ko_results_espn(events, bracket)
         # M90 pair is (W73, W75) which are unknown → pair_to_winner match fails → 90 absent
         self.assertNotIn(90, results)
 
@@ -258,7 +259,7 @@ class TestParseKoResultsEspn(unittest.TestCase):
         bracket = make_ko_bracket()
         events = [make_espn_event('Spain', 'France', 0, 0,
                                   season_slug='round-of-32', completed=False)]
-        results = parse_ko_results_espn(events, bracket)
+        results, scores = parse_ko_results_espn(events, bracket)
         self.assertNotIn(73, results)
 
     def test_skips_non_ko_slug(self):
@@ -266,12 +267,12 @@ class TestParseKoResultsEspn(unittest.TestCase):
         # group-stage slug — should not be in KO_SLUGS
         events = [make_espn_event('Spain', 'France', 2, 0,
                                   season_slug='group-stage')]
-        results = parse_ko_results_espn(events, bracket)
+        results, scores = parse_ko_results_espn(events, bracket)
         self.assertNotIn(73, results)
 
     def test_empty_events(self):
         bracket = make_ko_bracket()
-        self.assertEqual(parse_ko_results_espn([], bracket), {})
+        self.assertEqual(parse_ko_results_espn([], bracket), ({}, {}))
 
     def test_multiple_rounds(self):
         bracket = make_ko_bracket()
@@ -283,7 +284,7 @@ class TestParseKoResultsEspn(unittest.TestCase):
             self._ko_event('Spain',     'England',   home_wins=True,  slug='round-of-16'),  # M90
             # M89 = W74 vs W77 = Brazil vs (W77 unknown, skip)
         ]
-        results = parse_ko_results_espn(events, bracket)
+        results, scores = parse_ko_results_espn(events, bracket)
         self.assertEqual(results[73], 'Spain')
         self.assertEqual(results[74], 'Brazil')
         self.assertEqual(results[75], 'England')
@@ -344,6 +345,26 @@ class TestWriteCsv(unittest.TestCase):
 class TestWriteKoResultsCsv(unittest.TestCase):
 
     def test_output_format(self):
+        results = {73: 'Spain', 104: 'France', 89: 'Brazil'}
+        scores  = {73: (2, 1), 89: (3, 0)}
+        with tempfile.TemporaryDirectory() as tmpdir:
+            orig_dir = os.getcwd()
+            os.chdir(tmpdir)
+            try:
+                write_ko_results_csv(results, scores)
+                path = os.path.join(tmpdir, 'results', 'knockout_results.csv')
+                with open(path, newline='', encoding='utf-8') as f:
+                    rows = list(csv.reader(f))
+            finally:
+                os.chdir(orig_dir)
+
+        self.assertEqual(rows[0], ['match', 'winner', 'home_score', 'away_score'])
+        # Sorted by match number: 73, 89, 104
+        self.assertEqual(rows[1], ['73', 'Spain', '2', '1'])
+        self.assertEqual(rows[2], ['89', 'Brazil', '3', '0'])
+        self.assertEqual(rows[3], ['104', 'France', '', ''])
+
+    def test_output_format_no_scores(self):
         results = {73: 'Spain', 104: 'France', 89: 'Brazil'}
         with tempfile.TemporaryDirectory() as tmpdir:
             orig_dir = os.getcwd()
