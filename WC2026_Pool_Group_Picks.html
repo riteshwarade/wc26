@@ -580,7 +580,7 @@
   @media (max-width: 640px) {
     /* Header */
     header { padding: 16px 0 14px; }
-    .header-title { font-size: 1.2rem; }
+    .header-title { font-size: clamp(0.82rem, 3.6vw, 1.2rem); white-space: nowrap; }
 
     /* Reorder: pick form appears before group tables on mobile */
     .pick-layout { flex-direction: column; }

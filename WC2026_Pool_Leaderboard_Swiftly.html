@@ -314,28 +314,12 @@
 
   .td-match-num { color: var(--neutral-medium); font-weight: 700; text-align: center; }
   .td-grp       { color: var(--swiftly-blue); font-weight: 700; }
-  .td-score     { font-weight: 700; color: var(--neutral-darkest); }
-  .td-teams     { font-weight: 700; color: var(--neutral-darkest); min-width: 160px; }
+  .td-result-cell { min-width: 160px; }
 
-  .outcome-pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 3px 8px;
-    border-radius: 5px;
-    border: 1.5px solid var(--swiftly-blue);
-    background: var(--swiftly-blue);
-    color: #ffffff;
-    font-size: 0.78rem;
-    font-weight: 700;
-    white-space: nowrap;
-  }
-
-  .outcome-pill.draw {
-    border-color: var(--neutral-dark);
-    background: var(--neutral-dark);
-    color: #ffffff;
-  }
+  .res-winner { font-weight: 700; color: var(--neutral-darkest); white-space: nowrap; }
+  .res-loser  { color: var(--neutral-dark); white-space: nowrap; }
+  .res-verb   { font-size: 0.75rem; font-style: italic; color: var(--neutral-dark); margin: 0 5px; }
+  .td-score   { font-weight: 700; color: var(--neutral-dark); white-space: nowrap; width: 1%; }
 
   /* ── Side-by-side layout ── */
   .side-by-side-layout {
@@ -617,21 +601,26 @@
   @media (max-width: 640px) {
     /* Header */
     header { padding: 16px 0 14px; }
-    .header-title { font-size: 1.2rem; }
+    .header-title { font-size: clamp(0.82rem, 3.6vw, 1.2rem); white-space: nowrap; }
 
     /* Sticky bar: hide timestamp to keep it single-line */
     .updated-at { display: none; }
 
     /* Stack group tables and match results vertically */
     .side-by-side-layout { flex-direction: column; }
-    .side-left { width: 100%; }
+    .side-left  { width: 100%; order: 2; }
+    .side-right { order: 1; }
 
     /* Standings: hide per-match squares and max-pts — too wide for phones */
     .th-squares, .td-squares   { display: none; }
     .th-max-pts, .td-max-pts   { display: none; }
 
-    /* Results table: hide date & time columns */
+    /* Results table: hide # date & time columns; score stays pinned */
     .th-date, .td-date, .th-time, .td-time { display: none; }
+    .td-match-num { display: none; }
+    .results-table th:first-child { display: none; }
+    .results-table { table-layout: auto; }
+    #results-body .card { overflow-x: auto; }
 
     /* Bracket: tighter column padding + smaller min-width */
     .bk-col { min-width: 90px; padding: 0 6px; }
@@ -968,19 +957,25 @@ function renderResults(results) {
 
   const rows = completed.map(([num, grp, date, time, t1, t2]) => {
     const r = results[num];
-    const score = `${r.home} – ${r.away}`;
-    const winnerLabel = r.outcome === 'W1' ? `${t1} win`
-                      : r.outcome === 'W2' ? `${t2} win`
-                      : 'Draw';
-    const pillClass = r.outcome === 'Draw' ? 'outcome-pill draw' : 'outcome-pill';
+    let resultCell, scoreCell;
+    if (r.outcome === 'Draw') {
+      resultCell = `<span class="res-loser">${teamHtml(t1)}</span>`
+                 + `<span class="res-verb">drew</span>`
+                 + `<span class="res-loser">${teamHtml(t2)}</span>`;
+      scoreCell  = `${r.home} – ${r.away}`;
+    } else {
+      const [winner, loser] = r.outcome === 'W1' ? [t1, t2] : [t2, t1];
+      resultCell = `<span class="res-winner">${teamHtml(winner)}</span>`
+                 + `<span class="res-verb">beat</span>`
+                 + `<span class="res-loser">${teamHtml(loser)}</span>`;
+      scoreCell  = r.outcome === 'W2' ? `${r.away} – ${r.home}` : `${r.home} – ${r.away}`;
+    }
     return `<tr>
       <td class="td-match-num">${num}</td>
       <td class="td-date">${date}</td>
       <td class="td-grp">${grp}</td>
-      <td class="td-time">${time}</td>
-      <td class="td-teams">${t1} v ${t2}</td>
-      <td class="td-score">${score}</td>
-      <td class="td-result"><span class="${pillClass}">${winnerLabel}</span></td>
+      <td class="td-result-cell">${resultCell}</td>
+      <td class="td-score">${scoreCell}</td>
     </tr>`;
   }).join('');
 
@@ -991,10 +986,8 @@ function renderResults(results) {
           <th>#</th>
           <th class="th-date">Date</th>
           <th>Grp</th>
-          <th class="th-time">Time (ET)</th>
-          <th>Match</th>
-          <th>Score</th>
           <th>Result</th>
+          <th>Score</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
