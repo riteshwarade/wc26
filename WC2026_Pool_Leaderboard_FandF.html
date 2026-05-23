@@ -900,12 +900,19 @@ function renderKoBracket(bracketData, koResults, koScores) {
   function mkCard(m) {
     const [h, a] = getKoTeams(m, bracketData, koResults);
     const winner = koResults[m];
+    const sc     = koScores ? koScores[m] : null;
     let homeCls = '', awayCls = '';
     if (winner) {
       homeCls = winner === h ? 'w' : 'l';
       awayCls = winner === a ? 'w' : 'l';
     }
-    return matchCard(m, h, a, '', undefined, undefined, homeCls, awayCls);
+    let hSc = sc ? sc.home : undefined;
+    let aSc = sc ? sc.away : undefined;
+    if (sc && sc.homePen != null) {
+      hSc = `${sc.home} (${sc.homePen})`;
+      aSc = `${sc.away} (${sc.awayPen})`;
+    }
+    return matchCard(m, h, a, '', hSc, aSc, homeCls, awayCls);
   }
 
   // Determine podium teams
@@ -946,7 +953,13 @@ function renderKoBracket(bracketData, koResults, koScores) {
     if (winner && sc) {
       const wSc = winner === h ? sc.home : sc.away;
       const lSc = winner === h ? sc.away : sc.home;
-      scoreText = ` · ${wSc}–${lSc}`;
+      if (sc.homePen != null) {
+        const wPen = winner === h ? sc.homePen : sc.awayPen;
+        const lPen = winner === h ? sc.awayPen : sc.homePen;
+        scoreText = ` · ${wSc}–${lSc} (${wPen}–${lPen} pens)`;
+      } else {
+        scoreText = ` · ${wSc}–${lSc}`;
+      }
     }
     const hHtml  = hTbd ? `<span class="bk-mob-tbd">${h}</span>` : teamHtml(h);
     const aHtml  = aTbd ? `<span class="bk-mob-tbd">${a}</span>` : teamHtml(a);

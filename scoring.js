@@ -145,8 +145,8 @@ function parseKoResults(csvText) {
 }
 
 // ── Parse KO scores CSV ───────────────────────────────────────────────────────
-// Format: match,winner,home_score,away_score  (optional score columns)
-// Returns { matchNum: { home: N, away: N } } — only for rows with score data
+// Format: match,winner,home_score,away_score[,home_pen,away_pen]
+// Returns { matchNum: { home, away[, homePen, awayPen] } } — only rows with score data
 function parseKoScores(csvText) {
   const scores = {};
   if (!csvText || !csvText.trim()) return scores;
@@ -155,13 +155,23 @@ function parseKoScores(csvText) {
   const header   = lines[0].split(',').map(s => s.trim());
   const homeIdx  = header.indexOf('home_score');
   const awayIdx  = header.indexOf('away_score');
+  const hPenIdx  = header.indexOf('home_pen');
+  const aPenIdx  = header.indexOf('away_pen');
   if (homeIdx === -1 || awayIdx === -1) return scores;
   lines.slice(1).forEach(line => {
     const parts = line.split(',');
     const num   = parseInt(parts[0]);
     const home  = parseInt(parts[homeIdx]);
     const away  = parseInt(parts[awayIdx]);
-    if (num && !isNaN(home) && !isNaN(away)) scores[num] = { home, away };
+    if (num && !isNaN(home) && !isNaN(away)) {
+      const obj = { home, away };
+      if (hPenIdx !== -1 && aPenIdx !== -1) {
+        const hp = parseInt(parts[hPenIdx]);
+        const ap = parseInt(parts[aPenIdx]);
+        if (!isNaN(hp) && !isNaN(ap)) { obj.homePen = hp; obj.awayPen = ap; }
+      }
+      scores[num] = obj;
+    }
   });
   return scores;
 }

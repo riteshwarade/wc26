@@ -1,33 +1,33 @@
-match,winner,home_score,away_score
-73,Morocco,0,2
-74,France,2,0
-75,Spain,2,0
-76,Switzerland,0,2
-77,Mexico,0,2
-78,Senegal,0,2
-79,England,2,0
-80,Colombia,0,2
-81,United States,0,2
-82,Japan,0,2
-83,South Korea,2,0
-84,Uruguay,2,0
-85,Canada,0,2
-86,Austria,2,0
-87,Tunisia,2,0
-88,Panama,2,0
-89,Mexico,0,2
-90,Spain,0,2
-91,Switzerland,0,2
-92,Colombia,0,2
-93,Uruguay,0,2
-94,United States,0,2
-95,Austria,0,2
-96,Tunisia,0,2
-97,Spain,0,2
-98,Uruguay,0,2
-99,Colombia,0,2
-100,Austria,0,2
-101,Spain,0,2
-102,Colombia,0,2
-103,Austria,0,2
-104,Spain,0,2
+match,winner,home_score,away_score,home_pen,away_pen
+73,Morocco,0,2,,
+74,France,2,0,,
+75,Spain,2,0,,
+76,Switzerland,0,2,,
+77,Mexico,0,2,,
+78,Senegal,0,2,,
+79,England,2,0,,
+80,Colombia,0,2,,
+81,United States,0,2,,
+82,Japan,0,2,,
+83,South Korea,2,0,,
+84,Uruguay,2,0,,
+85,Canada,0,2,,
+86,Austria,2,0,,
+87,Tunisia,2,0,,
+88,Panama,2,0,,
+89,Mexico,0,2,,
+90,Spain,0,2,,
+91,Switzerland,0,2,,
+92,Colombia,0,2,,
+93,Uruguay,0,2,,
+94,United States,0,2,,
+95,Austria,0,2,,
+96,Tunisia,0,2,,
+97,Spain,1,1,4,2
+98,Uruguay,0,2,,
+99,Colombia,0,2,,
+100,Austria,0,2,,
+101,Spain,0,2,,
+102,Colombia,0,2,,
+103,Austria,0,2,,
+104,Spain,0,2,,

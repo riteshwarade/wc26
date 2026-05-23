@@ -46,29 +46,40 @@ from parse_results import (
 
 def make_espn_event(home_name, away_name, home_score, away_score,
                     season_slug='group-stage', completed=True,
-                    home_winner=None, away_winner=None):
-    """Build a minimal ESPN event dict matching the structure parse_* expects."""
+                    home_winner=None, away_winner=None,
+                    home_pen=None, away_pen=None):
+    """Build a minimal ESPN event dict matching the structure parse_* expects.
+
+    home_pen / away_pen: shootoutScore values for penalty-shootout matches.
+    """
     if home_winner is None and away_winner is None:
-        home_winner = home_score > away_score
-        away_winner = away_score > home_score
+        if home_pen is not None and away_pen is not None:
+            home_winner = int(home_pen) > int(away_pen)
+            away_winner = int(away_pen) > int(home_pen)
+        else:
+            home_winner = home_score > away_score
+            away_winner = away_score > home_score
+    home_comp = {
+        'homeAway': 'home',
+        'team': {'displayName': home_name},
+        'score': str(home_score),
+        'winner': home_winner,
+    }
+    away_comp = {
+        'homeAway': 'away',
+        'team': {'displayName': away_name},
+        'score': str(away_score),
+        'winner': away_winner,
+    }
+    if home_pen is not None:
+        home_comp['shootoutScore'] = str(home_pen)
+    if away_pen is not None:
+        away_comp['shootoutScore'] = str(away_pen)
     return {
         'season': {'slug': season_slug},
         'competitions': [{
             'status': {'type': {'completed': completed}},
-            'competitors': [
-                {
-                    'homeAway': 'home',
-                    'team': {'displayName': home_name},
-                    'score': str(home_score),
-                    'winner': home_winner,
-                },
-                {
-                    'homeAway': 'away',
-                    'team': {'displayName': away_name},
-                    'score': str(away_score),
-                    'winner': away_winner,
-                },
-            ],
+            'competitors': [home_comp, away_comp],
         }],
     }
 
@@ -291,6 +302,35 @@ class TestParseKoResultsEspn(unittest.TestCase):
         self.assertEqual(results[90], 'Spain')
         self.assertNotIn(89, results)  # W77 unknown → can't match
 
+    def test_penalty_shootout_home_wins(self):
+        # M73: Spain 1-1 France (AET), Spain wins 4-2 on pens
+        bracket = make_ko_bracket()
+        events = [make_espn_event('Spain', 'France', 1, 1,
+                                  season_slug='round-of-32',
+                                  home_pen=4, away_pen=2)]
+        results, scores = parse_ko_results_espn(events, bracket)
+        self.assertEqual(results[73], 'Spain')
+        self.assertEqual(scores[73], (1, 1, 4, 2))
+
+    def test_penalty_shootout_away_wins(self):
+        # M73: Spain 1-1 France (AET), France wins 5-3 on pens
+        bracket = make_ko_bracket()
+        events = [make_espn_event('Spain', 'France', 1, 1,
+                                  season_slug='round-of-32',
+                                  home_pen=3, away_pen=5)]
+        results, scores = parse_ko_results_espn(events, bracket)
+        self.assertEqual(results[73], 'France')
+        self.assertEqual(scores[73], (1, 1, 3, 5))
+
+    def test_no_shootout_score_is_two_tuple(self):
+        # Normal win — scores tuple should have exactly 2 elements
+        bracket = make_ko_bracket()
+        events = [make_espn_event('Spain', 'France', 2, 0,
+                                  season_slug='round-of-32')]
+        results, scores = parse_ko_results_espn(events, bracket)
+        self.assertEqual(scores[73], (2, 0))
+        self.assertEqual(len(scores[73]), 2)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # write_csv
@@ -382,6 +422,48 @@ class TestWriteKoResultsCsv(unittest.TestCase):
         self.assertEqual(rows[1], ['73', 'Spain'])
         self.assertEqual(rows[2], ['89', 'Brazil'])
         self.assertEqual(rows[3], ['104', 'France'])
+
+    def test_output_format_with_penalties(self):
+        # M97 went to pens (1-1 AET, home wins 4-2); others are normal
+        results = {73: 'Spain', 97: 'Brazil', 104: 'France'}
+        scores  = {73: (2, 1), 97: (1, 1, 4, 2)}
+        with tempfile.TemporaryDirectory() as tmpdir:
+            orig_dir = os.getcwd()
+            os.chdir(tmpdir)
+            try:
+                write_ko_results_csv(results, scores)
+                path = os.path.join(tmpdir, 'results', 'knockout_results.csv')
+                with open(path, newline='', encoding='utf-8') as f:
+                    rows = list(csv.reader(f))
+            finally:
+                os.chdir(orig_dir)
+
+        # Header must be 6-column when any pen data exists
+        self.assertEqual(rows[0], ['match', 'winner', 'home_score', 'away_score', 'home_pen', 'away_pen'])
+        # Normal win: pen columns blank
+        self.assertEqual(rows[1], ['73', 'Spain',  '2', '1', '',  '' ])
+        # Penalty win: all 6 columns populated
+        self.assertEqual(rows[2], ['97', 'Brazil', '1', '1', '4', '2'])
+        # No score at all: blank for all 4 score columns
+        self.assertEqual(rows[3], ['104', 'France', '', '', '', ''])
+
+    def test_output_format_mixed_no_pen_uses_4_cols(self):
+        # When no entry has pen data, use the 4-column format even if scores exist
+        results = {73: 'Spain', 89: 'Brazil'}
+        scores  = {73: (2, 1), 89: (3, 0)}
+        with tempfile.TemporaryDirectory() as tmpdir:
+            orig_dir = os.getcwd()
+            os.chdir(tmpdir)
+            try:
+                write_ko_results_csv(results, scores)
+                path = os.path.join(tmpdir, 'results', 'knockout_results.csv')
+                with open(path, newline='', encoding='utf-8') as f:
+                    rows = list(csv.reader(f))
+            finally:
+                os.chdir(orig_dir)
+
+        self.assertEqual(rows[0], ['match', 'winner', 'home_score', 'away_score'])
+        self.assertEqual(len(rows[0]), 4)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

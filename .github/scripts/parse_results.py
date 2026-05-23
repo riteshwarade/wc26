@@ -203,10 +203,17 @@ def parse_ko_results_espn(events, bracket_data):
             home_c = next((c for c in competitors if c.get('homeAway') == 'home'), None)
             away_c = next((c for c in competitors if c.get('homeAway') == 'away'), None)
             if home_c and away_c:
-                pair_to_scores[frozenset(teams)] = (
-                    int(home_c.get('score', 0) or 0),
-                    int(away_c.get('score', 0) or 0),
-                )
+                h_score = int(home_c.get('score', 0) or 0)
+                a_score = int(away_c.get('score', 0) or 0)
+                h_pen   = home_c.get('shootoutScore')
+                a_pen   = away_c.get('shootoutScore')
+                entry   = (h_score, a_score)
+                if h_pen is not None and a_pen is not None:
+                    try:
+                        entry = (h_score, a_score, int(h_pen), int(a_pen))
+                    except (TypeError, ValueError):
+                        pass
+                pair_to_scores[frozenset(teams)] = entry
 
     # Walk bracket sections in order to assign our match numbers.
     results       = {}
@@ -497,16 +504,34 @@ def parse_ko_results(wikitext, bracket_data):
 
 
 def write_ko_results_csv(results, scores=None):
-    """Write results/knockout_results.csv."""
+    """Write results/knockout_results.csv.
+
+    scores dict values are tuples:
+      (home_score, away_score)              — normal win
+      (home_score, away_score, home_pen, away_pen) — penalty shootout
+    Writes a 6-column CSV when any entry has pen data, otherwise 4-column.
+    """
     os.makedirs('results', exist_ok=True)
     path = 'results/knockout_results.csv'
+    has_pen = scores and any(len(sc) == 4 for sc in scores.values())
     with open(path, 'w', newline='', encoding='utf-8') as f:
         w = csv.writer(f)
         if scores:
-            w.writerow(['match', 'winner', 'home_score', 'away_score'])
-            for num in sorted(results):
-                sc = scores.get(num, ('', ''))
-                w.writerow([num, results[num], sc[0], sc[1]])
+            if has_pen:
+                w.writerow(['match', 'winner', 'home_score', 'away_score', 'home_pen', 'away_pen'])
+                for num in sorted(results):
+                    sc = scores.get(num)
+                    if sc and len(sc) == 4:
+                        w.writerow([num, results[num], sc[0], sc[1], sc[2], sc[3]])
+                    elif sc:
+                        w.writerow([num, results[num], sc[0], sc[1], '', ''])
+                    else:
+                        w.writerow([num, results[num], '', '', '', ''])
+            else:
+                w.writerow(['match', 'winner', 'home_score', 'away_score'])
+                for num in sorted(results):
+                    sc = scores.get(num, ('', ''))
+                    w.writerow([num, results[num], sc[0], sc[1]])
         else:
             w.writerow(['match', 'winner'])
             for num in sorted(results):
