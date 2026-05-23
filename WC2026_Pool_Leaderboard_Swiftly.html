@@ -1891,12 +1891,14 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed) {
   }
 
   // ── Mobile tab view ──────────────────────────────────────
+  // Match order mirrors desktop bracket (buildBracketHtml top-to-bottom layout)
   const MOB_ROUNDS = [
-    { id: 'r32', label: 'R32',   matches: [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88] },
-    { id: 'r16', label: 'R16',   matches: [89,90,91,92,93,94,95,96] },
+    { id: 'r32', label: 'R32',   matches: [74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87] },
+    { id: 'r16', label: 'R16',   matches: [89,90,93,94,91,92,95,96] },
     { id: 'qf',  label: 'QF',    matches: [97,98,99,100] },
     { id: 'sf',  label: 'SF',    matches: [101,102] },
-    { id: 'fin', label: 'Final', matches: [103,104] },
+    { id: '3rd', label: '3rd',   matches: [103] },
+    { id: 'fin', label: 'Final', matches: [104] },
   ];
   function mobMatchCard(m) {
     const [h, a] = slotTeams(m);
