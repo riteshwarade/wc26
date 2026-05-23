@@ -533,19 +533,26 @@
   }
   .bk-mob-teams { display: flex; flex-direction: column; gap: 2px; }
   .bk-mob-team {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
     font-size: 0.82rem;
     color: var(--neutral-darkest);
     font-weight: 500;
-    white-space: nowrap;
   }
+  .bk-mob-team-name { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bk-mob-sc { flex-shrink: 0; font-weight: inherit; color: inherit; font-variant-numeric: tabular-nums; }
   .bk-mob-team.tbd {
     color: var(--neutral-medium);
     font-style: italic;
     font-weight: 400;
   }
   .bk-mob-team.bk-mob-win { font-weight: 700; color: #042C53; }
+  .bk-mob-team.bk-mob-win .bk-mob-sc { color: #185FA5; }
   .bk-mob-team.bk-mob-los { font-weight: 400; color: var(--neutral-medium); }
   .bk-mob-team.bk-mob-los .team-rank { color: var(--neutral-medium); }
+  .bk-mob-team.bk-mob-los .bk-mob-sc { color: var(--neutral-medium); }
   .bk-mob-match.bk-mob-upcoming { opacity: 0.45; }
 
   /* ── Podium / final results (Variants 2 & 3; shown in Variant 1 for now) ── */
@@ -949,26 +956,27 @@ function renderKoBracket(bracketData, koResults, koScores) {
     const hCls   = winner ? (winner === h ? ' bk-mob-win' : ' bk-mob-los') : '';
     const aCls   = winner ? (winner === a ? ' bk-mob-win' : ' bk-mob-los') : '';
     const date   = KO_SCHEDULE[m] ? ` · ${KO_SCHEDULE[m]}` : '';
-    let scoreText = '';
-    if (winner && sc) {
-      const wSc = winner === h ? sc.home : sc.away;
-      const lSc = winner === h ? sc.away : sc.home;
+    // Per-team score strings (shown on each row, not in meta)
+    let hScTxt = '', aScTxt = '';
+    if (sc) {
       if (sc.homePen != null) {
-        const wPen = winner === h ? sc.homePen : sc.awayPen;
-        const lPen = winner === h ? sc.awayPen : sc.homePen;
-        scoreText = ` · ${wSc}–${lSc} (${wPen}–${lPen} pens)`;
+        hScTxt = `${sc.home} (${sc.homePen})`;
+        aScTxt = `${sc.away} (${sc.awayPen})`;
       } else {
-        scoreText = ` · ${wSc}–${lSc}`;
+        hScTxt = String(sc.home);
+        aScTxt = String(sc.away);
       }
     }
     const hHtml  = hTbd ? `<span class="bk-mob-tbd">${h}</span>` : teamHtml(h);
     const aHtml  = aTbd ? `<span class="bk-mob-tbd">${a}</span>` : teamHtml(a);
+    const hScHtml = hScTxt ? `<span class="bk-mob-sc">${hScTxt}</span>` : '';
+    const aScHtml = aScTxt ? `<span class="bk-mob-sc">${aScTxt}</span>` : '';
     const upCls  = !winner ? ' bk-mob-upcoming' : '';
     return `<div class="bk-mob-match${upCls}">
-      <div class="bk-mob-meta">M${m}${date}${scoreText}</div>
+      <div class="bk-mob-meta">M${m}${date}</div>
       <div class="bk-mob-teams">
-        <div class="bk-mob-team${hTbd ? ' tbd' : hCls}">${hHtml}</div>
-        <div class="bk-mob-team${aTbd ? ' tbd' : aCls}">${aHtml}</div>
+        <div class="bk-mob-team${hTbd ? ' tbd' : hCls}"><span class="bk-mob-team-name">${hHtml}</span>${hScHtml}</div>
+        <div class="bk-mob-team${aTbd ? ' tbd' : aCls}"><span class="bk-mob-team-name">${aHtml}</span>${aScHtml}</div>
       </div>
     </div>`;
   }
