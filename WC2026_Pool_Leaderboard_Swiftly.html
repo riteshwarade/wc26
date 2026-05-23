@@ -174,6 +174,10 @@
   }
 
   .standings-table th.th-squares { text-align: center; }
+  .standings-table th.th-grp-pts,
+  .standings-table th.th-ko-pts,
+  .standings-table th.th-max-pts,
+  .standings-table th.th-total-pts { text-align: center; }
 
   .standings-table tbody tr {
     border-bottom: 1px solid var(--neutral-light);
@@ -885,10 +889,10 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
             <tr>
               <th>#</th>
               <th>Name</th>
-              <th>Group pts</th>
-              <th>Knockout pts</th>
-              <th>Total</th>
-              <th class="th-max-pts">Max pts</th>
+              <th class="th-grp-pts">Grp</th>
+              <th class="th-ko-pts">KO</th>
+              <th class="th-total-pts">Total</th>
+              <th class="th-max-pts">Max</th>
               <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · red italic = cascaded void · empty = pending)</span></th>
             </tr>
           </thead>
