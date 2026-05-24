@@ -318,6 +318,7 @@
 
   .td-match-num { color: var(--neutral-medium); font-weight: 700; text-align: center; }
   .td-grp       { color: var(--swiftly-blue); font-weight: 700; }
+  .cell-tz      { display: none; }
   .td-result-cell { min-width: 160px; }
 
   .res-winner   { font-weight: 700; color: var(--neutral-darkest); white-space: nowrap; }
@@ -1096,14 +1097,16 @@ function renderStandings(standings, results) {
 }
 
 // ── Local match time (converts UTC ISO → user's local timezone) ──────────────
+// TZ abbreviation for column header (e.g. 'EDT', 'PDT', 'BST')
+const _tzAbbr = new Date().toLocaleTimeString('en-US', { timeZoneName: 'short' }).split(' ').pop();
+
 function localMatchTime(utcStr) {
   try {
     const dt = new Date(utcStr);
-    return dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const t = dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return `${t}<span class="cell-tz"> ${_tzAbbr}</span>`;
   } catch (e) { return utcStr; }
 }
-// TZ abbreviation for column header (e.g. 'EDT', 'PDT', 'BST')
-const _tzAbbr = new Date().toLocaleTimeString('en-US', { timeZoneName: 'short' }).split(' ').pop();
 
 // ── Render match results ──────────────────────────────────
 function renderResults(results) {

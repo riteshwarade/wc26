@@ -287,6 +287,7 @@
   }
 
   .match-grp { color: var(--swiftly-blue); font-weight: 700; }
+  .cell-tz { display: none; } /* shown on mobile where there's no column header */
 
   /* ── Pick buttons ────────────────────────────────────────── */
   .pick-group {
@@ -578,6 +579,7 @@
 
   /* ── Responsive (≤ 640 px — phones) ─────────────────────── */
   @media (max-width: 640px) {
+    .cell-tz { display: inline; }
     /* Header */
     header { padding: 16px 0 14px; }
     .header-title { font-size: clamp(0.82rem, 3.6vw, 1.2rem); white-space: nowrap; }
@@ -878,14 +880,16 @@ const MATCHES = [
 ];
 
 // ── Local match time (UTC ISO → user's local timezone) ────
+// TZ abbreviation for column header (e.g. 'EDT', 'PDT', 'BST')
+const _tzAbbr = new Date().toLocaleTimeString('en-US', { timeZoneName: 'short' }).split(' ').pop();
+
 function localMatchTime(utcStr) {
   try {
     const dt = new Date(utcStr);
-    return dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const t = dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return `${t}<span class="cell-tz"> ${_tzAbbr}</span>`;
   } catch (e) { return utcStr; }
 }
-// TZ abbreviation for column header (e.g. 'EDT', 'PDT', 'BST')
-const _tzAbbr = new Date().toLocaleTimeString('en-US', { timeZoneName: 'short' }).split(' ').pop();
 
 // ── Build form ────────────────────────────────────────────
 function buildForm() {
