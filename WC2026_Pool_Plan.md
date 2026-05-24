@@ -1,6 +1,6 @@
 # World Cup 2026 Pool — Master Plan
 
-Last updated: May 24, 2026 (mobile KO bracket UI polish: group-picks button style, card-per-match layout, pair pill connectors + grouped containers; penalty shootout support in scores + parse_results.py)
+Last updated: May 24, 2026 (UTC kick-off times for all group + KO matches; local-TZ display; KO schedule verified against ESPN API; bracket card title nowrap; column reorder)
 
 ---
 
@@ -31,6 +31,18 @@ Pick pages, leaderboard, and automation all live in a single GitHub repo (`rites
 | Knockout picks | `https://riteshwarade.github.io/wc26/WC2026_Pool_Knockout_Picks.html` | One page, both pools |
 | Swiftly leaderboard | `https://riteshwarade.github.io/wc26/WC2026_Pool_Leaderboard_Swiftly.html` | Pool-specific |
 | FandF leaderboard | `https://riteshwarade.github.io/wc26/WC2026_Pool_Leaderboard_FandF.html` | Pool-specific |
+
+---
+
+## Development workflow
+
+**Always edit `WC2026_Pool_Leaderboard_Swiftly.html`, then run `python3 make_fandf.py` to regenerate `WC2026_Pool_Leaderboard_FandF.html`. Never edit FandF directly.**
+
+Git pushes must be done from Mac (sandbox lacks SSH access to GitHub):
+```
+cd ~/Documents/GitHub/wc26 && git add -A && git commit -m "..." && git push
+```
+If you get `index.lock` error: `rm ~/Documents/GitHub/wc26/.git/index.lock` first.
 
 ---
 
@@ -294,6 +306,33 @@ Each page provides its own `renderBracket()` that calls the shared functions bel
 - `positionAndConnectBracket()` — sizes all `.bk-float` containers to R32 height; positions R16/QF/SF/Final cards at feeder midpoints (cascading); positions M103 aligned with M99; positions podium top at M89 top
 - `drawBracketConnectors()` — draws SVG `]` connector paths after positioning
 
+### UTC kick-off time storage and local-TZ display
+
+All match times are stored as UTC ISO 8601 strings and converted to the viewer's local timezone at render time. Never store or display ET/EDT times directly.
+
+**Group stage (`scoring.js` + pick/leaderboard pages):**
+- `MATCHES` array format: `[num, group, dateStr, utcKickoff, home, away]` — `dateStr` is a human-readable local date for display (e.g. `'Thu, Jun 11'`); `utcKickoff` is ISO 8601 UTC (e.g. `'2026-06-11T19:00:00Z'`)
+- 3 midnight games (M6, M20, M36) have `utcKickoff` on the calendar-next day (e.g. M6 is `'2026-06-14T04:00:00Z'`); `dateStr` shows the local viewing date
+- All 72 times verified against ESPN scoreboard API
+- **Pattern used in leaderboard and group picks pages:**
+  ```js
+  const _tzAbbr = new Date().toLocaleTimeString('en-US', { timeZoneName: 'short' }).split(' ').pop();
+  // → 'EDT', 'PDT', 'BST', etc. — computed once at page load
+
+  function localMatchTime(utcStr) {
+    const dt = new Date(utcStr);
+    const t = dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return `${t}<span class="cell-tz"> ${_tzAbbr}</span>`;
+  }
+  ```
+- Column header: `Time (${_tzAbbr})` — shows timezone once per table
+- `.cell-tz { display: none }` on desktop (header shows TZ); `display: inline` on mobile via `@media (max-width: 640px)` (no column header visible)
+- Group picks CSS grid: `grid-template-columns: 30px 28px 88px 72px auto` (`#` · `Grp` · `Date` · `Time` · picks); mobile breakpoint `max-width: 640px`
+
+**KO stage (`bracket.js`):**
+- `KO_SCHEDULE` stores UTC ISO strings for M73–M104; R32 times verified by cross-referencing ESPN team-slot descriptions against `R32_SLOTS`; R16/QF/SF/Final assigned chronologically within each local date
+- `koDisplay(num)` converts to e.g. `Jun 28 · 3:00 PM EDT`; used in `matchCard()` and all mobile card renderers in leaderboard + KO picks pages
+
 ### Group stage pick page (`WC2026_Pool_Group_Picks.html`)
 - Single shared page for all pools (no Swiftly/FandF split — Ritesh sorts CSVs manually)
 - 72 matches, W1/Draw/W2 picks
@@ -322,8 +361,8 @@ Each page provides its own `renderBracket()` that calls the shared functions bel
 - **Live knockout bracket** (collapsible section at bottom) — see below
 
 #### Match results table (group stage)
-- Columns: # · Date · Time (ET) · Grp · Result · Score
-- On mobile: # hidden, Date/Time hidden; result + score remain
+- Columns: `#` · `Grp` · `Date` · `Time (TZ)` · `Result` · `Score` — Group moved immediately after # so it scans fast; TZ abbreviation in column header reflects viewer's local timezone
+- On mobile (`max-width: 680px`): Time column hidden entirely; `#` and `Grp` also hidden; result + score remain
 - **Completed matches:** `[Winner bold] beat [loser muted] · score` or `[A muted] drew [B muted] · score`; winner's score always listed first (score flipped for away wins so winner's goals appear on the left)
 - **Upcoming matches:** team names shown as `A v B` with slight opacity (0.45) — muted but readable
 - Team names use `teamHtml()`: flag + name + (rank); `white-space: nowrap` prevents name/rank from splitting across lines
@@ -338,9 +377,11 @@ Each page provides its own `renderBracket()` that calls the shared functions bel
 - `test_bracket.py` — end-to-end test, all 495 combos verified passing
 - Uses `bracket.js` for all rendering primitives; page only defines `slotTeams()` + `mkCard()` + calls `buildBracketHtml(mkCard, { podiumHtml })`
 
-**Bracket design (all variants — updated May 20):**
+**Bracket design (all variants):**
 - ESPN-style cards: flag (`.bk-fl`) + name+rank (`.bk-tn`) — flag rendered separately, not via `teamHtml()` (avoids double-flag)
-- Match header bar: `[Round] · M# · Date` (e.g. `R32 · M74 · Jun 29`, `QF · M97 · Jul 9`)
+- Match header bar (`.bk-mnum`): `[Round] · M# · Date · Time TZ` (e.g. `R32 · M74 · Jun 29 · 1:00 PM EDT`); `roundLabel(103)` returns `'3rd'` (not `'3rd Place'`) to keep it short
+- `.bk-mnum` has `white-space: nowrap; overflow: hidden; text-overflow: ellipsis` — prevents wrapping that would unbalance column widths
+- All `.bk-col` use `flex: 1` (equal width); no per-round flex overrides
 - **Sticky round header strip** (`.bk-header-strip`) sits above `.bk-wrap`, auto-pins below `.sticky-bar` using measured height. `position: sticky` works because leaderboard `.section-body` uses `overflow: clip` (not `hidden`), which clips without creating a scroll container
 - Round headers with blue intensity progression: lightest R32 → darkest Final; strip injected via `bracket.js` CSS tag
 - Matches in Wikipedia bracket order: [74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87]
