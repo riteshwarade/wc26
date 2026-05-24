@@ -1095,6 +1095,16 @@ function renderStandings(standings, results) {
     </table>`;
 }
 
+// ── Local match time (converts UTC ISO → user's local timezone) ──────────────
+function localMatchTime(utcStr) {
+  try {
+    const dt = new Date(utcStr);
+    return dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  } catch (e) { return utcStr; }
+}
+// TZ abbreviation for column header (e.g. 'EDT', 'PDT', 'BST')
+const _tzAbbr = new Date().toLocaleTimeString('en-US', { timeZoneName: 'short' }).split(' ').pop();
+
 // ── Render match results ──────────────────────────────────
 function renderResults(results) {
   const rows = MATCHES.map(([num, grp, date, time, t1, t2]) => {
@@ -1117,9 +1127,9 @@ function renderResults(results) {
     }
     return `<tr class="${r ? '' : 'res-row-upcoming'}">
       <td class="td-match-num">${num}</td>
-      <td class="td-date">${date}</td>
-      <td class="td-time">${time.replace(' ET','')}</td>
       <td class="td-grp">${grp}</td>
+      <td class="td-date">${date}</td>
+      <td class="td-time">${localMatchTime(time)}</td>
       <td class="td-result-cell">${resultCell}</td>
       <td class="td-score">${scoreCell}</td>
     </tr>`;
@@ -1130,9 +1140,9 @@ function renderResults(results) {
       <thead>
         <tr>
           <th>#</th>
-          <th class="th-date">Date</th>
-          <th class="th-time">Time (ET)</th>
           <th>Grp</th>
+          <th class="th-date">Date</th>
+          <th class="th-time">Time (${_tzAbbr})</th>
           <th>Result</th>
           <th>Score</th>
         </tr>
