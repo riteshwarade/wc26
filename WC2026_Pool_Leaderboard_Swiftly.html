@@ -474,6 +474,9 @@
     padding: 2px 8px;
     background: var(--neutral-lightest);
     letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .bk-team {
     display: flex;
@@ -969,7 +972,7 @@ function renderKoBracket(bracketData, koResults, koScores) {
     const hTbd   = isTbd(h), aTbd = isTbd(a);
     const hCls   = winner ? (winner === h ? ' bk-mob-win' : ' bk-mob-los') : '';
     const aCls   = winner ? (winner === a ? ' bk-mob-win' : ' bk-mob-los') : '';
-    const date   = KO_SCHEDULE[m] ? ` · ${KO_SCHEDULE[m]}` : '';
+    const date   = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
     // Per-team score strings (shown on each row, not in meta)
     let hScTxt = '', aScTxt = '';
     if (sc) {
@@ -2019,7 +2022,7 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed) {
   ];
   function mobMatchCard(m) {
     const [h, a] = slotTeams(m);
-    const date  = KO_SCHEDULE[m] ? ` · ${KO_SCHEDULE[m]}` : '';
+    const date  = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
     const hTbd  = isTbd(h), aTbd = isTbd(a);
     const hHtml = hTbd ? `<span class="bk-mob-tbd">${h}</span>` : teamHtml(h);
     const aHtml = aTbd ? `<span class="bk-mob-tbd">${a}</span>` : teamHtml(a);

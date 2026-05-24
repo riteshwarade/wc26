@@ -147,7 +147,7 @@
   .bk-float   { position: relative; }
   .bk-float .bk-card { position: absolute; left: 0; right: 0; }
   .bk-card { background: #ffffff; border: 0.5px solid var(--neutral-light); border-radius: 8px; overflow: hidden; }
-  .bk-mnum { font-size: 0.78rem; color: var(--neutral-darkest); text-align: left; padding: 2px 8px; background: var(--neutral-lightest); }
+  .bk-mnum { font-size: 0.78rem; color: var(--neutral-darkest); text-align: left; padding: 2px 8px; background: var(--neutral-lightest); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bk-team { display: flex; align-items: center; gap: 6px; padding: 5px 8px; font-size: 0.78rem; }
   .bk-team + .bk-team { border-top: 0.5px solid var(--neutral-light); }
   .bk-fl { font-size: 0.85rem; line-height: 1; flex-shrink: 0; width: 16px; text-align: center; }
@@ -619,7 +619,7 @@ function mobPickCard(m) {
   const bothKnown = !hTbd && !aTbd;
   const hCls      = picked ? (picked === h ? ' w' : ' l') : '';
   const aCls      = picked ? (picked === a ? ' w' : ' l') : '';
-  const date      = KO_SCHEDULE[m] ? ` · ${KO_SCHEDULE[m]}` : '';
+  const date      = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
   const hAttrs    = bothKnown ? ` data-match="${m}" data-team="${h.replace(/"/g,'&quot;')}"` : '';
   const aAttrs    = bothKnown ? ` data-match="${m}" data-team="${a.replace(/"/g,'&quot;')}"` : '';
   const hHtml     = hTbd ? h : teamHtml(h);

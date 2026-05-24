@@ -61,23 +61,45 @@ const RANKINGS = {
   'England':4,'Croatia':11,'Ghana':74,'Panama':33,
 };
 
-// ── Knockout match dates ──────────────────────────────────
+// ── Knockout match UTC kick-off times (ISO 8601) ──────────
+// Verified against ESPN API (fifa.world scoreboard).
+// R32 times confirmed by matching ESPN team-slot descriptions to R32_SLOTS.
+// R16/QF/SF/Final assigned chronologically within each local date.
 const KO_SCHEDULE = {
   // Round of 32 (Jun 28 – Jul 3)
-  73:'Jun 28', 74:'Jun 29', 75:'Jun 29', 76:'Jun 29',
-  77:'Jun 30', 78:'Jun 30', 79:'Jun 30', 80:'Jul 1',
-  81:'Jul 1',  82:'Jul 1',  83:'Jul 2',  84:'Jul 2',
-  85:'Jul 2',  86:'Jul 3',  87:'Jul 3',  88:'Jul 3',
+  73:'2026-06-28T19:00Z',
+  74:'2026-06-29T20:30Z', 75:'2026-06-30T01:00Z', 76:'2026-06-29T17:00Z',
+  77:'2026-06-30T21:00Z', 78:'2026-06-30T17:00Z', 79:'2026-07-01T01:00Z',
+  80:'2026-07-01T16:00Z', 81:'2026-07-02T00:00Z', 82:'2026-07-01T20:00Z',
+  83:'2026-07-02T23:00Z', 84:'2026-07-02T19:00Z', 85:'2026-07-03T03:00Z',
+  86:'2026-07-03T22:00Z', 87:'2026-07-04T01:30Z', 88:'2026-07-03T18:00Z',
   // Round of 16 (Jul 4 – Jul 7)
-  89:'Jul 4',  90:'Jul 4',  91:'Jul 5',  92:'Jul 5',
-  93:'Jul 6',  94:'Jul 6',  95:'Jul 7',  96:'Jul 7',
+  89:'2026-07-04T17:00Z', 90:'2026-07-04T21:00Z',
+  91:'2026-07-05T20:00Z', 92:'2026-07-06T00:00Z',
+  93:'2026-07-06T19:00Z', 94:'2026-07-07T00:00Z',
+  95:'2026-07-07T16:00Z', 96:'2026-07-07T20:00Z',
   // Quarterfinals (Jul 9 – Jul 11)
-  97:'Jul 9',  98:'Jul 10', 99:'Jul 11', 100:'Jul 11',
+  97:'2026-07-09T20:00Z', 98:'2026-07-10T19:00Z',
+  99:'2026-07-11T21:00Z', 100:'2026-07-12T01:00Z',
   // Semifinals (Jul 14 – Jul 15)
-  101:'Jul 14', 102:'Jul 15',
+  101:'2026-07-14T19:00Z', 102:'2026-07-15T19:00Z',
   // 3rd place & Final
-  103:'Jul 18', 104:'Jul 19',
+  103:'2026-07-18T21:00Z', 104:'2026-07-19T19:00Z',
 };
+
+// ── Format a KO match time for display ────────────────────
+// Returns e.g. "Jun 28 · 3:00 PM EDT" in the viewer's local timezone.
+function koDisplay(num) {
+  const utc = KO_SCHEDULE[num];
+  if (!utc) return '';
+  try {
+    const dt = new Date(utc);
+    const dateStr = dt.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    const timeStr = dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const tzAbbr  = dt.toLocaleTimeString('en-US', { timeZoneName: 'short' }).split(' ').pop();
+    return `${dateStr} · ${timeStr} ${tzAbbr}`;
+  } catch(e) { return utc; }
+}
 
 // ── Bracket topology: feeders for each round ─────────────
 // These define the bracket structure for all three variants.
@@ -151,7 +173,7 @@ function roundLabel(num) {
 // homeAttrs / awayAttrs: optional extra HTML attributes for each team row.
 function matchCard(num, home, away, label, homeScore, awayScore, homeCls, awayCls, homeAttrs='', awayAttrs='') {
   const round = roundLabel(num);
-  const date = KO_SCHEDULE[num] ? ` · ${KO_SCHEDULE[num]}` : '';
+  const date = KO_SCHEDULE[num] ? ` · ${koDisplay(num)}` : '';
   const mnumText = `${round} · M${num}${date}${label ? ' · ' + label : ''}`;
   return `<div class="bk-card" data-match="${num}">
     <div class="bk-mnum">${mnumText}</div>
