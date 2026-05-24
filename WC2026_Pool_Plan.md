@@ -1,6 +1,6 @@
 # World Cup 2026 Pool — Master Plan
 
-Last updated: May 23, 2026 (mobile-friendly all 4 pages; leaderboard results table redesign)
+Last updated: May 24, 2026 (mobile KO bracket UI polish: group-picks button style, card-per-match layout, pair pill connectors + grouped containers; penalty shootout support in scores + parse_results.py)
 
 ---
 
@@ -132,7 +132,7 @@ Two separate fetches, called on every run, because ESPN caps responses at 100 ev
 1. Calls `fetch_espn_group_events()` (Jun 11–27 date range). For each completed group-stage event, reads home/away team `displayName`, looks up the match number via `MATCH_LOOKUP`, determines outcome (`W1`/`Draw`/`W2`) from scores, and writes `results/group_results.csv`.
 2. From group results, computes which teams qualified top-2/3rd by group and builds the R32 bracket. Writes `data/knockout_bracket.json`.
 3. Calls `verify_r32_against_wikipedia()` as a cross-check on the R32 bracket once all 72 group matches are complete. Sets `"confirmed": true` in `knockout_bracket.json` only when the Wikipedia bracket matches.
-4. If `data/knockout_bracket.json` exists, calls `fetch_espn_ko_events()` (Jun 28–Jul 20 date range). ESPN returns `competitor.winner = true` on the winning team — no score parsing needed. Results are resolved by walking the bracket topology (R32 → R16 → QF → SF → 3rd/Final), propagating actual team names through `W73`-style references as rounds complete. Writes `results/knockout_results.csv`.
+4. If `data/knockout_bracket.json` exists, calls `fetch_espn_ko_events()` (Jun 28–Jul 20 date range). ESPN returns `competitor.winner = true` on the winning team. Scores are read from `competitor.score`; penalty shootout scores from `competitor.shootoutScore` (present only when a match goes to penalties). Results are resolved by walking the bracket topology (R32 → R16 → QF → SF → 3rd/Final), propagating actual team names through `W73`-style references as rounds complete. Writes `results/knockout_results.csv` (6-column with pen columns when any match had penalties).
 
 ### Results CSV formats
 
@@ -147,11 +147,11 @@ Only completed matches included. Outcome: `W1` / `Draw` / `W2`.
 
 **`results/knockout_results.csv`:**
 ```
-match,winner
-73,Netherlands
-89,Spain
+match,winner,home_score,away_score,home_pen,away_pen
+73,Netherlands,0,2,,
+89,Spain,1,1,4,2
 ```
-One row per completed KO match. Winner is the team's display name (as used in picks CSVs).
+One row per completed KO match. `home_pen`/`away_pen` are only present if the match went to a penalty shootout; otherwise those columns are empty. `parse_results.py` writes 6-column format whenever any match in the file has penalty data; otherwise falls back to 4-column. `parseKoScores()` in `scoring.js` reads `home_pen`/`away_pen` and returns `{ home, away, homePen, awayPen }` when present. On the leaderboard bracket, penalty scores render as `1 (4)` / `1 (2)` per team row.
 
 ### ESPN → internal team name mapping
 
@@ -355,11 +355,22 @@ Each page provides its own `renderBracket()` that calls the shared functions bel
 - Click any team row to pick winner — both teams must be known before either row is clickable
 - Winner cascades into the next round's slot; downstream picks cleared if they become invalid
 - Picks state: `picks = { matchNum: winnerName }` — 32 picks total
-- **No re-render on pick**: `updateCards()` replaces each `.bk-card` outerHTML in-place, preserving `style.top` on absolutely-positioned cards — eliminates flash/jitter
+- **No re-render on pick**: `updateCards()` replaces each `.bk-card` outerHTML in-place on desktop (preserves `style.top`); replaces `#mob-card-${m}` outerHTML on mobile (preserves active tab state)
 - Full `renderBracket()` only called once on initial load
 - Podium updates live as Final and 3rd place picks are made
 - Shortcuts: 🎲 Pick randomly · 💪 Pick higher-ranked · ✕ Reset — all use `updateCards()`
 - Progress bar: `X / 32 matches picked`
+
+**Mobile tab view (≤ 640px):**
+- Desktop bracket hidden; `.bk-mobile-tabs` shown
+- Round tabs: R32 · R16 · QF · SF · 3rd · Final; auto-opens first round with any unpicked matches
+- `MOB_ROUNDS` match order mirrors desktop bracket column order
+- `PAIR_NEXT` maps each pair of matches in a round to their next-round match (e.g. [M74,M77]→M89)
+- Each pair wrapped in `.bk-mob-pair-group` (blue-light border, 12px radius) — visually groups the two feeders
+- Floating blue pill (`.bk-mob-pair-pill`) between the two matches in each group: "winners meet in R16 · M89"
+- Team rows use group-picks button style: white bg + `1.5px solid var(--blue-light)` unselected; solid `var(--swiftly-blue)` fill + white text when picked; borderless muted when loser
+- `.team-rank` inherits white at 75% opacity on picked/winner rows (matching group picks behaviour)
+- Results fetched from `raw.githubusercontent.com?t=Date.now()` (bypasses CDN cache)
 
 ### GitHub Actions
 - `update.yml` — runs every 15 min, Jun 11–Jul 19
@@ -675,8 +686,16 @@ No individual participant drill-down — points columns tell the story.
 #### Knockout bracket (Variant 3)
 
 Same ESPN-style cards as Variant 1. `mkCard` reads from `koResults`:
-- **Match played**: winner row `.w` (blue), loser row `.l` (muted), score shown
-- **Not yet played**: both rows neutral; teams shown from bracket JSON or derived from prior results
+- **Match played**: winner row `.bk-mob-win` (solid swiftly-blue fill, white text), loser row `.bk-mob-los` (borderless, muted), score shown
+- **Penalty shootout**: score renders as `1 (4)` / `1 (2)` per team row; `parseKoScores()` returns `{ home, away, homePen, awayPen }` when pen columns present
+- **Not yet played**: both rows neutral (white bg + blue-light border); teams shown from bracket JSON or derived from prior results
+
+**Mobile tab view (≤ 640px):**
+- Same tab structure as Variant 2 (`KO_MOB_ROUNDS`, `KO_PAIR_NEXT`, `.bk-mob-pair-group`, `.bk-mob-pair-pill`)
+- Team rows use same group-picks button style; `.bk-mob-win` = solid swiftly-blue; `.bk-mob-los` = borderless muted
+- Each match is a white rounded card (`border: 0.5px solid var(--neutral-light); border-radius: 10px`) on a light-gray panel (`var(--neutral-lightest)`)
+- Font size `0.90rem`, card padding `10px 14px`, team gap `4px`
+- KO mode (games > 72): group section hidden entirely; only KO standings + KO bracket shown
 
 Results fill in progressively round by round as `knockout_results.csv` grows.
 
@@ -742,7 +761,7 @@ Key insight documented: cascade is not gated on the downstream match being playe
 
 Run: `python3 test_parse_results.py`
 
-61 tests across 9 classes covering every testable function in `.github/scripts/parse_results.py`:
+67 tests across 9 classes covering every testable function in `.github/scripts/parse_results.py`:
 
 - `TestEspnTeamName` (9) — ESPN display-name normalisation: Czechia→Czech Republic, Türkiye→Turkey, Curaçao, Bosnia, passthrough, missing field
 - `TestParseGroupResultsEspn` (10) — home win, away win, draw, incomplete skip, non-group-stage skip, ESPN name mapping, multiple matches, unknown matchup skip, empty events, match lookup coverage
@@ -815,6 +834,10 @@ All 4 pages are mobile-friendly. Breakpoint: `@media (max-width: 640px)`.
 | Leaderboard: group tables | Appear below match results (CSS `order` swap on `.side-left`/`.side-right`) |
 | Leaderboard: results table | # column hidden; Date/Time hidden; result + score remain; score pinned right |
 | KO bracket | Tighter column padding (`min-width: 90px`, `padding: 0 6px`) and team row padding |
+| KO bracket mobile | Desktop `.bk-outer` hidden; `.bk-mobile-tabs` shown. Round tabs + pair-grouped match cards. |
+| KO mobile team row | `0.90rem`, `padding: 7px 9px`, `border-radius: 6px`. Unselected: white bg + `1.5px solid var(--blue-light)`. Selected/winner: solid `var(--swiftly-blue)` fill + white text. Loser: borderless + muted. |
+| KO mobile pair group | `.bk-mob-pair-group`: `border: 1px solid var(--blue-light); border-radius: 12px; padding: 8px`. Wraps two match cards + pill connector. |
+| KO mobile pill | `.bk-mob-pair-pill span`: `10px`, `#185FA5`, `var(--blue-lightest)` bg, `1px solid var(--blue-light)` border, `border-radius: 20px`. |
 
 **FandF rule:** `make_fandf.py` regenerates FandF from Swiftly — all mobile CSS propagates automatically. Never edit FandF directly.
 
