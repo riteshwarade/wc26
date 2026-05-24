@@ -271,7 +271,8 @@ Each page provides its own `renderBracket()` that calls the shared functions bel
 **Shared data:**
 - `FLAGS` — flag emoji lookup for all 48 teams
 - `RANKINGS` — FIFA rankings (canonical name; was `LB_RANKINGS` in leaderboard before extraction)
-- `KO_SCHEDULE` — match dates M73–M104
+- `KO_SCHEDULE` — UTC ISO kick-off times for M73–M104 (verified against ESPN `fifa.world` scoreboard API; R32 confirmed by matching ESPN team-slot descriptions to `R32_SLOTS`)
+- `koDisplay(num)` — formats `KO_SCHEDULE[num]` into local-timezone string e.g. `Jun 28 · 3:00 PM EDT`; used in `matchCard()` and all mobile card renderers
 - `R16`, `QF`, `SF` — bracket topology (feeder match pairs for each round)
 
 **Shared rendering primitives:**
@@ -934,7 +935,7 @@ The leaderboard always fetches live data from GitHub — there is no embedded si
 - **Variant 2 hook**: `bkTeamRow` accepts `extraAttrs` (4th param) for injecting `data-match`/`data-team` attributes on click targets. `matchCard` accepts `homeAttrs`/`awayAttrs` (9th/10th params) that forward to `bkTeamRow`.
 - **Variant 3 readiness**: `matchCard()` already accepts `homeScore`, `awayScore`, `homeCls`, `awayCls` params. When knockout results exist, pass them in. Connectors and positioning will still work.
 - **Podium in Variant 1**: currently passes `buildPodiumHtml(null, null, null)` — shows TBD. Remove this call from Variant 1's `renderBracket` once Variants 2/3 are built.
-- **KO_SCHEDULE**: knockout match dates encoded in JS object for M73–M104. Times not yet available from FIFA.
+- **KO_SCHEDULE**: stores UTC ISO strings (e.g. `'2026-06-28T19:00Z'`) for all 32 KO matches (M73–M104), verified via ESPN API. Displayed via `koDisplay(num)` in the viewer's local timezone. `.bk-mnum` uses `white-space: nowrap; overflow: hidden; text-overflow: ellipsis` to keep card titles on one line. `roundLabel(103)` returns `'3rd'` (not `'3rd Place'`) to fit within the card width.
 
 ---
 
