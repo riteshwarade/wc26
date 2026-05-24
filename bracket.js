@@ -164,7 +164,7 @@ function roundLabel(num) {
   if (num >= 89 && num <= 96) return 'R16';
   if (num >= 97 && num <= 100) return 'QF';
   if (num === 101 || num === 102) return 'SF';
-  if (num === 103) return '3rd Place';
+  if (num === 103) return '3rd';
   if (num === 104) return 'Final';
   return '';
 }
