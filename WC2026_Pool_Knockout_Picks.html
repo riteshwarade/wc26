@@ -265,20 +265,43 @@
   .bk-podium-row.bronze { background: #fff6f0; }
 
   /* ── Mobile responsive (≤ 640 px — phones) ── */
+  /* ── Mobile bracket tabs (Variant 2) ── */
+  .bk-mobile-tabs { display: none; }
+  .bk-tab-bar { display: flex; border-bottom: 1.5px solid var(--neutral-light); background: var(--neutral-lightest); }
+  .bk-tab { flex: 1; padding: 9px 2px; font-size: 0.72rem; font-weight: 700; border: none; background: none; cursor: pointer; color: var(--neutral-dark); border-bottom: 2px solid transparent; margin-bottom: -1.5px; letter-spacing: 0.2px; }
+  .bk-tab.active { color: #185FA5; border-bottom-color: #185FA5; }
+  .bk-tab-panel { display: none; }
+  .bk-tab-panel.active { display: block; }
+  .bk-mob-match { padding: 7px 12px; border-bottom: 0.5px solid var(--neutral-light); }
+  .bk-mob-match:last-child { border-bottom: none; }
+  .bk-mob-meta { font-size: 0.65rem; color: var(--neutral-dark); margin-bottom: 3px; }
+  .bk-mob-teams { display: flex; flex-direction: column; gap: 2px; }
+  .bk-mob-pick-team {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--neutral-darkest);
+    font-weight: 500;
+    padding: 6px 4px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .bk-mob-pick-team.tbd { color: var(--neutral-medium); font-style: italic; font-weight: 400; cursor: default; }
+  .bk-mob-pick-team:not(.tbd):hover { background: var(--blue-lightest); }
+  .bk-mob-pick-team.w { font-weight: 700; color: #042C53; background: var(--blue-lightest); }
+  .bk-mob-pick-team.l { font-weight: 400; color: var(--neutral-medium); }
+  .bk-mob-team-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
   @media (max-width: 640px) {
-    /* Header */
     header { padding: 16px 0 14px; }
     .header-title { font-size: clamp(0.82rem, 3.6vw, 1.2rem); white-space: nowrap; }
-
-    /* Shortcuts bar: wrap onto multiple lines */
     .shortcuts-bar { flex-wrap: wrap; }
     .shortcut-btn  { padding: 6px 10px; min-height: 36px; }
-
-    /* Bracket columns: tighter padding + smaller min-width */
-    .bk-col { min-width: 90px; padding: 0 6px; }
-
-    /* Bracket team rows: taller touch targets */
-    .bk-team { padding: 7px 8px; }
+    /* Hide desktop bracket, show tab view */
+    .bk-outer { display: none; }
+    .bk-mobile-tabs { display: block; }
   }
 </style>
 </head>
@@ -433,6 +456,12 @@ function updateCards() {
   const podiumEl   = document.getElementById('bk-podium-results');
   if (podiumEl) podiumEl.outerHTML = buildPodiumHtml(champion, runnerUp, picks[103] || null);
 
+  // Update mobile pick cards (surgical — preserves active tab)
+  for (const m of MATCH_ORDER) {
+    const mobEl = document.getElementById(`mob-card-${m}`);
+    if (mobEl) mobEl.outerHTML = mobPickCard(m);
+  }
+
   // Update progress bar
   const done = Object.keys(picks).length;
   document.getElementById('progressFill').style.width = `${(done / 32) * 100}%`;
@@ -456,7 +485,7 @@ function renderBracket() {
   const runnerUp   = champion ? (champion === h104 ? a104 : h104) : null;
   const thirdPlace = picks[103] || null;
 
-  el.innerHTML = buildBracketHtml(mkCard, { podiumHtml: buildPodiumHtml(champion, runnerUp, thirdPlace) });
+  el.innerHTML = buildBracketHtml(mkCard, { podiumHtml: buildPodiumHtml(champion, runnerUp, thirdPlace) }) + buildMobTabHtml();
   requestAnimationFrame(() => requestAnimationFrame(positionAndConnectBracket));
 
   // Update progress bar
@@ -559,6 +588,59 @@ function downloadCSV(name) {
   a.download = `wc26_knockout_${name.replace(/\s+/g, '-').toLowerCase()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// ── Mobile tab view (Variant 2) ──────────────────────────────────────────────
+function switchBracketTab(roundId) {
+  document.querySelectorAll('.bk-tab').forEach(b =>
+    b.classList.toggle('active', b.dataset.round === roundId));
+  document.querySelectorAll('.bk-tab-panel').forEach(p =>
+    p.classList.toggle('active', p.id === 'bk-panel-' + roundId));
+}
+
+const MOB_ROUNDS = [
+  { id: 'r32', label: 'R32',   matches: [74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87] },
+  { id: 'r16', label: 'R16',   matches: [89,90,93,94,91,92,95,96] },
+  { id: 'qf',  label: 'QF',    matches: [97,98,99,100] },
+  { id: 'sf',  label: 'SF',    matches: [101,102] },
+  { id: '3rd', label: '3rd',   matches: [103] },
+  { id: 'fin', label: 'Final', matches: [104] },
+];
+
+function mobPickCard(m) {
+  const [h, a]    = getTeams(m);
+  const picked    = picks[m];
+  const hTbd      = isTbd(h), aTbd = isTbd(a);
+  const bothKnown = !hTbd && !aTbd;
+  const hCls      = picked ? (picked === h ? ' w' : ' l') : '';
+  const aCls      = picked ? (picked === a ? ' w' : ' l') : '';
+  const date      = KO_SCHEDULE[m] ? ` · ${KO_SCHEDULE[m]}` : '';
+  const hAttrs    = bothKnown ? ` data-match="${m}" data-team="${h.replace(/"/g,'&quot;')}"` : '';
+  const aAttrs    = bothKnown ? ` data-match="${m}" data-team="${a.replace(/"/g,'&quot;')}"` : '';
+  const hHtml     = hTbd ? h : teamHtml(h);
+  const aHtml     = aTbd ? a : teamHtml(a);
+  return `<div class="bk-mob-match" id="mob-card-${m}">
+    <div class="bk-mob-meta">${roundLabel(m)} · M${m}${date}</div>
+    <div class="bk-mob-teams">
+      <div class="bk-mob-pick-team${hTbd ? ' tbd' : hCls}"${hAttrs}><span class="bk-mob-team-name">${hHtml}</span></div>
+      <div class="bk-mob-pick-team${aTbd ? ' tbd' : aCls}"${aAttrs}><span class="bk-mob-team-name">${aHtml}</span></div>
+    </div>
+  </div>`;
+}
+
+function buildMobTabHtml() {
+  // Auto-open first round with any unpicked matches
+  let activeRound = MOB_ROUNDS[MOB_ROUNDS.length - 1].id;
+  for (const r of MOB_ROUNDS) {
+    if (r.matches.some(m => !picks[m])) { activeRound = r.id; break; }
+  }
+  const tabBar = MOB_ROUNDS.map(r =>
+    `<button class="bk-tab${r.id === activeRound ? ' active' : ''}" onclick="switchBracketTab('${r.id}')" data-round="${r.id}">${r.label}</button>`
+  ).join('');
+  const panels = MOB_ROUNDS.map(r =>
+    `<div class="bk-tab-panel${r.id === activeRound ? ' active' : ''}" id="bk-panel-${r.id}">${r.matches.map(mobPickCard).join('')}</div>`
+  ).join('');
+  return `<div class="bk-mobile-tabs"><div class="bk-tab-bar">${tabBar}</div>${panels}</div>`;
 }
 
 // ── Load bracket JSON, then render ──
