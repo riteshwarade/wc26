@@ -524,26 +524,29 @@
   }
   .bk-tab.active { color: #185FA5; border-bottom-color: #185FA5; }
   .bk-tab-panel { display: none; }
-  .bk-tab-panel.active { display: block; }
-  .bk-mob-match {
-    padding: 7px 12px;
-    border-bottom: 0.5px solid var(--neutral-light);
-  }
-  .bk-mob-match:last-child { border-bottom: none; }
+  .bk-tab-panel.active { display: flex; flex-direction: column; gap: 7px; padding: 8px 10px; background: var(--neutral-lightest); }
+  .bk-mob-match { padding: 8px 10px; border: 0.5px solid var(--neutral-light); border-radius: 10px; background: #ffffff; }
+  .bk-mob-pair-pill { display: flex; justify-content: center; padding: 2px 0; }
+  .bk-mob-pair-pill span { font-size: 10px; font-weight: 500; color: #185FA5; background: var(--blue-lightest); border: 1px solid var(--blue-light); border-radius: 20px; padding: 3px 12px; }
+  .bk-mob-pair-group { border: 1px solid var(--blue-light); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 5px; }
   .bk-mob-meta {
-    font-size: 0.65rem;
+    font-size: 0.70rem;
     color: var(--neutral-dark);
-    margin-bottom: 3px;
+    margin-bottom: 5px;
   }
-  .bk-mob-teams { display: flex; flex-direction: column; gap: 2px; }
+  .bk-mob-teams { display: flex; flex-direction: column; gap: 4px; }
   .bk-mob-team {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: center;
     gap: 6px;
-    font-size: 0.82rem;
+    font-size: 0.90rem;
     color: var(--neutral-darkest);
-    font-weight: 500;
+    font-weight: 400;
+    padding: 7px 9px;
+    border-radius: 6px;
+    border: 1.5px solid var(--blue-light);
+    background: #ffffff;
   }
   .bk-mob-team-name { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bk-mob-sc { flex-shrink: 0; font-weight: inherit; color: inherit; font-variant-numeric: tabular-nums; }
@@ -551,10 +554,12 @@
     color: var(--neutral-medium);
     font-style: italic;
     font-weight: 400;
+    border-color: var(--neutral-light);
   }
-  .bk-mob-team.bk-mob-win { font-weight: 700; color: #042C53; }
-  .bk-mob-team.bk-mob-win .bk-mob-sc { color: #185FA5; }
-  .bk-mob-team.bk-mob-los { font-weight: 400; color: var(--neutral-medium); }
+  .bk-mob-team.bk-mob-win { font-weight: 500; background: var(--swiftly-blue); border-color: var(--swiftly-blue); color: #ffffff; }
+  .bk-mob-team.bk-mob-win .team-rank { color: rgba(255,255,255,0.75); }
+  .bk-mob-team.bk-mob-win .bk-mob-sc { color: rgba(255,255,255,0.85); }
+  .bk-mob-team.bk-mob-los { font-weight: 400; border-color: transparent; background: transparent; color: var(--neutral-medium); }
   .bk-mob-team.bk-mob-los .team-rank { color: var(--neutral-medium); }
   .bk-mob-team.bk-mob-los .bk-mob-sc { color: var(--neutral-medium); }
   .bk-mob-match.bk-mob-upcoming { opacity: 0.45; }
@@ -991,9 +996,33 @@ function renderKoBracket(bracketData, koResults, koScores) {
   const koMobTabBarHtml = KO_MOB_ROUNDS.map(r =>
     `<button class="bk-tab${r.id === koActiveRound ? ' active' : ''}" onclick="switchBracketTab('${r.id}')" data-round="${r.id}">${r.label}</button>`
   ).join('');
-  const koMobPanelsHtml = KO_MOB_ROUNDS.map(r =>
-    `<div class="bk-tab-panel${r.id === koActiveRound ? ' active' : ''}" id="bk-panel-${r.id}">${r.matches.map(koMobMatchCard).join('')}</div>`
-  ).join('');
+  const KO_PAIR_NEXT = {
+    r32: [['R16','M89'],['R16','M90'],['R16','M93'],['R16','M94'],['R16','M91'],['R16','M92'],['R16','M95'],['R16','M96']],
+    r16: [['QF','M97'],['QF','M98'],['QF','M99'],['QF','M100']],
+    qf:  [['SF','M101'],['SF','M102']],
+    sf:  [['Final','M104']],
+  };
+  const koMobPanelsHtml = KO_MOB_ROUNDS.map(r => {
+    const pairs = KO_PAIR_NEXT[r.id] || [];
+    let html = '';
+    for (let i = 0; i < r.matches.length; i += 2) {
+      const m1 = r.matches[i];
+      const m2 = r.matches[i + 1];
+      const pair = pairs[i / 2];
+      if (m2 !== undefined && pair) {
+        const [rl, mn] = pair;
+        html += `<div class="bk-mob-pair-group">`;
+        html += koMobMatchCard(m1);
+        html += `<div class="bk-mob-pair-pill"><span>winners meet in ${rl} · ${mn}</span></div>`;
+        html += koMobMatchCard(m2);
+        html += `</div>`;
+      } else {
+        html += koMobMatchCard(m1);
+        if (m2 !== undefined) html += koMobMatchCard(m2);
+      }
+    }
+    return `<div class="bk-tab-panel${r.id === koActiveRound ? ' active' : ''}" id="bk-panel-${r.id}">${html}</div>`;
+  }).join('');
   const koMobTabHtml = `<div class="bk-mobile-tabs"><div class="bk-tab-bar">${koMobTabBarHtml}</div>${koMobPanelsHtml}</div>`;
 
   el.innerHTML = buildBracketHtml(mkCard, { podiumHtml }) + koMobTabHtml;

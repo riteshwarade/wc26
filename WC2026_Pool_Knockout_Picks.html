@@ -271,27 +271,32 @@
   .bk-tab { flex: 1; padding: 9px 2px; font-size: 0.72rem; font-weight: 700; border: none; background: none; cursor: pointer; color: var(--neutral-dark); border-bottom: 2px solid transparent; margin-bottom: -1.5px; letter-spacing: 0.2px; }
   .bk-tab.active { color: #185FA5; border-bottom-color: #185FA5; }
   .bk-tab-panel { display: none; }
-  .bk-tab-panel.active { display: block; }
-  .bk-mob-match { padding: 7px 12px; border-bottom: 0.5px solid var(--neutral-light); }
-  .bk-mob-match:last-child { border-bottom: none; }
-  .bk-mob-meta { font-size: 0.65rem; color: var(--neutral-dark); margin-bottom: 3px; }
-  .bk-mob-teams { display: flex; flex-direction: column; gap: 2px; }
+  .bk-tab-panel.active { display: flex; flex-direction: column; gap: 7px; padding: 8px 10px; background: var(--neutral-lightest); }
+  .bk-mob-match { padding: 8px 10px; border: 0.5px solid var(--neutral-light); border-radius: 10px; background: #ffffff; }
+  .bk-mob-pair-pill { display: flex; justify-content: center; padding: 2px 0; }
+  .bk-mob-pair-pill span { font-size: 10px; font-weight: 500; color: #185FA5; background: var(--blue-lightest); border: 1px solid var(--blue-light); border-radius: 20px; padding: 3px 12px; }
+  .bk-mob-pair-group { border: 1px solid var(--blue-light); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .bk-mob-meta { font-size: 0.70rem; color: var(--neutral-dark); margin-bottom: 5px; }
+  .bk-mob-teams { display: flex; flex-direction: column; gap: 4px; }
   .bk-mob-pick-team {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.82rem;
+    font-size: 0.90rem;
     color: var(--neutral-darkest);
-    font-weight: 500;
-    padding: 6px 4px;
-    border-radius: 5px;
+    font-weight: 400;
+    padding: 7px 9px;
+    border-radius: 6px;
+    border: 1.5px solid var(--blue-light);
+    background: #ffffff;
     cursor: pointer;
-    transition: background 0.1s;
+    transition: all 0.14s;
   }
-  .bk-mob-pick-team.tbd { color: var(--neutral-medium); font-style: italic; font-weight: 400; cursor: default; }
-  .bk-mob-pick-team:not(.tbd):hover { background: var(--blue-lightest); }
-  .bk-mob-pick-team.w { font-weight: 700; color: #042C53; background: var(--blue-lightest); }
-  .bk-mob-pick-team.l { font-weight: 400; color: var(--neutral-medium); }
+  .bk-mob-pick-team.tbd { color: var(--neutral-medium); font-style: italic; font-weight: 400; cursor: default; border-color: var(--neutral-light); }
+  .bk-mob-pick-team:not(.tbd):hover { border-color: var(--swiftly-blue); color: var(--swiftly-blue); background: var(--blue-lightest); }
+  .bk-mob-pick-team.w { border-color: var(--swiftly-blue); background: var(--swiftly-blue); color: #ffffff; font-weight: 500; }
+  .bk-mob-pick-team.w .team-rank { color: rgba(255,255,255,0.75); }
+  .bk-mob-pick-team.l { border-color: transparent; background: transparent; color: var(--neutral-medium); font-weight: 400; }
   .bk-mob-team-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   @media (max-width: 640px) {
@@ -628,6 +633,13 @@ function mobPickCard(m) {
   </div>`;
 }
 
+const PAIR_NEXT = {
+  r32: [['R16','M89'],['R16','M90'],['R16','M93'],['R16','M94'],['R16','M91'],['R16','M92'],['R16','M95'],['R16','M96']],
+  r16: [['QF','M97'],['QF','M98'],['QF','M99'],['QF','M100']],
+  qf:  [['SF','M101'],['SF','M102']],
+  sf:  [['Final','M104']],
+};
+
 function buildMobTabHtml() {
   // Auto-open first round with any unpicked matches
   let activeRound = MOB_ROUNDS[MOB_ROUNDS.length - 1].id;
@@ -637,9 +649,27 @@ function buildMobTabHtml() {
   const tabBar = MOB_ROUNDS.map(r =>
     `<button class="bk-tab${r.id === activeRound ? ' active' : ''}" onclick="switchBracketTab('${r.id}')" data-round="${r.id}">${r.label}</button>`
   ).join('');
-  const panels = MOB_ROUNDS.map(r =>
-    `<div class="bk-tab-panel${r.id === activeRound ? ' active' : ''}" id="bk-panel-${r.id}">${r.matches.map(mobPickCard).join('')}</div>`
-  ).join('');
+  const panels = MOB_ROUNDS.map(r => {
+    const pairs = PAIR_NEXT[r.id] || [];
+    let html = '';
+    for (let i = 0; i < r.matches.length; i += 2) {
+      const m1 = r.matches[i];
+      const m2 = r.matches[i + 1];
+      const pair = pairs[i / 2];
+      if (m2 !== undefined && pair) {
+        const [rl, mn] = pair;
+        html += `<div class="bk-mob-pair-group">`;
+        html += mobPickCard(m1);
+        html += `<div class="bk-mob-pair-pill"><span>winners meet in ${rl} · ${mn}</span></div>`;
+        html += mobPickCard(m2);
+        html += `</div>`;
+      } else {
+        html += mobPickCard(m1);
+        if (m2 !== undefined) html += mobPickCard(m2);
+      }
+    }
+    return `<div class="bk-tab-panel${r.id === activeRound ? ' active' : ''}" id="bk-panel-${r.id}">${html}</div>`;
+  }).join('');
   return `<div class="bk-mobile-tabs"><div class="bk-tab-bar">${tabBar}</div>${panels}</div>`;
 }
 
