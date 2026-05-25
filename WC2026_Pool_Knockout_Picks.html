@@ -313,6 +313,27 @@
     .bk-outer { display: none; }
     .bk-mobile-tabs { display: block; }
   }
+
+  /* ── Round-advance toast ── */
+  .tab-advance-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--neutral-darkest);
+    color: #ffffff;
+    padding: 11px 20px;
+    border-radius: 24px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.28);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+  }
+  .tab-advance-toast.visible { opacity: 1; }
 </style>
 </head>
 <body>
@@ -478,12 +499,76 @@ function updateCards() {
   document.getElementById('progressCount').textContent = `${done} / 32 matches picked`;
 }
 
+// ── Round-advance toast with countdown ──
+const ROUND_FULL_LABELS = {
+  r32: 'Round of 32', r16: 'Round of 16', qf: 'Quarter-Finals',
+  sf: 'Semi-Finals', '3rd': '3rd Place Match', fin: 'Final',
+};
+
+function showAdvanceToast(nextRound) {
+  // Cancel any in-progress toast
+  const existing = document.getElementById('tab-advance-toast');
+  if (existing) {
+    existing._cancel?.();
+    existing.remove();
+  }
+
+  const toast = document.createElement('div');
+  toast.id = 'tab-advance-toast';
+  toast.className = 'tab-advance-toast';
+  document.body.appendChild(toast);
+
+  let remaining = 3;
+  let cancelled = false;
+
+  function updateText() {
+    toast.textContent = `Moving to ${ROUND_FULL_LABELS[nextRound.id]} in ${remaining}s…`;
+  }
+  updateText();
+
+  // Fade in
+  requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('visible')));
+
+  const interval = setInterval(() => {
+    if (cancelled) return;
+    remaining--;
+    if (remaining > 0) {
+      updateText();
+    } else {
+      clearInterval(interval);
+      toast.classList.remove('visible');
+      setTimeout(() => {
+        if (cancelled) return;
+        toast.remove();
+        switchBracketTab(nextRound.id);
+        const tabsEl = document.querySelector('.bk-mobile-tabs');
+        if (tabsEl) tabsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 200);
+    }
+  }, 1000);
+
+  toast._cancel = () => { cancelled = true; clearInterval(interval); };
+}
+
+// ── Auto-advance to next tab when all picks in current tab are done (mobile) ──
+function maybeAdvanceTab() {
+  const activeTab = document.querySelector('.bk-tab.active');
+  if (!activeTab) return;
+  const roundIdx = MOB_ROUNDS.findIndex(r => r.id === activeTab.dataset.round);
+  if (roundIdx < 0 || roundIdx >= MOB_ROUNDS.length - 1) return; // already on last tab
+  const currentRound = MOB_ROUNDS[roundIdx];
+  if (currentRound.matches.every(m => !!picks[m])) {
+    showAdvanceToast(MOB_ROUNDS[roundIdx + 1]);
+  }
+}
+
 // ── Pick a winner for match m, cascade downstream ──
 function pickTeam(m, team) {
   if (!team) return; // guard: click bubbled to .bk-card (has data-match but no data-team)
   picks[m] = team;
   clearInvalidDownstream(m);
   updateCards(); // surgical — no re-render
+  maybeAdvanceTab();
 }
 
 // ── Full render (initial load only) ──
