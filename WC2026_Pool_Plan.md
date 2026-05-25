@@ -401,7 +401,7 @@ All match times are stored as UTC ISO 8601 strings and converted to the viewer's
 - Full `renderBracket()` only called once on initial load
 - Podium updates live as Final and 3rd place picks are made
 - Shortcuts: 🎲 Pick randomly · 💪 Pick higher-ranked · ✕ Reset — all use `updateCards()`
-- Progress bar: `X / 32 matches picked`
+- Progress bar: `X / 32 matches picked` — counts `Object.keys(picks).length`
 
 **Mobile tab view (≤ 640px):**
 - Desktop bracket hidden; `.bk-mobile-tabs` shown
@@ -413,6 +413,7 @@ All match times are stored as UTC ISO 8601 strings and converted to the viewer's
 - Team rows use group-picks button style: white bg + `1.5px solid var(--blue-light)` unselected; solid `var(--swiftly-blue)` fill + white text when picked; borderless muted when loser
 - `.team-rank` inherits white at 75% opacity on picked/winner rows (matching group picks behaviour)
 - Results fetched from `raw.githubusercontent.com?t=Date.now()` (bypasses CDN cache)
+- **Auto-advance:** when all matches in the current tab are picked, a centered toast appears — "Moving to Round of 16 in 3s…" — counts down 3→2→1, then switches tab and scrolls to top. Only triggers on manual picks (`pickTeam`), not shortcuts.
 
 ### GitHub Actions
 - `update.yml` — runs every 15 min, Jun 11–Jul 19
