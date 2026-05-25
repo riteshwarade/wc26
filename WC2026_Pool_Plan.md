@@ -1,6 +1,6 @@
 # World Cup 2026 Pool — Master Plan
 
-Last updated: May 24, 2026 (UTC kick-off times for all group + KO matches; local-TZ display; KO schedule verified against ESPN API; bracket card title nowrap; column reorder)
+Last updated: May 24, 2026 (UTC kick-off times for all group + KO matches; local-TZ display; KO schedule verified against ESPN API; bracket card title nowrap; column reorder; koDisplay day-of-week + no TZ; group picks reset highlight bug fix)
 
 ---
 
@@ -284,7 +284,7 @@ Each page provides its own `renderBracket()` that calls the shared functions bel
 - `FLAGS` — flag emoji lookup for all 48 teams
 - `RANKINGS` — FIFA rankings (canonical name; was `LB_RANKINGS` in leaderboard before extraction)
 - `KO_SCHEDULE` — UTC ISO kick-off times for M73–M104 (verified against ESPN `fifa.world` scoreboard API; R32 confirmed by matching ESPN team-slot descriptions to `R32_SLOTS`)
-- `koDisplay(num)` — formats `KO_SCHEDULE[num]` into local-timezone string e.g. `Jun 28 · 3:00 PM EDT`; used in `matchCard()` and all mobile card renderers
+- `koDisplay(num)` — formats `KO_SCHEDULE[num]` into local-timezone string e.g. `Sat, Jun 28 · 3:00 PM` (day of week included, timezone abbreviation omitted); used in `matchCard()` and all mobile card renderers
 - `R16`, `QF`, `SF` — bracket topology (feeder match pairs for each round)
 
 **Shared rendering primitives:**
@@ -379,7 +379,7 @@ All match times are stored as UTC ISO 8601 strings and converted to the viewer's
 
 **Bracket design (all variants):**
 - ESPN-style cards: flag (`.bk-fl`) + name+rank (`.bk-tn`) — flag rendered separately, not via `teamHtml()` (avoids double-flag)
-- Match header bar (`.bk-mnum`): `[Round] · M# · Date · Time TZ` (e.g. `R32 · M74 · Jun 29 · 1:00 PM EDT`); `roundLabel(103)` returns `'3rd'` (not `'3rd Place'`) to keep it short
+- Match header bar (`.bk-mnum`): `[Round] · M# · Day, Date · Time` (e.g. `R32 · M74 · Sat, Jun 28 · 1:00 PM`); timezone abbreviation omitted from cards; `roundLabel(103)` returns `'3rd'` (not `'3rd Place'`) to keep it short
 - `.bk-mnum` has `white-space: nowrap; overflow: hidden; text-overflow: ellipsis` — prevents wrapping that would unbalance column widths
 - All `.bk-col` use `flex: 1` (equal width); no per-round flex overrides
 - **Sticky round header strip** (`.bk-header-strip`) sits above `.bk-wrap`, auto-pins below `.sticky-bar` using measured height. `position: sticky` works because leaderboard `.section-body` uses `overflow: clip` (not `hidden`), which clips without creating a scroll container
@@ -976,7 +976,7 @@ The leaderboard always fetches live data from GitHub — there is no embedded si
 - **Variant 2 hook**: `bkTeamRow` accepts `extraAttrs` (4th param) for injecting `data-match`/`data-team` attributes on click targets. `matchCard` accepts `homeAttrs`/`awayAttrs` (9th/10th params) that forward to `bkTeamRow`.
 - **Variant 3 readiness**: `matchCard()` already accepts `homeScore`, `awayScore`, `homeCls`, `awayCls` params. When knockout results exist, pass them in. Connectors and positioning will still work.
 - **Podium in Variant 1**: currently passes `buildPodiumHtml(null, null, null)` — shows TBD. Remove this call from Variant 1's `renderBracket` once Variants 2/3 are built.
-- **KO_SCHEDULE**: stores UTC ISO strings (e.g. `'2026-06-28T19:00Z'`) for all 32 KO matches (M73–M104), verified via ESPN API. Displayed via `koDisplay(num)` in the viewer's local timezone. `.bk-mnum` uses `white-space: nowrap; overflow: hidden; text-overflow: ellipsis` to keep card titles on one line. `roundLabel(103)` returns `'3rd'` (not `'3rd Place'`) to fit within the card width.
+- **KO_SCHEDULE**: stores UTC ISO strings (e.g. `'2026-06-28T19:00Z'`) for all 32 KO matches (M73–M104), verified via ESPN API. Displayed via `koDisplay(num)` → `Sat, Jun 28 · 1:00 PM` (viewer's local timezone, day of week prepended, TZ abbreviation dropped). `.bk-mnum` uses `white-space: nowrap; overflow: hidden; text-overflow: ellipsis` to keep card titles on one line. `roundLabel(103)` returns `'3rd'` (not `'3rd Place'`) to fit within the card width.
 
 ---
 

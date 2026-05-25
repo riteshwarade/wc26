@@ -59,7 +59,7 @@ function localMatchTime(utcStr) {
 **KO games** — in `bracket.js`:
 ```js
 // KO_SCHEDULE: { matchNum: '2026-06-28T19:00Z', ... } for M73–M104
-// koDisplay(num) → 'Jun 28 · 3:00 PM EDT'
+// koDisplay(num) → 'Sat, Jun 28 · 3:00 PM' (day of week included, TZ abbreviation omitted)
 // Used in matchCard() and all mobile card renderers
 ```
 
