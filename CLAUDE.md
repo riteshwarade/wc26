@@ -65,15 +65,58 @@ function localMatchTime(utcStr) {
 
 ---
 
-## Bracket architecture
+## Bracket
 
-- `bracket.js` defines: `KO_SCHEDULE`, `koDisplay()`, `R16`, `QF`, `SF`, `R32_SLOTS`, `FLAGS`, `RANKINGS`, `roundLabel()`, `matchCard()`, `buildBracketHtml()`, `positionAndConnectBracket()`, `drawBracketConnectors()`
+### JS primitives (`bracket.js`)
+
+- Exports: `KO_SCHEDULE`, `koDisplay()`, `R16`, `QF`, `SF`, `R32_SLOTS`, `FLAGS`, `RANKINGS`, `roundLabel()`, `matchCard()`, `buildBracketHtml()`, `positionAndConnectBracket()`, `drawBracketConnectors()`
 - Match numbers: R32=73–88, R16=89–96, QF=97–100, SF=101–102, 3rd=103, Final=104
 - R32 display order follows Wikipedia bracket (not M73–M88 numeric): `[74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87]`
-- All `.bk-col` use `flex: 1` — no per-round flex overrides; `.bk-mnum` uses `white-space: nowrap; overflow: hidden; text-overflow: ellipsis`
 - `bkTeamRow` renders flag in `.bk-fl` and name+rank in `.bk-tn` separately — do NOT call `teamHtml()` inside bracket cards (double-flag bug)
 - R16/QF/SF/Final cards are `position: absolute` inside `.bk-float` — absolutely positioned cards have no intrinsic width, so column sizing is driven by R32 content only
 - `roundLabel(103)` returns `'3rd'` (not `'3rd Place'`)
+
+### Desktop card styling
+
+Applies to both `WC2026_Pool_Knockout_Picks.html` and `WC2026_Pool_Leaderboard_Swiftly.html`.
+
+**Spacing:** Uniform 16px gap at all four hierarchy levels keeps R32 evenly distributed and R16/QF/SF/Final midpoints mathematically aligned:
+```css
+.bk-matches, .bk-half, .bk-quarter, .bk-pair { gap: 16px; }
+```
+
+**Team row (flush bordered pill):**
+```css
+.bk-team {
+  padding: 5px 9px;     /* height-neutral: larger font offset by smaller padding */
+  font-size: 0.92rem;
+  font-weight: 400;
+  margin: 0 4px;
+  border-radius: 5px;
+  border: 1.5px solid #cce8f4;
+}
+.bk-mnum + .bk-team { margin-top: 4px; }
+.bk-team + .bk-team  { margin-top: 4px; }
+.bk-team:last-child   { margin-bottom: 4px; }
+```
+No `border-top` divider — row separation comes from `margin-top` only.
+
+**Match header:** `.bk-mnum { letter-spacing: 0.2px; }`
+
+**States:**
+| Class | Background | Border | Text |
+|---|---|---|---|
+| (default) | white | `#cce8f4` | `var(--neutral-darkest)`, weight 400 |
+| `.w` (winner) | `var(--swiftly-blue)` solid | same | white, weight 700; rank + score at 75% opacity |
+| `.l` (loser) | transparent | transparent | `var(--neutral-medium)`; flag 35% opacity |
+| `:hover` (unset) | `var(--blue-lightest)` | `var(--swiftly-blue)` | — |
+| `.w:hover` | `var(--swiftly-blue)` + `brightness(0.92)` | same | — |
+| `.l:hover` | `var(--blue-lightest)` | `var(--swiftly-blue)` | restored to normal |
+
+**Gotchas:**
+- `.bk-team[data-match].w:hover` must re-assert `background: var(--swiftly-blue)` — the less-specific `:hover` rule otherwise wins and reverts the row to light blue
+- `.team-rank` has its own `color: var(--neutral-dark)` rule; losers need explicit `.bk-team.l .team-rank { color: var(--neutral-medium); }` to override it
+- Do NOT add `font-weight` to loser hover — font-weight changes cause text reflow even with `white-space: nowrap`
 
 ---
 

@@ -379,17 +379,17 @@ All match times are stored as UTC ISO 8601 strings and converted to the viewer's
 
 **Bracket design (all variants):**
 - ESPN-style cards: flag (`.bk-fl`) + name+rank (`.bk-tn`) — flag rendered separately, not via `teamHtml()` (avoids double-flag)
-- Match header bar (`.bk-mnum`): `[Round] · M# · Day, Date · Time` (e.g. `R32 · M74 · Sat, Jun 28 · 1:00 PM`); timezone abbreviation omitted from cards; `roundLabel(103)` returns `'3rd'` (not `'3rd Place'`) to keep it short
-- `.bk-mnum` has `white-space: nowrap; overflow: hidden; text-overflow: ellipsis` — prevents wrapping that would unbalance column widths
+- Match header bar (`.bk-mnum`): `[Round] · M# · Day, Date · Time` (e.g. `R32 · M74 · Sat, Jun 28 · 1:00 PM`); timezone abbreviation omitted; `roundLabel(103)` returns `'3rd'`
 - All `.bk-col` use `flex: 1` (equal width); no per-round flex overrides
 - **Sticky round header strip** (`.bk-header-strip`) sits above `.bk-wrap`, auto-pins below `.sticky-bar` using measured height. `position: sticky` works because leaderboard `.section-body` uses `overflow: clip` (not `hidden`), which clips without creating a scroll container
 - Round headers with blue intensity progression: lightest R32 → darkest Final; strip injected via `bracket.js` CSS tag
 - Matches in Wikipedia bracket order: [74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87]
-- R32 uses uniform 16px gap between all 16 matches
+- Uniform 16px gap at all hierarchy levels — R32 rows evenly distributed; R16/QF/SF/Final midpoints mathematically symmetric
 - R16/QF/SF/Final cards absolutely positioned by JS to align team-dividing line with midpoint of feeders
 - SVG `]` bracket connectors drawn after positioning
 - Final column label: `🏆 Final (and 3rd place)`
 - Podium section (🥇/🥈/🥉) in Final column, top aligned with M89
+- Desktop team rows: flush bordered pill style (0.92rem, 5px/9px padding, 1.5px `#cce8f4` border, solid blue winner fill). Full CSS + gotchas in `CLAUDE.md`.
 
 ### Knockout pick page (`WC2026_Pool_Knockout_Picks.html`) — Variant 2 ✅
 - Fetches `knockout_bracket.json` on load; shows "not yet available" if file missing (pre-Jun 27)
@@ -875,7 +875,7 @@ All 4 pages are mobile-friendly. Breakpoint: `@media (max-width: 640px)`.
 | Leaderboard: max pts column | Hidden |
 | Leaderboard: group tables | Appear below match results (CSS `order` swap on `.side-left`/`.side-right`) |
 | Leaderboard: results table | # column hidden; Date/Time hidden; result + score remain; score pinned right |
-| KO bracket | Tighter column padding (`min-width: 90px`, `padding: 0 6px`) and team row padding |
+| KO bracket (desktop) | Flush bordered pill rows: `font-size: 0.92rem; padding: 5px 9px; border-radius: 5px; border: 1.5px solid #cce8f4; margin: 0 4px`. Uniform 16px gap at all hierarchy levels. Winner: solid `var(--swiftly-blue)` fill. Loser: transparent. |
 | KO bracket mobile | Desktop `.bk-outer` hidden; `.bk-mobile-tabs` shown. Round tabs + pair-grouped match cards. |
 | KO mobile team row | `0.90rem`, `padding: 7px 9px`, `border-radius: 6px`. Unselected: white bg + `1.5px solid var(--blue-light)`. Selected/winner: solid `var(--swiftly-blue)` fill + white text. Loser: borderless + muted. |
 | KO mobile pair group | `.bk-mob-pair-group`: `border: 1px solid var(--blue-light); border-radius: 12px; padding: 8px`. Wraps two match cards + pill connector. |
