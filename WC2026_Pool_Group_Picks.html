@@ -946,9 +946,14 @@ let picked = 0;
 
 function onPick(num) {
   const row = document.getElementById(`row-${num}`);
-  if (!row.classList.contains('picked')) {
+  const hasSelection = !!document.querySelector(`input[name="m${num}"]:checked`);
+  if (hasSelection && !row.classList.contains('picked')) {
     row.classList.add('picked');
     picked++;
+    updateProgress();
+  } else if (!hasSelection && row.classList.contains('picked')) {
+    row.classList.remove('picked');
+    picked--;
     updateProgress();
   }
   document.getElementById('confirmRow').classList.remove('visible');
