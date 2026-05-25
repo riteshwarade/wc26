@@ -94,10 +94,9 @@ function koDisplay(num) {
   if (!utc) return '';
   try {
     const dt = new Date(utc);
-    const dateStr = dt.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    const dateStr = dt.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
     const timeStr = dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    const tzAbbr  = dt.toLocaleTimeString('en-US', { timeZoneName: 'short' }).split(' ').pop();
-    return `${dateStr} · ${timeStr} ${tzAbbr}`;
+    return `${dateStr} · ${timeStr}`;
   } catch(e) { return utc; }
 }
 
