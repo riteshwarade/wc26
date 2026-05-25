@@ -480,6 +480,7 @@ function updateCards() {
 
 // ── Pick a winner for match m, cascade downstream ──
 function pickTeam(m, team) {
+  if (!team) return; // guard: click bubbled to .bk-card (has data-match but no data-team)
   picks[m] = team;
   clearInvalidDownstream(m);
   updateCards(); // surgical — no re-render
