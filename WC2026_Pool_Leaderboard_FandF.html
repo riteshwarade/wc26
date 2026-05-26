@@ -474,10 +474,22 @@
     padding: 2px 8px;
     background: var(--neutral-lightest);
     letter-spacing: 0.2px;
-    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .bk-mnum-label {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
   }
+  /* ── Correctness pill ── */
+  .cp-pill { display: inline-block; font-size: 0.62rem; font-weight: 600; padding: 1px 6px; border-radius: 20px; white-space: nowrap; line-height: 1.6; flex-shrink: 0; }
+  .cp-hi   { background: #d4f0fb; color: #00628a; }
+  .cp-mid  { background: #fff0d0; color: #a05800; }
+  .cp-lo   { background: #fce0e7; color: #b3003d; }
   .bk-team {
     display: flex;
     align-items: center;
@@ -922,7 +934,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
 }
 
 // ── Render KO bracket (KO mode) ───────────────────────────
-function renderKoBracket(bracketData, koResults, koScores) {
+function renderKoBracket(bracketData, koResults, koScores, koCounts) {
   const el = document.getElementById('koBracketCard');
   if (!el) return;
 
@@ -946,7 +958,23 @@ function renderKoBracket(bracketData, koResults, koScores) {
       hSc = `${sc.home} (${sc.homePen})`;
       aSc = `${sc.away} (${sc.awayPen})`;
     }
-    return matchCard(m, h, a, '', hSc, aSc, homeCls, awayCls);
+    let cardHtml = matchCard(m, h, a, '', hSc, aSc, homeCls, awayCls);
+    // Inject correctness pill into .bk-mnum as a flex row
+    if (winner) {
+      const c = koCounts && koCounts[m];
+      const pill = c ? correctnessPill(c.correct, c.total) : '';
+      cardHtml = cardHtml.replace(
+        /(<div class="bk-mnum">)([\s\S]*?)(<\/div>)/,
+        `$1<span class="bk-mnum-label">$2</span>${pill}$3`
+      );
+    } else {
+      // No pill but still wrap label for consistent flex layout
+      cardHtml = cardHtml.replace(
+        /(<div class="bk-mnum">)([\s\S]*?)(<\/div>)/,
+        `$1<span class="bk-mnum-label">$2</span>$3`
+      );
+    }
+    return cardHtml;
   }
 
   // Determine podium teams
@@ -983,6 +1011,8 @@ function renderKoBracket(bracketData, koResults, koScores) {
     const hCls   = winner ? (winner === h ? ' bk-mob-win' : ' bk-mob-los') : '';
     const aCls   = winner ? (winner === a ? ' bk-mob-win' : ' bk-mob-los') : '';
     const date   = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
+    const c      = koCounts && koCounts[m];
+    const pill   = (winner && c) ? ' ' + correctnessPill(c.correct, c.total) : '';
     // Per-team score strings (shown on each row, not in meta)
     let hScTxt = '', aScTxt = '';
     if (sc) {
@@ -1000,7 +1030,7 @@ function renderKoBracket(bracketData, koResults, koScores) {
     const aScHtml = aScTxt ? `<span class="bk-mob-sc">${aScTxt}</span>` : '';
     const upCls  = !winner ? ' bk-mob-upcoming' : '';
     return `<div class="bk-mob-match${upCls}">
-      <div class="bk-mob-meta">M${m}${date}</div>
+      <div class="bk-mob-meta">M${m}${date}${pill}</div>
       <div class="bk-mob-teams">
         <div class="bk-mob-team${hTbd ? ' tbd' : hCls}"><span class="bk-mob-team-name">${hHtml}</span>${hScHtml}</div>
         <div class="bk-mob-team${aTbd ? ' tbd' : aCls}"><span class="bk-mob-team-name">${aHtml}</span>${aScHtml}</div>
@@ -1122,7 +1152,49 @@ function localMatchTime(utcStr) {
 }
 
 // ── Render match results ──────────────────────────────────
-function renderResults(results) {
+// ── Correctness pill helpers ──────────────────────────────
+function correctnessPill(correct, total) {
+  if (!total) return '';
+  const pct = correct / total;
+  const cls = pct >= 0.67 ? 'cp-hi' : pct >= 0.33 ? 'cp-mid' : 'cp-lo';
+  return `<span class="cp-pill ${cls}">${correct}/${total}</span>`;
+}
+
+// Count correct/wrong per group match across all participants.
+// Excludes 'pending' and 'empty' (no result yet or no pick made).
+function buildGrpCounts(standings) {
+  const counts = {};
+  for (const p of standings) {
+    for (const [numStr, pr] of Object.entries(p.pickResults || {})) {
+      const num = Number(numStr);
+      if (pr.status === 'correct' || pr.status === 'wrong') {
+        if (!counts[num]) counts[num] = { correct: 0, total: 0 };
+        counts[num].total++;
+        if (pr.status === 'correct') counts[num].correct++;
+      }
+    }
+  }
+  return counts;
+}
+
+// Count correct/wrong per KO match across all participants.
+// Excludes 'cascaded' (invalid pick) and 'pending'/'empty'.
+function buildKoCounts(combined) {
+  const counts = {};
+  for (const p of combined) {
+    for (const [numStr, pr] of Object.entries(p.koPickResults || {})) {
+      const num = Number(numStr);
+      if (pr.status === 'correct' || pr.status === 'wrong') {
+        if (!counts[num]) counts[num] = { correct: 0, total: 0 };
+        counts[num].total++;
+        if (pr.status === 'correct') counts[num].correct++;
+      }
+    }
+  }
+  return counts;
+}
+
+function renderResults(results, grpCounts) {
   const rows = MATCHES.map(([num, grp, date, time, t1, t2]) => {
     const r = results[num];
     let resultCell, scoreCell;
@@ -1133,13 +1205,16 @@ function renderResults(results) {
       resultCell = `<span class="res-loser">${teamHtml(t1)}</span>`
                  + `<span class="res-verb">drew</span>`
                  + `<span class="res-loser">${teamHtml(t2)}</span>`;
-      scoreCell  = `${r.home} – ${r.away}`;
+      const c = grpCounts && grpCounts[num];
+      scoreCell  = `${r.home} – ${r.away}${c ? ' ' + correctnessPill(c.correct, c.total) : ''}`;
     } else {
       const [winner, loser] = r.outcome === 'W1' ? [t1, t2] : [t2, t1];
       resultCell = `<span class="res-winner">${teamHtml(winner)}</span>`
                  + `<span class="res-verb">beat</span>`
                  + `<span class="res-loser">${teamHtml(loser)}</span>`;
-      scoreCell  = r.outcome === 'W2' ? `${r.away} – ${r.home}` : `${r.home} – ${r.away}`;
+      const score = r.outcome === 'W2' ? `${r.away} – ${r.home}` : `${r.home} – ${r.away}`;
+      const c = grpCounts && grpCounts[num];
+      scoreCell  = `${score}${c ? ' ' + correctnessPill(c.correct, c.total) : ''}`;
     }
     return `<tr class="${r ? '' : 'res-row-upcoming'}">
       <td class="td-match-num">${num}</td>
@@ -2141,6 +2216,7 @@ async function init(skipBracket = false) {
     const koResults = parseKoResults(koResultsCSV);
     const koScores  = parseKoScores(koResultsCSV);
     const standings = computeStandings(picksData, results);
+    const grpCounts = buildGrpCounts(standings);
     const played    = Object.keys(results).length;
     const koPlayed  = Object.keys(koResults).length;
 
@@ -2161,14 +2237,15 @@ async function init(skipBracket = false) {
 
     if (knockoutMode) {
       const combined = computeCombinedStandings(standings, koPicksData, koResults, bracketData);
+      const koCounts = buildKoCounts(combined);
       renderKoStandings(combined, koResults, bracketData);
-      if (!skipBracket) renderKoBracket(bracketData, koResults, koScores);
+      if (!skipBracket) renderKoBracket(bracketData, koResults, koScores, koCounts);
       renderStandings(standings, results);  // group-only in group section
     } else {
       renderStandings(standings, results);
     }
 
-    renderResults(results);
+    renderResults(results, grpCounts);
     renderGroupTables(results);
     renderBracket(results, allGrpsStarted, bracketConfirmed);
 
