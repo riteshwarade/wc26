@@ -1,6 +1,12 @@
 # World Cup 2026 Pool — Master Plan
 
-Last updated: May 24, 2026 (UTC kick-off times for all group + KO matches; local-TZ display; KO schedule verified against ESPN API; bracket card title nowrap; column reorder; koDisplay day-of-week + no TZ; group picks reset highlight bug fix)
+## Changelog
+
+| Date | Change |
+|---|---|
+| May 26, 2026 | Correctness pill — group results table + KO bracket desktop/mobile |
+| May 24, 2026 | UTC kick-off times for all group + KO matches; local-TZ display; KO schedule verified against ESPN API; bracket card title nowrap; column reorder; `koDisplay` day-of-week + no TZ; group picks reset highlight bug fix |
+| Earlier | KO leaderboard (Variant 3) + combined standings; cascade scoring; `parse_results.py` KO fetch; test suite (80 + 105 + 84 + 67 tests); bracket shared template (`bracket.js`); KO picks page (Variant 2); mobile tab view + auto-advance; penalty shootout scores; podium section |
 
 ---
 
@@ -215,6 +221,15 @@ Implemented in `computeCombinedStandings()` via `eliminatedInRound` map + `casca
 
 **Max pts** column on leaderboard = current total + sum of `KO_POINTS[m]` for all `pending` picks (i.e. best-case remaining score assuming all pending picks turn out correct).
 
+### Tiebreaker
+
+When two or more players share the same total points, tiebreakers apply in order:
+
+1. **Correct champion** — correctly picked the winner of M104
+2. **Most correct picks** — total individual matches correctly predicted across all 104 matches
+
+Both are derived automatically from picks vs results. Sort order: total pts ↓ → correct champion ↓ → total correct picks ↓ → name A–Z.
+
 ---
 
 ## What's Built ✅
@@ -367,6 +382,7 @@ All match times are stored as UTC ISO 8601 strings and converted to the viewer's
 - **Upcoming matches:** team names shown as `A v B` with slight opacity (0.45) — muted but readable
 - Team names use `teamHtml()`: flag + name + (rank); `white-space: nowrap` prevents name/rank from splitting across lines
 - On mobile the result cell wraps between the verb and the second team when names are long; score column stays pinned right
+- **Correctness pill** — appended to the Score cell for completed matches; shows `N/total` with a color-tinted pill (blue ≥67% correct, orange 33–66%, red <33%). Separated from the score text by `margin-left: 8px`. Pill also appears right-aligned in the `.bk-mnum` header of KO desktop bracket cards and inline in `.bk-mob-meta` on mobile. See CLAUDE.md for full implementation details.
 
 ### Knockout bracket (leaderboard pages — Variant 1)
 - 5-column horizontal layout: R32 → R16 → QF → SF → Final/3rd
@@ -509,244 +525,26 @@ Lookup key = sorted string of the 8 qualifying groups (e.g. `"EFGHIJKL"`). All 4
 
 ---
 
-## Bracket Design — Three Variants
+## Bracket Implementation
 
-Same ESPN-style card DNA across all three: flag emoji + team name + score, winner row highlighted blue, loser row muted, TBD rows in grey italic, round headers with blue intensity progression (lightest R32 → darkest Final).
+All three variants share ESPN-style card DNA: flag emoji + team name + score, winner row solid blue, loser row muted, TBD rows grey italic, round header strip with blue intensity progression (lightest R32 → darkest Final). All rendering primitives live in `bracket.js`; each page supplies its own `mkCard()`.
 
-### Variant 1 — Provisional bracket (leaderboard, group stage live)
-**File:** embedded in `WC2026_Pool_Leaderboard_Swiftly.html` + FandF  
-**When shown:** once all 12 groups have each played ≥1 match (Provisional badge), updated to Confirmed ✓ after all 72 group matches  
-**Interaction:** read-only  
-**States:**
-- Confirmed 1st/2nd slots → real team name + flag
-- Unconfirmed slots (3rd-place TBD, groups not finished) → greyed italic "3rd place TBD" or "1F TBD"
-- Later rounds (R16, QF, etc.) → "W73"-style placeholders until knockout matches complete
-- Match header bar: match number + date, no score column
+### Variant 1 — Provisional bracket (leaderboard, group stage)
+Embedded in both leaderboard pages. Read-only. Real team names fill in as groups confirm; greyed italic for unresolved 3rd-place and future rounds. Shows **Provisional** badge (orange) until `knockout_bracket.json` has `confirmed: true`, then **Confirmed ✓** (green).
 
-### Variant 2 — Pick bracket (knockout picks page, after Jun 27)
-**Files:** `WC2026_Pool_Knockout_Picks_Swiftly.html` + FandF (new pages, not yet built)  
-**When shown:** after Jun 27 once all group games done and R32 bracket is confirmed  
-**Interaction:** tap a team row to pick them as winner  
-**States:**
-- Picked team → blue highlight + ✓ checkmark, auto-populates into next round slot
-- Unpicked teams in unlocked cards → normal, tappable
-- Cards in future rounds where feeder picks not yet made → greyed out "Pick M__ first"
-- Picks cascade round-by-round (R32 → R16 → QF → SF → Final)
-- Submit / download flow (same pattern as group pick pages)
+### Variant 2 — Pick bracket (`WC2026_Pool_Knockout_Picks.html`)
+Shared by both pools. Click any team row to pick winner — cascades into next-round slot; downstream picks clear if invalidated. 32 picks total. CSV download → `wc26_knockout_[name].csv`. Desktop: `updateCards()` replaces cards in-place. Mobile: tab view with auto-advance toast (3s countdown when a full round is picked). Shortcuts: 🎲 random · 💪 higher-ranked · ✕ reset.
 
-### Variant 3 — Results bracket (leaderboard, knockout in progress)
-**File:** embedded in leaderboard pages (replaces/extends Variant 1 after Jun 28)  
-**When shown:** as knockout matches complete (Jun 28 – Jul 19)  
-**Interaction:** read-only  
-**States:**
-- Completed match → scores shown in .sc column; winner row blue + bold; loser row muted + flag faded
-- Penalty shootout → small italic note below card ("Netherlands win 5–3 on pens")
-- Confirmed upcoming matchup (teams known, match not played) → teams shown, no score, normal weight
-- Future slot not yet determined → grey italic "TBD" or "Winner M73"
-- Match header: "M73 · Jun 28 · FT" or "M74 · Jul 1 · upcoming"
+### Variant 3 — Results bracket (leaderboard, knockout stage)
+Same cards as Variant 1. `mkCard` reads from `koResults`: completed matches show winner (solid blue) + loser (muted) + score; penalty shootouts render as `1 (4)` / `1 (2)`. Unplayed matches show known teams in neutral style. Correctness pill right-aligned in `.bk-mnum` for completed matches.
 
 ---
 
-## Still To Build
+## Still To Do
 
-### Pre-tournament (before Jun 11)
-- [x] ~~Iterate on visual design of knockout bracket~~ — ESPN-style design finalised
-- [x] ~~Rebuild bracket with new design~~ — Variant 1 complete in both leaderboard pages
-- [x] ~~Font size consistency~~ — `0.78rem` body / `0.68rem` headers across all 4 pages
-- [x] ~~Pick form polish~~ — shortcuts, name field, progress bar, reset, qualification logic, flag emojis, header consistency
-- [x] ~~**Remove `USE_LOCAL_DATA`**~~ — removed; leaderboard always fetches live from GitHub. Use `simulate.py` + `?games=N` for testing.
-- [x] ~~**`knockoutMode` date expression**~~ — already date-driven (`>= 2026-06-28`); no manual flag to remove
-- [x] ~~**Testing URL params**~~ — `?games=N` (0–104) and `?ko=1` added; no code cleanup needed before tournament
 - [ ] Clear simulation data (`Actions → Clear simulation data`) before Jun 11 — or auto-clear fires at 1pm ET Jun 11
-- [ ] Share pick page links with participants, collect CSVs
-- [ ] Upload real participant CSVs to `picks/group/swiftly/` and `picks/group/fandf/`
-
-### After Jun 27 (bracket confirmed — build before Jun 28)
-- [x] ~~`bracket.js` shared template~~ — all rendering primitives extracted; both leaderboards updated
-- [x] ~~Podium section~~ — `buildPodiumHtml()` in template, positioned at M89, updates live from picks
-- [x] ~~Interactive bracket (Variant 2)~~ — `WC2026_Pool_Knockout_Picks.html` fully wired; click-to-pick, cascade, surgical update, shortcuts
-- [x] ~~Wire CSV download + submission flow~~ — same pattern as group picks; downloads `wc26_knockout_[name].csv`
-- [x] ~~Update `aggregate_picks.py`~~ — aggregates knockout CSVs → `data/knockout_swiftly_picks.json` + `data/knockout_fandf_picks.json`
-- [x] ~~Single picks page~~ — one page for both pools (same as group picks); leaderboards are the only pool-specific pages
-- [ ] Share knockout pick page link, collect and upload CSVs before Jun 28
-
-### After Jun 28 (knockout results start)
-- [x] ~~Build Variant 3 leaderboard~~ — **complete and merged to main**
-  - Combined table: Group pts · KO pts · Total · Max pts · squares (group + KO, with dividers)
-  - Cascading tournament scoring — eliminated teams score 0 in all downstream rounds
-  - Group section flat in KO mode (no toggle); KO teaser below bracket in group mode
-  - Variant 3 results bracket: ESPN cards fill progressively from `knockout_results.csv`
-- [x] ~~**Extend `parse_results.py`** to fetch knockout scores~~ — complete; uses ESPN KO API (Jun 28–Jul 20) → `results/knockout_results.csv` (existing `update.yml` picks it up automatically)
-- [x] ~~**Test suite**~~ — `test_leaderboard.js` (80 unit tests) + `test_e2e.js` (105 invariants) + `test_partial.js` (84 mid-tournament state tests) + `test_parse_results.py` (61 Python tests); all import shared `scoring.js` / `sim_core.js`
-- [x] ~~**Duplicate Variant 3 changes to `WC2026_Pool_Leaderboard_FandF.html`**~~ — FandF is now regenerated directly from Swiftly; the two files are byte-for-byte identical except 4 lines (title, header text, `POOL_ID`, `POOL_NAME`)
-
----
-
-## Knockout Stage Design
-
-### Two-stage pool structure
-1. **Group stage** (before Jun 12): participants submit 72 picks. Points lock after Jun 27.
-2. **Knockout stage** (Jun 27–28): participants submit 32 bracket picks. Points accumulate as rounds complete Jun 28 – Jul 19.
-3. **Final leaderboard**: group pts + knockout pts, one combined ranking.
-
-### Knockout pick page (Variant 2)
-
-**File:** `WC2026_Pool_Knockout_Picks.html` — shared by both pools (same as group picks page pattern)
-
-**Source data:** `data/knockout_bracket.json` (confirmed after all 72 group matches)
-
-**UX — cascading bracket fill:**
-- Shows the full confirmed bracket (all 32 matches)
-- User clicks a team in R32 to pick them → that team auto-populates into the correct R16 slot
-- User picks R16 winners → auto-populates QF slots
-- User picks QF winners → auto-populates SF slots
-- User picks SF winners → winners auto-populate Final, losers auto-populate 3rd place match
-- User picks winner of Final AND winner of 3rd place match
-- **32 picks total** — all must be filled before submission
-- Same submission flow as group picks: CSV download → email to Ritesh → upload to `picks/knockout/swiftly/` or `picks/knockout/fandf/`
-
-**CSV format (`wc26_knockout_john-smith.csv`):**
-```
-match,winner
-73,Netherlands
-74,Spain
-75,France
-...
-103,Argentina
-104,Brazil
-```
-
-### Scoring
-
-Points per correct pick (Scheme A):
-
-| Round | Matches | Pts per correct pick | Max pts |
-|---|---|---|---|
-| Group stage | 72 | 2 | 144 |
-| Round of 32 | 16 | 4 | 64 |
-| Round of 16 | 8 | 8 | 64 |
-| Quarterfinals | 4 | 12 | 48 |
-| Semifinals | 2 | 16 | 32 |
-| 3rd place | 1 | 12 | 12 |
-| Final | 1 | 24 | 24 |
-| **Total** | **104** | | **388** |
-
-**Scoring model (75% favourite wins, path-dependent):**
-- A player who always picks the favourite expects ~12/16 correct in R32, ~4/8 in R16, ~2/4 in QF, ~1/2 in SF, and the Final/3rd are binary (0 or full points)
-- Expected total for favourite-picking strategy: ~192–228 pts (50–59% of 388 max)
-
-**A pick is correct if the team you picked to win that match actually won.** If a team you picked didn't reach a round (because they were eliminated earlier), all their remaining picks score 0.
-
-### Data pipeline
-
-```
-ESPN API (dates=20260628-20260720)
-  → parse_results.py → results/knockout_results.csv
-picks/knockout/swiftly/*.csv → aggregate_picks.py → data/knockout_swiftly_picks.json
-picks/knockout/fandf/*.csv  → aggregate_picks.py → data/knockout_fandf_picks.json
-```
-
-`update.yml` already runs every 15 min Jun 11–Jul 19 and commits `results/` and `data/` — no workflow changes needed.
-
-### Tiebreaker
-
-If two or more players finish with the same total points, tiebreakers are applied in order:
-
-1. **Correct champion** — who correctly picked the winner of the Final (M104). Players who got the champion right win over those who didn't.
-2. **Most matches correct** — total number of individual matches correctly picked across all 104 matches (72 group + 32 knockout). The player who predicted the most individual matches correctly wins.
-
-- Both tiebreakers are derived automatically from picks vs results — no extra input required
-- Leaderboard sort order: total pts (desc) → correct champion (desc) → total correct picks (desc) → name (alpha)
-
-### Leaderboard update (Variant 3)
-
-#### Page layout — two modes
-
-**Group stage (before Jun 28):**
-```
-[GROUP STAGE] section          ← flat, no toggles
-  └─ standings table
-  └─ group tables + match results (side by side)
-  └─ provisional bracket (Variant 1)
-  └─ KO teaser card ("picks open Jun 27…")
-```
-
-**Knockout stage (Jun 28+):**
-```
-[KNOCKOUT STANDINGS] section   ← primary view; combined table
-  └─ Rank · Name · Group pts · KO pts · Total · Max pts · squares (group + KO)
-[KNOCKOUT BRACKET] section     ← Variant 3 live results bracket
-── section divider ──
-[GROUP STAGE] section          ← flat (no toggle); provisional bracket hidden
-  └─ group-only standings (locked)
-  └─ group tables + match results
-```
-
-**Section notes:**
-- All sub-toggles removed — everything is flat with plain section labels
-- No accordion anywhere in KO mode
-- Provisional bracket hidden in KO mode (superseded by Variant 3 KO bracket above)
-
-#### Mode detection
-Date-gated:
-```javascript
-const knockoutMode = new Date() >= new Date('2026-06-28T00:00:00Z');
-```
-`knockoutMode` controls section visibility, accordion default state, and sort/scoring logic on page load.
-
-#### New data sources (added to parallel fetch in `init()`)
-- `data/knockout_{pool}_picks.json` — each participant's 32 KO picks
-- `results/knockout_results.csv` — completed KO match results (`match,winner` format)
-
-Both fetched with `.catch(() => null)` fallback. Page degrades gracefully if files missing.
-
-#### Combined standings table (knockout mode)
-
-Columns: **Rank · Name · Group pts · KO pts · Total pts · squares**
-
-Sort order: Total pts ↓ → correct champion (M104) ↓ → total correct picks (group + KO) ↓ → name A-Z
-
-Mini squares: 72 group squares + visual divider + 32 KO squares in the same row.
-- Group squares: existing correct/wrong/pending colours
-- KO squares: same colour scheme; pending (grey) until match is played
-- Square sizing TBD once initial design is reviewed
-
-No individual participant drill-down — points columns tell the story.
-
-#### KO scoring
-
-| Round | Matches | Pts per correct pick |
-|---|---|---|
-| Round of 32 | M73–88 | 4 |
-| Round of 16 | M89–96 | 8 |
-| Quarterfinals | M97–100 | 12 |
-| Semifinals | M101–102 | 16 |
-| 3rd place | M103 | 12 |
-| Final | M104 | 24 |
-
-**Cascading scoring:** if a team loses in round R, all downstream picks for that team in rounds R+1+ score 0 and are marked `cascaded` (red, italic strikethrough). This is enforced in `computeCombinedStandings()` via `eliminatedInRound` map + `cascadeThreshold(m)`. See Variant 3 section above for full logic.
-
-#### Knockout bracket (Variant 3)
-
-Same ESPN-style cards as Variant 1. `mkCard` reads from `koResults`:
-- **Match played**: winner row `.bk-mob-win` (solid swiftly-blue fill, white text), loser row `.bk-mob-los` (borderless, muted), score shown
-- **Penalty shootout**: score renders as `1 (4)` / `1 (2)` per team row; `parseKoScores()` returns `{ home, away, homePen, awayPen }` when pen columns present
-- **Not yet played**: both rows neutral (white bg + blue-light border); teams shown from bracket JSON or derived from prior results
-
-**Mobile tab view (≤ 640px):**
-- Same tab structure as Variant 2 (`KO_MOB_ROUNDS`, `KO_PAIR_NEXT`, `.bk-mob-pair-group`, `.bk-mob-pair-pill`)
-- Team rows use same group-picks button style; `.bk-mob-win` = solid swiftly-blue; `.bk-mob-los` = borderless muted
-- Each match is a white rounded card (`border: 0.5px solid var(--neutral-light); border-radius: 10px`) on a light-gray panel (`var(--neutral-lightest)`)
-- Font size `0.90rem`, card padding `10px 14px`, team gap `4px`
-- KO mode (games > 72): group section hidden entirely; only KO standings + KO bracket shown
-
-Results fill in progressively round by round as `knockout_results.csv` grows.
-
-#### Sticky bar (knockout mode)
-Switches from `X / 72 group matches played` to `X / 32 knockout matches played`.
-
-#### `parse_results.py` KO fetch ✅
-Fetches knockout match results from ESPN API (`dates=20260628-20260720`). ESPN returns `competitor.winner = true` on the winning team — no score parsing needed. Results are resolved by walking the bracket topology in order (R32 → R16 → QF → SF → 3rd/Final), propagating actual team names through `W73`-style references in `knockout_bracket.json` as rounds complete. Writes `results/knockout_results.csv` (`match,winner` format, confirmed matches only). Existing `update.yml` already runs every 15 min — no workflow changes needed.
+- [ ] Share group pick page links with participants, collect and upload CSVs to `picks/group/swiftly/` and `picks/group/fandf/`
+- [ ] Share knockout pick page link before Jun 28, collect and upload CSVs to `picks/knockout/swiftly/` and `picks/knockout/fandf/`
 
 ---
 
@@ -977,7 +775,8 @@ The leaderboard always fetches live data from GitHub — there is no embedded si
 - **Variant 2 hook**: `bkTeamRow` accepts `extraAttrs` (4th param) for injecting `data-match`/`data-team` attributes on click targets. `matchCard` accepts `homeAttrs`/`awayAttrs` (9th/10th params) that forward to `bkTeamRow`.
 - **Variant 3 readiness**: `matchCard()` already accepts `homeScore`, `awayScore`, `homeCls`, `awayCls` params. When knockout results exist, pass them in. Connectors and positioning will still work.
 - **Podium in Variant 1**: currently passes `buildPodiumHtml(null, null, null)` — shows TBD. Remove this call from Variant 1's `renderBracket` once Variants 2/3 are built.
-- **KO_SCHEDULE**: stores UTC ISO strings (e.g. `'2026-06-28T19:00Z'`) for all 32 KO matches (M73–M104), verified via ESPN API. Displayed via `koDisplay(num)` → `Sat, Jun 28 · 1:00 PM` (viewer's local timezone, day of week prepended, TZ abbreviation dropped). `.bk-mnum` uses `white-space: nowrap; overflow: hidden; text-overflow: ellipsis` to keep card titles on one line. `roundLabel(103)` returns `'3rd'` (not `'3rd Place'`) to fit within the card width.
+- **KO_SCHEDULE**: stores UTC ISO strings (e.g. `'2026-06-28T19:00Z'`) for all 32 KO matches (M73–M104), verified via ESPN API. Displayed via `koDisplay(num)` → `Sat, Jun 28 · 1:00 PM` (viewer's local timezone, day of week prepended, TZ abbreviation dropped). `roundLabel(103)` returns `'3rd'` (not `'3rd Place'`) to fit within the card width.
+- **`.bk-mnum` on leaderboard**: `display: flex; justify-content: space-between` with label in `.bk-mnum-label` (overflow hidden, ellipsis) and correctness pill right-aligned. On the KO picks page `.bk-mnum` remains plain block — no flex, no pill. `bracket.js` is not modified; the pill is injected in the leaderboard via string-replace in `mkCard()`.
 
 ---
 

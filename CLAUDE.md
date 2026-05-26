@@ -101,7 +101,7 @@ Applies to both `WC2026_Pool_Knockout_Picks.html` and `WC2026_Pool_Leaderboard_S
 ```
 No `border-top` divider — row separation comes from `margin-top` only.
 
-**Match header:** `.bk-mnum { letter-spacing: 0.2px; }`
+**Match header:** `.bk-mnum` is `display: flex; justify-content: space-between` on the leaderboard (label in `.bk-mnum-label`, correctness pill right-aligned). Plain block on the KO picks page — no flex, no pill.
 
 **States:**
 | Class | Background | Border | Text |
@@ -135,6 +135,15 @@ No `border-top` divider — row separation comes from `margin-top` only.
 - Mobile (`max-width: 680px`): Time column hidden; `#` and `Grp` also hidden
 - Group picks CSS grid: `grid-template-columns: 30px 28px 88px 72px auto`; mobile breakpoint `max-width: 640px`
 
+### Correctness pill
+
+Shows `N/total` for completed matches. Locations: appended to `td-score` cell (group table, `margin-left: 8px` via `.td-score .cp-pill`); right-aligned in `.bk-mnum` header (KO desktop); inline in `.bk-mob-meta` (KO mobile). `bracket.js` is not modified — injected entirely in the leaderboard.
+
+**Color classes** (% of participants correct):
+- ≥ 67%: `.cp-hi` — `#d4f0fb` bg / `#00628a` text
+- 33–66%: `.cp-mid` — `#fff0d0` bg / `#a05800` text
+- < 33%: `.cp-lo` — `#fce0e7` bg / `#b3003d` text
+
 ---
 
 ## ESPN API
@@ -158,4 +167,13 @@ python .github/scripts/aggregate_picks.py
 python -m http.server 8000
 # open http://localhost:8000/WC2026_Pool_Leaderboard_Swiftly.html?games=88
 ```
-Append `?games=N` to simulate any point in the tournament (e.g. `?games=88` = R32 complete).
+
+**URL params:**
+- `?games=N` — simulate tournament at match N (0–72 group, 73–104 KO); e.g. `?games=88` = R32 complete
+- `?ko=1` — force knockout mode without specifying a game count
+
+## Pick status values
+
+Group `pickResults[num].status`: `correct` · `wrong` · `pending` (result not yet in) · `empty` (no pick made)
+
+KO `koPickResults[num].status`: same four + `cascaded` (team already eliminated, pick voids)
