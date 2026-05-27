@@ -1,72 +1,72 @@
-1,Mexico v South Africa,South Africa
-2,South Korea v Czech Republic,South Korea
-3,Canada v Bosnia and Herzegovina,Canada
-4,United States v Paraguay,United States
-5,Haiti v Scotland,Haiti
-6,Australia v Turkey,Australia
-7,Brazil v Morocco,Morocco
+1,Mexico v South Africa,Draw
+2,South Korea v Czech Republic,Czech Republic
+3,Canada v Bosnia and Herzegovina,Bosnia and Herzegovina
+4,United States v Paraguay,Draw
+5,Haiti v Scotland,Draw
+6,Australia v Turkey,Turkey
+7,Brazil v Morocco,Draw
 8,Qatar v Switzerland,Switzerland
-9,Ivory Coast v Ecuador,Ecuador
-10,Germany v Curaçao,Germany
-11,Netherlands v Japan,Draw
-12,Sweden v Tunisia,Sweden
+9,Ivory Coast v Ecuador,Ivory Coast
+10,Germany v Curaçao,Draw
+11,Netherlands v Japan,Japan
+12,Sweden v Tunisia,Tunisia
 13,Saudi Arabia v Uruguay,Uruguay
-14,Spain v Cape Verde,Spain
+14,Spain v Cape Verde,Draw
 15,Iran v New Zealand,Draw
-16,Belgium v Egypt,Draw
+16,Belgium v Egypt,Egypt
 17,France v Senegal,Senegal
-18,Iraq v Norway,Draw
-19,Argentina v Algeria,Argentina
-20,Austria v Jordan,Draw
-21,Ghana v Panama,Panama
-22,England v Croatia,England
+18,Iraq v Norway,Norway
+19,Argentina v Algeria,Algeria
+20,Austria v Jordan,Jordan
+21,Ghana v Panama,Ghana
+22,England v Croatia,Croatia
 23,Portugal v DR Congo,DR Congo
-24,Uzbekistan v Colombia,Colombia
-25,Czech Republic v South Africa,Czech Republic
-26,Switzerland v Bosnia and Herzegovina,Bosnia and Herzegovina
-27,Canada v Qatar,Canada
-28,Mexico v South Korea,South Korea
+24,Uzbekistan v Colombia,Uzbekistan
+25,Czech Republic v South Africa,Draw
+26,Switzerland v Bosnia and Herzegovina,Switzerland
+27,Canada v Qatar,Qatar
+28,Mexico v South Korea,Mexico
 29,Brazil v Haiti,Brazil
-30,Scotland v Morocco,Draw
-31,Turkey v Paraguay,Draw
-32,United States v Australia,United States
-33,Germany v Ivory Coast,Germany
-34,Ecuador v Curaçao,Draw
+30,Scotland v Morocco,Morocco
+31,Turkey v Paraguay,Paraguay
+32,United States v Australia,Draw
+33,Germany v Ivory Coast,Draw
+34,Ecuador v Curaçao,Curaçao
 35,Netherlands v Sweden,Sweden
-36,Tunisia v Japan,Draw
-37,Uruguay v Cape Verde,Draw
-38,Spain v Saudi Arabia,Spain
-39,Belgium v Iran,Iran
-40,New Zealand v Egypt,Egypt
+36,Tunisia v Japan,Japan
+37,Uruguay v Cape Verde,Cape Verde
+38,Spain v Saudi Arabia,Saudi Arabia
+39,Belgium v Iran,Draw
+40,New Zealand v Egypt,New Zealand
 41,Norway v Senegal,Draw
-42,France v Iraq,France
-43,Argentina v Austria,Argentina
-44,Jordan v Algeria,Jordan
-45,England v Ghana,England
-46,Panama v Croatia,Panama
+42,France v Iraq,Draw
+43,Argentina v Austria,Draw
+44,Jordan v Algeria,Algeria
+45,England v Ghana,Draw
+46,Panama v Croatia,Croatia
 47,Portugal v Uzbekistan,Draw
-48,Colombia v DR Congo,Draw
+48,Colombia v DR Congo,Colombia
 49,Scotland v Brazil,Draw
-50,Morocco v Haiti,Haiti
-51,Switzerland v Canada,Switzerland
+50,Morocco v Haiti,Draw
+51,Switzerland v Canada,Draw
 52,Bosnia and Herzegovina v Qatar,Draw
-53,Czech Republic v Mexico,Czech Republic
-54,South Africa v South Korea,Draw
-55,Curaçao v Ivory Coast,Draw
+53,Czech Republic v Mexico,Draw
+54,South Africa v South Korea,South Korea
+55,Curaçao v Ivory Coast,Ivory Coast
 56,Ecuador v Germany,Draw
-57,Japan v Sweden,Draw
-58,Tunisia v Netherlands,Netherlands
-59,Turkey v United States,Turkey
+57,Japan v Sweden,Japan
+58,Tunisia v Netherlands,Tunisia
+59,Turkey v United States,Draw
 60,Paraguay v Australia,Australia
-61,Norway v France,Norway
+61,Norway v France,Draw
 62,Senegal v Iraq,Senegal
 63,Egypt v Iran,Draw
-64,New Zealand v Belgium,New Zealand
-65,Cape Verde v Saudi Arabia,Cape Verde
-66,Uruguay v Spain,Draw
+64,New Zealand v Belgium,Draw
+65,Cape Verde v Saudi Arabia,Saudi Arabia
+66,Uruguay v Spain,Uruguay
 67,Panama v England,Panama
 68,Croatia v Ghana,Croatia
-69,Algeria v Austria,Austria
+69,Algeria v Austria,Draw
 70,Jordan v Argentina,Argentina
 71,Colombia v Portugal,Draw
-72,DR Congo v Uzbekistan,Draw
+72,DR Congo v Uzbekistan,DR Congo
