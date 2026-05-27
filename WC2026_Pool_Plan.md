@@ -585,9 +585,10 @@ Run: `node test_leaderboard.js`
 
 Run: `node test_e2e.js`
 
-Generates a full 104-match tournament (seeded, reproducible — same result every run) with 10 participants (Alice–Jack), then runs the real scoring pipeline and checks 105 structural invariants:
+Generates a full 104-match tournament (seeded, reproducible — same result every run) with 10 participants (Alice–Jack) plus 3 sentinel participants whose expected scores are computed exactly from the results. Runs the real scoring pipeline and checks **152 invariants** (105 structural + 47 exact-score).
 
-- All 10 participants present, group pts 0–144, KO pts 0–244
+**Structural invariants (105):**
+- All 13 participants present, group pts 0–144, KO pts 0–244
 - totalPts = groupPts + koPts for all participants
 - No pending picks when all 104 results provided; maxPts = totalPts
 - All 72 group pick results resolved per participant
@@ -595,6 +596,11 @@ Generates a full 104-match tournament (seeded, reproducible — same result ever
 - koPts = sum of `correct` KO pick points (proves cascaded picks score exactly 0)
 - correctChampion flag consistent with M104 pick status
 - Aggregate point bounds and coverage sanity
+
+**Exact-score invariants (47) — sentinel participants:**
+- `__Perfect__` (picks every match correctly) → **388 pts** (144 + 244); all 72 group picks correct; all 32 KO picks correct; correctChampion = true
+- `__Zero__` (picks every match wrong) → **0 pts**; no correct group picks; no correct KO picks; correctChampion = false
+- `__CascadeR32__` (correct group + correct R32, then all R16+ picks cascade) → **208 pts** (144 + 64); all 16 R32 picks correct; all 16 R16+ picks cascaded
 
 Simulated tournament result (seed 20260611): **Belgium wins**, beats Canada in Final, England wins 3rd place.
 
