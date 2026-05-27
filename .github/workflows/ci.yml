@@ -32,6 +32,9 @@ jobs:
       - name: Python unit tests (test_parse_results.py)
         run: python test_parse_results.py -v
 
+      - name: Python unit tests (test_aggregate_picks.py)
+        run: python test_aggregate_picks.py -v
+
       - name: Bracket logic test (test_bracket.py)
         # Runs self-contained — generates deterministic fallback results when
         # results/group_results.csv doesn't exist (no simulate.py required).

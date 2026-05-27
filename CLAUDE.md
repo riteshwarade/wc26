@@ -34,10 +34,11 @@ If `index.lock` error: `rm ~/Documents/GitHub/wc26/.git/index.lock` first.
 | `WC2026_Pool_Group_Picks.html` | Group stage picks entry page |
 | `make_fandf.py` | Regenerates FandF from Swiftly (4 substitutions) |
 | `data/rankings.json` | **Canonical** FIFA rankings — single source of truth for all scripts |
+| `test_aggregate_picks.py` | Python unit tests for aggregate_picks.py: CSV parsing + filename extraction (28 tests) |
 | `test_parse_results.py` | Python unit tests for parse_results.py (84 tests) |
 | `test_e2e.js` | JS end-to-end: 10-user full-tournament + 105 invariant checks |
 | `test_bracket.py` | Bracket + standings end-to-end (all 495 3rd-place combos) |
-| `.github/workflows/ci.yml` | CI: runs all three test suites on every push/PR |
+| `.github/workflows/ci.yml` | CI: runs all four test suites on every push/PR |
 
 ---
 
@@ -180,6 +181,7 @@ python -m http.server 8000
 
 # Run all tests (same commands CI uses)
 python3 test_parse_results.py   # 84 Python unit tests
+python3 test_aggregate_picks.py # 28 Python unit tests (aggregate_picks.py CSV parsing)
 node test_e2e.js                # 105 JS invariant checks
 python3 test_bracket.py         # bracket + standings (self-contained, no CSV needed)
 ```

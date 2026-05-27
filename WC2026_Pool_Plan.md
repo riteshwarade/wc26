@@ -4,6 +4,7 @@
 
 | Date | Change |
 |---|---|
+| May 27, 2026 | **Picks CSV format improvements.** Group CSV: added header (`match,group,matchup,pick`), added `group` column, renamed pick column from unlabeled to `pick`. KO CSV: added `round` and `matchup` columns, renamed `winner` → `pick`. Both formats now consistent. Group filename: `wc26group_{pool_id}_name.csv` → `wc26_group_name.csv` (pool from folder, not filename). `aggregate_picks.py` updated for new column positions; `name_from_filename` no longer requires `pool_id`. KO `downloadCSV()` uses `getTeams(m)` to populate matchup; added `koRoundLabel()`. New `test_aggregate_picks.py` (28 tests) covers all parsing and filename functions; added to `ci.yml`. |
 | May 27, 2026 | **Data model robustness + CI.** Canonical data sources: `data/rankings.json` created; `parse_results.py` loads RANKINGS from JSON; `GROUP_MATCHES` moved to top of `parse_results.py`; `MATCH_LOOKUP` auto-derived (no more 72-line hardcoded dict); `simulate.py` and `aggregate_picks.py` import `GROUP_MATCHES` instead of their own hardcoded copies; `test_bracket.py` imports from `parse_results.py`. ESPN robustness: home/away reversal handled in both group and KO parsing (fallback + score swap); `KNOWN_TEAMS` validation added to `espn_team_name()`. KO topology: `scoring.js` runtime assertion catches drift vs `bracket.js`; comments on all copies name `bracket.js` as canonical. `simulate.py` `--seed` flag for reproducible runs. 84 Python tests (up from 67): 4 new test classes cover ESPN reversal (group + KO), KNOWN_TEAMS warning, and `compute_group_standings`. `test_bracket.py` self-contained (deterministic fallback results, no CSV required). **`ci.yml` — runs all three test suites on every push/PR.** |
 | May 26, 2026 | Correctness pill — group results table + KO bracket desktop/mobile |
 | May 24, 2026 | UTC kick-off times for all group + KO matches; local-TZ display; KO schedule verified against ESPN API; bracket card title nowrap; column reorder; `koDisplay` day-of-week + no TZ; group picks reset highlight bug fix |
@@ -70,6 +71,7 @@ wc26/
 ├── test_leaderboard.js                        ← unit tests: group scoring, KO scoring, cascade rules, tiebreakers (80 tests)
 ├── test_e2e.js                                ← 10-user full-tournament simulation + 105 structural invariant checks
 ├── test_partial.js                            ← mid-tournament state tests: pending/cascaded picks, maxPts at each phase (84 tests)
+├── test_aggregate_picks.py                    ← Python unit tests for aggregate_picks.py: CSV parsing (group + KO 4-col format), filename → name extraction (28 tests)
 ├── test_parse_results.py                      ← Python unit tests for parse_results.py: ESPN + wikitext parsers, home/away reversal, KNOWN_TEAMS, standings (84 tests)
 ├── picks/
 │   ├── group/
@@ -94,8 +96,8 @@ wc26/
     │   └── clear_simulation.yml                 ← wipes simulation data
     └── scripts/
         ├── parse_results.py                     ← ESPN API → results CSV + knockout_bracket.json; GROUP_MATCHES canonical list; RANKINGS from data/rankings.json; KNOWN_TEAMS guard on ESPN names
-        ├── aggregate_picks.py                   ← pick CSVs → picks JSON; imports GROUP_MATCHES from parse_results.py
-        └── simulate.py                          ← generates simulated picks + results; imports GROUP_MATCHES from parse_results.py; --seed flag
+        ├── aggregate_picks.py                   ← pick CSVs → picks JSON; imports GROUP_MATCHES from parse_results.py; parses 4-col format (match,group,matchup,pick) for group and (match,round,matchup,pick) for KO
+        └── simulate.py                          ← generates simulated picks + results; imports GROUP_MATCHES from parse_results.py; --seed flag; outputs 4-col format with headers
 ```
 
 ---
@@ -110,23 +112,30 @@ wc26/
 
 ### Pick CSV format
 
+Filenames carry no pool identifier — pool is determined by which folder Ritesh places the file in.
+
 **Group:** `wc26_group_john-smith.csv`
 ```
-match,result
-1,"Mexico v South Africa",Mexico win
-2,"South Korea v Czech Republic",Draw
+match,group,matchup,pick
+1,A,Mexico v South Africa,Mexico
+2,A,South Korea v Czech Republic,Draw
 ...
-72,"DR Congo v Uzbekistan",DR Congo win
+72,L,DR Congo v Uzbekistan,DR Congo
 ```
 
 **Knockout:** `wc26_knockout_john-smith.csv`
 ```
-match,winner
-73,Netherlands
-74,Spain
+match,round,matchup,pick
+73,R32,Brazil v Morocco,Brazil
+74,R32,France v Norway,France
 ...
-104,Brazil
+89,R16,Brazil v France,France
+...
+104,Final,England v Germany,England
 ```
+- `round` values: `R32` · `R16` · `QF` · `SF` · `3rd` · `Final`
+- `matchup` for R16+ is filled from the user's own prior picks (i.e. the teams they expect to advance)
+- `pick` for group stage: team name or `Draw`; for KO: team name only
 
 Ritesh routes the CSV to the correct pool folder on upload (`picks/group/swiftly/` or `picks/group/fandf/` etc.).
 
@@ -436,7 +445,7 @@ All match times are stored as UTC ISO 8601 strings and converted to the viewer's
 - **Auto-advance:** when all matches in the current tab are picked, a centered toast appears — "Moving to Round of 16 in 3s…" — counts down 3→2→1, then switches tab and scrolls to top. Only triggers on manual picks (`pickTeam`), not shortcuts.
 
 ### GitHub Actions
-- `ci.yml` — runs on every push and PR: `test_parse_results.py -v` → `test_bracket.py` → `node test_e2e.js`. No simulate.py required — test_bracket.py generates its own fallback data.
+- `ci.yml` — runs on every push and PR: `test_parse_results.py -v` → `test_aggregate_picks.py -v` → `test_bracket.py` → `node test_e2e.js`. No simulate.py required — test_bracket.py generates its own fallback data.
 - `update.yml` — runs every 15 min, Jun 11–Jul 19
 - `simulate.yml` — generates test picks + results (supports `--seed N` for reproducibility)
 - `clear_simulation.yml` — wipes simulation data
@@ -622,6 +631,17 @@ Run: `python3 test_parse_results.py`
 - `TestParseResultsWikitext` (10) — home win, away win, draw, unplayed (no score field), placeholder score, multiple blocks, lowercase `{{football box}}`, unknown team, empty wikitext, `{{#invoke:flag|...}}` format
 - `TestMatchLookupIntegrity` (3) — exactly 72 entries, all numbers 1–72 present, all team names in TEAM_CODES
 - `TestComputeGroupStandings` (6) — **new:** all 12 groups present; winner tops group; 4 teams per group; empty results OK; points accumulate correctly; draw gives 1pt each
+
+### Python unit tests — `test_aggregate_picks.py`
+
+Run: `python3 test_aggregate_picks.py`
+
+**28 tests** across 4 classes covering every function in `.github/scripts/aggregate_picks.py`:
+
+- `TestNameFromFilename` (5) — `wc26_group_` prefix stripped; hyphens → spaces → title case; full paths handled; simulation names; multi-part names
+- `TestNameFromKnockoutFilename` (4) — `wc26_knockout_` prefix stripped; same name normalization
+- `TestLoadPicksCsv` (10) — home win → `W1`, away win → `W2`, draw → `Draw`; header skipped; multiple matches; unknown team skipped; short rows skipped; empty file; header-only file; unknown match number skipped
+- `TestLoadKnockoutCsv` (9) — single pick; header skipped; multiple rounds; empty pick skipped; short rows skipped; empty file; header-only file; all 32 match numbers; quoted team name with comma
 
 ### Simulation data for local testing — `simulate.py`
 
