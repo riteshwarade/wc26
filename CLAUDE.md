@@ -27,11 +27,17 @@ If `index.lock` error: `rm ~/Documents/GitHub/wc26/.git/index.lock` first.
 |---|---|
 | `bracket.js` | Shared bracket primitives — loaded by all pages |
 | `scoring.js` | MATCHES array (72 group games), KO topology, scoring functions |
+| `sim_core.js` | Seeded PRNG + KO generators for Node sim/test scripts |
 | `WC2026_Pool_Leaderboard_Swiftly.html` | Main leaderboard — edit this, never FandF |
 | `WC2026_Pool_Leaderboard_FandF.html` | Auto-generated from Swiftly via `make_fandf.py` |
 | `WC2026_Pool_Knockout_Picks.html` | KO picks entry page |
 | `WC2026_Pool_Group_Picks.html` | Group stage picks entry page |
 | `make_fandf.py` | Regenerates FandF from Swiftly (4 substitutions) |
+| `data/rankings.json` | **Canonical** FIFA rankings — single source of truth for all scripts |
+| `test_parse_results.py` | Python unit tests for parse_results.py (84 tests) |
+| `test_e2e.js` | JS end-to-end: 10-user full-tournament + 105 invariant checks |
+| `test_bracket.py` | Bracket + standings end-to-end (all 495 3rd-place combos) |
+| `.github/workflows/ci.yml` | CI: runs all three test suites on every push/PR |
 
 ---
 
@@ -157,20 +163,49 @@ No API key required. Returns events with UTC `date` field and team `displayName`
 ESPN name mapping (5 teams differ from internal names):
 `Czechia→Czech Republic`, `Türkiye→Turkey`, `Bosnia-Herzegovina→Bosnia and Herzegovina`, `Congo DR→DR Congo`, `Curacao→Curaçao`
 
+**Home/away ordering** — ESPN's `homeAway` field on each competitor matches our internal MATCHES ordering exactly for all 72 group games. `parse_group_results_espn()` handles the rare case where ESPN reverses home/away: it tries `MATCH_LOOKUP[(home, away)]` first, then falls back to `MATCH_LOOKUP[(away, home)]` and swaps scores. Same logic in `parse_ko_results_espn()`: if `espn_home != bracket_home`, scores are swapped so the CSV always stores scores from the bracket's home team's perspective.
+
+**Unknown team detection** — `KNOWN_TEAMS = set(TEAM_CODES.values())` is defined in `parse_results.py`. `espn_team_name()` prints a warning if a resolved name is not in `KNOWN_TEAMS`, which surfaces any new ESPN name variants that need an `ESPN_TEAM_MAP` entry.
+
 ---
 
 ## Local dev / testing
 
 ```bash
-python .github/scripts/simulate.py --participants 10 --stage all
+# Generate sim data and serve
+python .github/scripts/simulate.py --participants 10 --stage all [--seed N]
 python .github/scripts/aggregate_picks.py
 python -m http.server 8000
 # open http://localhost:8000/WC2026_Pool_Leaderboard_Swiftly.html?games=88
+
+# Run all tests (same commands CI uses)
+python3 test_parse_results.py   # 84 Python unit tests
+node test_e2e.js                # 105 JS invariant checks
+python3 test_bracket.py         # bracket + standings (self-contained, no CSV needed)
 ```
+
+**`--seed N`** — makes simulate.py output reproducible. Without it, results are random each run.
 
 **URL params:**
 - `?games=N` — simulate tournament at match N (0–72 group, 73–104 KO); e.g. `?games=88` = R32 complete
 - `?ko=1` — force knockout mode without specifying a game count
+
+---
+
+## Canonical data sources
+
+Each piece of shared data has exactly one canonical source. All other copies must stay in sync:
+
+| Data | Canonical source | Copies (must match) |
+|---|---|---|
+| FIFA rankings | `data/rankings.json` | `bracket.js` `const RANKINGS` (comment points here); `parse_results.py` loads from JSON |
+| KO bracket topology (R16/QF/SF) | `bracket.js` `R16`/`QF`/`SF` | `scoring.js` `_R16`/`_QF`/`_SF` (+ runtime assertion); `sim_core.js` `R16`/`QF`/`SF`; `simulate.py` `R16_FEEDS` etc. |
+| Group match list | `parse_results.py` `GROUP_MATCHES` | `simulate.py` and `aggregate_picks.py` import it; `test_bracket.py` imports it |
+| ESPN name mapping | `parse_results.py` `ESPN_TEAM_MAP` | `CLAUDE.md` table above |
+
+**Rankings update process:** edit `data/rankings.json` first, then update `bracket.js` `const RANKINGS` to match.
+
+**Topology update process:** edit `bracket.js` `R16`/`QF`/`SF` first, then mirror changes to `scoring.js`, `sim_core.js`, and `simulate.py`. The `scoring.js` runtime assertion (`_assertEq`) will log a `console.error` in the browser if the copies drift.
 
 ## Pick status values
 

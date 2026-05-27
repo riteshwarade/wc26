@@ -4,6 +4,7 @@
 
 | Date | Change |
 |---|---|
+| May 27, 2026 | **Data model robustness + CI.** Canonical data sources: `data/rankings.json` created; `parse_results.py` loads RANKINGS from JSON; `GROUP_MATCHES` moved to top of `parse_results.py`; `MATCH_LOOKUP` auto-derived (no more 72-line hardcoded dict); `simulate.py` and `aggregate_picks.py` import `GROUP_MATCHES` instead of their own hardcoded copies; `test_bracket.py` imports from `parse_results.py`. ESPN robustness: home/away reversal handled in both group and KO parsing (fallback + score swap); `KNOWN_TEAMS` validation added to `espn_team_name()`. KO topology: `scoring.js` runtime assertion catches drift vs `bracket.js`; comments on all copies name `bracket.js` as canonical. `simulate.py` `--seed` flag for reproducible runs. 84 Python tests (up from 67): 4 new test classes cover ESPN reversal (group + KO), KNOWN_TEAMS warning, and `compute_group_standings`. `test_bracket.py` self-contained (deterministic fallback results, no CSV required). **`ci.yml` — runs all three test suites on every push/PR.** |
 | May 26, 2026 | Correctness pill — group results table + KO bracket desktop/mobile |
 | May 24, 2026 | UTC kick-off times for all group + KO matches; local-TZ display; KO schedule verified against ESPN API; bracket card title nowrap; column reorder; `koDisplay` day-of-week + no TZ; group picks reset highlight bug fix |
 | Earlier | KO leaderboard (Variant 3) + combined standings; cascade scoring; `parse_results.py` KO fetch; test suite (80 + 105 + 84 + 67 tests); bracket shared template (`bracket.js`); KO picks page (Variant 2); mobile tab view + auto-advance; penalty shootout scores; podium section |
@@ -60,15 +61,16 @@ wc26/
 ├── WC2026_Pool_Knockout_Picks.html            ← knockout pick page (shared by both pools)
 ├── WC2026_Pool_Leaderboard_Swiftly.html       ← leaderboard + knockout bracket (Swiftly)
 ├── WC2026_Pool_Leaderboard_FandF.html         ← leaderboard + knockout bracket (F&F)
-├── bracket.js                                 ← shared bracket rendering primitives (all variants)
-├── scoring.js                                 ← shared scoring module (browser + Node); single source of truth for MATCHES, KO_POINTS, scoring fns
-├── make_fandf.py                              ← regenerate FandF from Swiftly (5 substitutions); never edit FandF directly
+├── bracket.js                                 ← shared bracket rendering primitives; canonical R16/QF/SF topology + RANKINGS
+├── scoring.js                                 ← shared scoring module (browser + Node); MATCHES, KO_POINTS, scoring fns; mirrors bracket.js topology with runtime assertion
+├── sim_core.js                                ← seeded PRNG + KO generators for Node sim/test; mirrors bracket.js topology
+├── make_fandf.py                              ← regenerate FandF from Swiftly (4 substitutions); never edit FandF directly
 ├── WC2026_Pool_Plan.md                        ← this document
-├── test_bracket.py                             ← bracket end-to-end test (495 combos verified)
-├── test_leaderboard.js                        ← unit tests: group scoring, KO scoring, cascade rules, tiebreakers (80 tests); imports scoring.js
-├── test_e2e.js                                ← 10-user full-tournament simulation + 105 structural invariant checks; imports scoring.js + sim_core.js
-├── test_partial.js                            ← mid-tournament state tests: pending/cascaded picks, maxPts at each phase (84 tests); imports scoring.js
-├── test_parse_results.py                      ← Python unit tests for parse_results.py: ESPN + wikitext parsers, CSV writers, MATCH_LOOKUP (61 tests)
+├── test_bracket.py                             ← bracket end-to-end test (all 495 3rd-place combos); self-contained — runs without CSV
+├── test_leaderboard.js                        ← unit tests: group scoring, KO scoring, cascade rules, tiebreakers (80 tests)
+├── test_e2e.js                                ← 10-user full-tournament simulation + 105 structural invariant checks
+├── test_partial.js                            ← mid-tournament state tests: pending/cascaded picks, maxPts at each phase (84 tests)
+├── test_parse_results.py                      ← Python unit tests for parse_results.py: ESPN + wikitext parsers, home/away reversal, KNOWN_TEAMS, standings (84 tests)
 ├── picks/
 │   ├── group/
 │   │   ├── swiftly/                            ← participant CSVs (uploaded manually by Ritesh)
@@ -77,6 +79,7 @@ wc26/
 │       ├── swiftly/                            ← empty until Jun 27
 │       └── fandf/
 ├── data/
+│   ├── rankings.json                           ← CANONICAL FIFA rankings (single source of truth; bracket.js + parse_results.py load from here)
 │   ├── knockout_bracket.json                   ← R32 matchups (auto-generated, live)
 │   ├── group_swiftly_picks.json                ← aggregated group picks
 │   └── group_fandf_picks.json
@@ -85,13 +88,14 @@ wc26/
 │   └── knockout_results.csv                    ← KO results (simulation data now; real data Jun 28+ via parse_results.py)
 └── .github/
     ├── workflows/
+    │   ├── ci.yml                               ← runs on every push/PR: test_parse_results.py + test_bracket.py + test_e2e.js
     │   ├── update.yml                           ← every 15 min, Jun 11–Jul 19
-    │   ├── simulate.yml                         ← generates test data
+    │   ├── simulate.yml                         ← generates test data (supports --seed for reproducibility)
     │   └── clear_simulation.yml                 ← wipes simulation data
     └── scripts/
-        ├── parse_results.py                     ← ESPN API → results CSV + knockout_bracket.json (two fetches: group M1–72, KO M73–104)
-        ├── aggregate_picks.py                   ← pick CSVs → picks JSON
-        └── simulate.py                          ← generates simulated picks + results
+        ├── parse_results.py                     ← ESPN API → results CSV + knockout_bracket.json; GROUP_MATCHES canonical list; RANKINGS from data/rankings.json; KNOWN_TEAMS guard on ESPN names
+        ├── aggregate_picks.py                   ← pick CSVs → picks JSON; imports GROUP_MATCHES from parse_results.py
+        └── simulate.py                          ← generates simulated picks + results; imports GROUP_MATCHES from parse_results.py; --seed flag
 ```
 
 ---
@@ -432,8 +436,9 @@ All match times are stored as UTC ISO 8601 strings and converted to the viewer's
 - **Auto-advance:** when all matches in the current tab are picked, a centered toast appears — "Moving to Round of 16 in 3s…" — counts down 3→2→1, then switches tab and scrolls to top. Only triggers on manual picks (`pickTeam`), not shortcuts.
 
 ### GitHub Actions
+- `ci.yml` — runs on every push and PR: `test_parse_results.py -v` → `test_bracket.py` → `node test_e2e.js`. No simulate.py required — test_bracket.py generates its own fallback data.
 - `update.yml` — runs every 15 min, Jun 11–Jul 19
-- `simulate.yml` — generates test picks + results
+- `simulate.yml` — generates test picks + results (supports `--seed N` for reproducibility)
 - `clear_simulation.yml` — wipes simulation data
 
 ### `data/knockout_bracket.json` format
@@ -602,25 +607,27 @@ Key insight documented: cascade is not gated on the downstream match being playe
 
 Run: `python3 test_parse_results.py`
 
-67 tests across 9 classes covering every testable function in `.github/scripts/parse_results.py`:
+**84 tests** across 13 classes covering every testable function in `.github/scripts/parse_results.py`:
 
 - `TestEspnTeamName` (9) — ESPN display-name normalisation: Czechia→Czech Republic, Türkiye→Turkey, Curaçao, Bosnia, passthrough, missing field
+- `TestEspnTeamNameValidation` (4) — **new:** unknown name triggers KNOWN_TEAMS warning; valid name is silent; all TEAM_CODES in KNOWN_TEAMS; all ESPN_TEAM_MAP values in KNOWN_TEAMS
 - `TestParseGroupResultsEspn` (10) — home win, away win, draw, incomplete skip, non-group-stage skip, ESPN name mapping, multiple matches, unknown matchup skip, empty events, match lookup coverage
-- `TestParseKoResultsEspn` (8) — single R32, away win, R16 resolves after R32 winner known, R16 not resolved without R32, incomplete skip, non-KO slug skip, empty, multiple rounds
+- `TestGroupEspnHomeAwayReversal` (4) — **new:** ESPN reversed home/away detected and scores swapped; draw stays draw; home-team-wins case; normal order unaffected
+- `TestParseKoResultsEspn` (13) — single R32, away win, R16 resolves after R32, R16 not resolved without R32, incomplete skip, non-KO slug skip, empty, multiple rounds, penalty home wins, penalty away wins, no-shootout is 2-tuple
+- `TestKoEspnHomeAwayReversal` (3) — **new:** KO ESPN reversal detected, scores swapped; penalty scores swapped correctly; normal order unaffected
 - `TestWriteCsv` (2) — output format (sorted by match number, correct columns), empty results
-- `TestWriteKoResultsCsv` (1) — output format
-- `TestExtractTeam` (10) — `{{fb|...}}`, `{{fb-rt|...}}`, `{{#invoke:flag|fb|...}}`, `{{#invoke:flagg|...}}`, wiki-link fallback, unknown code, empty, all 44 TEAM_CODES parseable
+- `TestWriteKoResultsCsv` (4) — output format, no scores, with penalties (6-col), mixed no-pen uses 4 cols
+- `TestExtractTeam` (10) — `{{fb|...}}`, `{{fb-rt|...}}`, `{{#invoke:flag|fb|...}}`, `{{#invoke:flagg|...}}`, wiki-link fallback, unknown code, empty, all 48 TEAM_CODES parseable
 - `TestExtractScore` (9) — dash, en-dash, 0-0, high score, whitespace, text, empty, partial
 - `TestParseResultsWikitext` (10) — home win, away win, draw, unplayed (no score field), placeholder score, multiple blocks, lowercase `{{football box}}`, unknown team, empty wikitext, `{{#invoke:flag|...}}` format
 - `TestMatchLookupIntegrity` (3) — exactly 72 entries, all numbers 1–72 present, all team names in TEAM_CODES
-
-Also fixed a bug in `parse_results()`: the team1/team2 regex used `([^\n|]+)` which stopped at the pipe inside `{{fb|ESP}}`, making the entire wikitext parser silently produce empty results. Fixed to `([^\n]+)` (consistent with `parse_ko_results()`).
+- `TestComputeGroupStandings` (6) — **new:** all 12 groups present; winner tops group; 4 teams per group; empty results OK; points accumulate correctly; draw gives 1pt each
 
 ### Simulation data for local testing — `simulate.py`
 
-Run: `python .github/scripts/simulate.py --participants 10 --stage all && python .github/scripts/aggregate_picks.py`
+Run: `python .github/scripts/simulate.py --participants 10 --stage all [--seed N] && python .github/scripts/aggregate_picks.py`
 
-Generates realistic picks CSVs for N simulated participants in both pools, plus group and KO results, plus the confirmed bracket JSON. The leaderboard fetches these files via HTTP — serve with `python -m http.server 8000`. This is the canonical local dev workflow; see the Local Dev Workflow section above.
+`--seed N` makes all random choices deterministic and reproducible (default: random). Generates realistic picks CSVs for N simulated participants in both pools, plus group and KO results, plus the confirmed bracket JSON. The leaderboard fetches these files via HTTP — serve with `python -m http.server 8000`. This is the canonical local dev workflow; see the Local Dev Workflow section above.
 
 ---
 
