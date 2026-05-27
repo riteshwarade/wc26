@@ -196,7 +196,7 @@ def parse_ko_results_espn(events, bracket_data):
     # Build {frozenset(team1, team2): winner} from completed KO events.
     # ESPN sets competitor.winner=True for the winning side.
     pair_to_winner = {}
-    pair_to_scores = {}
+    pair_to_scores = {}  # frozenset -> (espn_home_name, score_tuple)
     for evt in events:
         if evt.get('season', {}).get('slug') not in KO_SLUGS:
             continue
@@ -214,6 +214,7 @@ def parse_ko_results_espn(events, bracket_data):
             home_c = next((c for c in competitors if c.get('homeAway') == 'home'), None)
             away_c = next((c for c in competitors if c.get('homeAway') == 'away'), None)
             if home_c and away_c:
+                espn_home = espn_team_name(home_c.get('team', {}))
                 h_score = int(home_c.get('score', 0) or 0)
                 a_score = int(away_c.get('score', 0) or 0)
                 h_pen   = home_c.get('shootoutScore')
@@ -224,7 +225,7 @@ def parse_ko_results_espn(events, bracket_data):
                         entry = (h_score, a_score, int(h_pen), int(a_pen))
                     except (TypeError, ValueError):
                         pass
-                pair_to_scores[frozenset(teams)] = entry
+                pair_to_scores[frozenset(teams)] = (espn_home, entry)
 
     # Walk bracket sections in order to assign our match numbers.
     results       = {}
@@ -257,8 +258,14 @@ def parse_ko_results_espn(events, bracket_data):
                 results[m]       = winner
                 match_winners[m] = winner
                 match_losers[m]  = away if winner == home else home
-                sc = pair_to_scores.get(frozenset([home, away]))
-                if sc:
+                sc_entry = pair_to_scores.get(frozenset([home, away]))
+                if sc_entry:
+                    espn_home, sc = sc_entry
+                    if espn_home != home:
+                        # ESPN labelled home/away reversed vs our bracket — swap scores
+                        sc = (sc[1], sc[0], sc[3], sc[2]) if len(sc) == 4 else (sc[1], sc[0])
+                        print(f'  Note: ESPN home/away reversed for M{m} '
+                              f'({espn_home} vs {home}) — scores swapped')
                     scores[m] = sc
 
     return results, scores
