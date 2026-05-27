@@ -16,82 +16,14 @@ import csv
 import json
 import os
 import random
+import sys
 
-# ── Match data ────────────────────────────────────────────────────────────────
-MATCHES = [
-    (1,  'Mexico',                'South Africa'),
-    (2,  'South Korea',           'Czech Republic'),
-    (3,  'Canada',                'Bosnia and Herzegovina'),
-    (4,  'United States',         'Paraguay'),
-    (5,  'Haiti',                 'Scotland'),
-    (6,  'Australia',             'Turkey'),
-    (7,  'Brazil',                'Morocco'),
-    (8,  'Qatar',                 'Switzerland'),
-    (9,  'Ivory Coast',           'Ecuador'),
-    (10, 'Germany',               'Curaçao'),
-    (11, 'Netherlands',           'Japan'),
-    (12, 'Sweden',                'Tunisia'),
-    (13, 'Saudi Arabia',          'Uruguay'),
-    (14, 'Spain',                 'Cape Verde'),
-    (15, 'Iran',                  'New Zealand'),
-    (16, 'Belgium',               'Egypt'),
-    (17, 'France',                'Senegal'),
-    (18, 'Iraq',                  'Norway'),
-    (19, 'Argentina',             'Algeria'),
-    (20, 'Austria',               'Jordan'),
-    (21, 'Ghana',                 'Panama'),
-    (22, 'England',               'Croatia'),
-    (23, 'Portugal',              'DR Congo'),
-    (24, 'Uzbekistan',            'Colombia'),
-    (25, 'Czech Republic',               'South Africa'),
-    (26, 'Switzerland',           'Bosnia and Herzegovina'),
-    (27, 'Canada',                'Qatar'),
-    (28, 'Mexico',                'South Korea'),
-    (29, 'Brazil',                'Haiti'),
-    (30, 'Scotland',              'Morocco'),
-    (31, 'Turkey',                'Paraguay'),
-    (32, 'United States',         'Australia'),
-    (33, 'Germany',               'Ivory Coast'),
-    (34, 'Ecuador',               'Curaçao'),
-    (35, 'Netherlands',           'Sweden'),
-    (36, 'Tunisia',               'Japan'),
-    (37, 'Uruguay',               'Cape Verde'),
-    (38, 'Spain',                 'Saudi Arabia'),
-    (39, 'Belgium',               'Iran'),
-    (40, 'New Zealand',           'Egypt'),
-    (41, 'Norway',                'Senegal'),
-    (42, 'France',                'Iraq'),
-    (43, 'Argentina',             'Austria'),
-    (44, 'Jordan',                'Algeria'),
-    (45, 'England',               'Ghana'),
-    (46, 'Panama',                'Croatia'),
-    (47, 'Portugal',              'Uzbekistan'),
-    (48, 'Colombia',              'DR Congo'),
-    (49, 'Scotland',              'Brazil'),
-    (50, 'Morocco',               'Haiti'),
-    (51, 'Switzerland',           'Canada'),
-    (52, 'Bosnia and Herzegovina','Qatar'),
-    (53, 'Czech Republic',               'Mexico'),
-    (54, 'South Africa',          'South Korea'),
-    (55, 'Curaçao',               'Ivory Coast'),
-    (56, 'Ecuador',               'Germany'),
-    (57, 'Japan',                 'Sweden'),
-    (58, 'Tunisia',               'Netherlands'),
-    (59, 'Turkey',                'United States'),
-    (60, 'Paraguay',              'Australia'),
-    (61, 'Norway',                'France'),
-    (62, 'Senegal',               'Iraq'),
-    (63, 'Egypt',                 'Iran'),
-    (64, 'New Zealand',           'Belgium'),
-    (65, 'Cape Verde',            'Saudi Arabia'),
-    (66, 'Uruguay',               'Spain'),
-    (67, 'Panama',                'England'),
-    (68, 'Croatia',               'Ghana'),
-    (69, 'Algeria',               'Austria'),
-    (70, 'Jordan',                'Argentina'),
-    (71, 'Colombia',              'Portugal'),
-    (72, 'DR Congo',              'Uzbekistan'),
-]
+# parse_results.py is in the same directory — import canonical match data from it.
+sys.path.insert(0, os.path.dirname(__file__))
+from parse_results import GROUP_MATCHES
+
+# Build (num, t1, t2) tuples used throughout this script.
+MATCHES = [(num, t1, t2) for num, grp, t1, t2 in GROUP_MATCHES]
 
 
 # ── Knockout bracket data ─────────────────────────────────────────────────────
@@ -117,7 +49,8 @@ R32_SIM_TEAMS = {
     88: ('Panama',          'Australia'),
 }
 
-# Mirror of bracket.js topology (R16/QF/SF feeds)
+# KO topology — canonical source is bracket.js (R16/QF/SF) / sim_core.js.
+# Mirrored here for the Python simulation context.
 R16_FEEDS = {
     89: (74, 77),  90: (73, 75),  91: (76, 78),  92: (79, 80),
     93: (83, 84),  94: (81, 82),  95: (86, 88),  96: (85, 87),
@@ -266,7 +199,13 @@ if __name__ == '__main__':
     parser.add_argument('--participants', type=int, default=5)
     parser.add_argument('--stage', choices=['group', 'knockout', 'all'], default='all',
                         help='Which stage to simulate (default: all)')
+    parser.add_argument('--seed', type=int, default=None,
+                        help='Random seed for reproducible output (default: random)')
     args = parser.parse_args()
+
+    if args.seed is not None:
+        random.seed(args.seed)
+        print(f'Random seed: {args.seed}')
 
     if args.stage in ('group', 'all'):
         print(f'\nGenerating {args.participants} participants × 2 pools (all 72 group matches)...')

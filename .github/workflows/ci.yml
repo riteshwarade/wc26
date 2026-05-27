@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install requests
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Python unit tests (test_parse_results.py)
+        run: python test_parse_results.py -v
+
+      - name: Bracket logic test (test_bracket.py)
+        # Runs self-contained — generates deterministic fallback results when
+        # results/group_results.csv doesn't exist (no simulate.py required).
+        run: python test_bracket.py
+
+      - name: JS end-to-end scoring test (test_e2e.js)
+        run: node test_e2e.js

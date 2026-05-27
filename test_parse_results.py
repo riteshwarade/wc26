@@ -34,9 +34,13 @@ from parse_results import (
     extract_team,
     extract_score,
     parse_results,
+    compute_group_standings,
     MATCH_LOOKUP,
     ESPN_TEAM_MAP,
     TEAM_CODES,
+    KNOWN_TEAMS,
+    GROUP_MATCHES,
+    GROUP_ORDER,
 )
 
 
@@ -636,6 +640,196 @@ class TestMatchLookupIntegrity(unittest.TestCase):
         for (t1, t2) in MATCH_LOOKUP:
             self.assertIn(t1, all_values, f'Team {t1!r} in MATCH_LOOKUP but not TEAM_CODES')
             self.assertIn(t2, all_values, f'Team {t2!r} in MATCH_LOOKUP but not TEAM_CODES')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# espn_team_name — KNOWN_TEAMS validation
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestEspnTeamNameValidation(unittest.TestCase):
+
+    def test_unknown_name_triggers_warning(self):
+        """An ESPN displayName that isn't in KNOWN_TEAMS should print a warning."""
+        import io
+        from unittest.mock import patch
+        with patch('builtins.print') as mock_print:
+            result = espn_team_name({'displayName': 'Wakanda'})
+        self.assertEqual(result, 'Wakanda')
+        # Confirm a warning was printed containing the unknown name
+        printed = ' '.join(str(a) for call in mock_print.call_args_list for a in call[0])
+        self.assertIn('Warning', printed)
+        self.assertIn('Wakanda', printed)
+
+    def test_known_name_no_warning(self):
+        """A valid internal team name should not trigger a warning."""
+        from unittest.mock import patch
+        with patch('builtins.print') as mock_print:
+            result = espn_team_name({'displayName': 'Brazil'})
+        self.assertEqual(result, 'Brazil')
+        mock_print.assert_not_called()
+
+    def test_all_known_teams_covered(self):
+        """Every value in TEAM_CODES must be in KNOWN_TEAMS."""
+        for name in TEAM_CODES.values():
+            self.assertIn(name, KNOWN_TEAMS, f'{name!r} missing from KNOWN_TEAMS')
+
+    def test_mapped_names_in_known_teams(self):
+        """Every value in ESPN_TEAM_MAP must be in KNOWN_TEAMS."""
+        for espn_raw, internal in ESPN_TEAM_MAP.items():
+            self.assertIn(internal, KNOWN_TEAMS,
+                          f'ESPN_TEAM_MAP value {internal!r} not in KNOWN_TEAMS')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# parse_group_results_espn — ESPN home/away reversal
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestGroupEspnHomeAwayReversal(unittest.TestCase):
+    """Verify the reversed-pair fallback: when ESPN lists home/away swapped vs
+    our MATCH_LOOKUP, scores are recorded from our home team's perspective."""
+
+    def test_reversed_pair_match_found(self):
+        # M1: Mexico (home) vs South Africa (away).
+        # ESPN sends South Africa as home (1 goal) and Mexico as away (0 goals).
+        # Our result should be home_score=0 (Mexico), away_score=1 (South Africa).
+        events = [make_espn_event('South Africa', 'Mexico', 1, 0)]
+        results = parse_group_results_espn(events)
+        self.assertIn(1, results)
+        home_score, away_score, outcome = results[1]
+        self.assertEqual(home_score, 0)   # Mexico scored 0
+        self.assertEqual(away_score, 1)   # South Africa scored 1
+        self.assertEqual(outcome, 'W2')   # South Africa (away in our system) wins
+
+    def test_reversed_pair_draw(self):
+        # M7: Brazil (home) vs Morocco (away) — reversed in ESPN as Morocco 1 Brazil 1
+        events = [make_espn_event('Morocco', 'Brazil', 1, 1)]
+        results = parse_group_results_espn(events)
+        self.assertIn(7, results)
+        home_score, away_score, outcome = results[7]
+        self.assertEqual(home_score, 1)
+        self.assertEqual(away_score, 1)
+        self.assertEqual(outcome, 'Draw')
+
+    def test_reversed_pair_home_team_wins(self):
+        # M17: France (home) vs Senegal (away) — ESPN reverses to Senegal 0 France 2
+        events = [make_espn_event('Senegal', 'France', 0, 2)]
+        results = parse_group_results_espn(events)
+        self.assertIn(17, results)
+        home_score, away_score, outcome = results[17]
+        self.assertEqual(home_score, 2)   # France (our home) scored 2
+        self.assertEqual(away_score, 0)
+        self.assertEqual(outcome, 'W1')
+
+    def test_normal_order_still_works(self):
+        # Make sure the normal (non-reversed) path is unaffected
+        events = [make_espn_event('Mexico', 'South Africa', 3, 0)]
+        results = parse_group_results_espn(events)
+        self.assertEqual(results[1], (3, 0, 'W1'))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# parse_ko_results_espn — ESPN home/away reversal
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestKoEspnHomeAwayReversal(unittest.TestCase):
+    """When ESPN labels a team as 'home' but our bracket has it as 'away',
+    the stored scores must be swapped to match our bracket's home/away order."""
+
+    def test_reversed_ko_scores_swapped(self):
+        # Bracket M73: Spain=home, France=away.
+        # ESPN sends France as home (2 goals), Spain as away (1 goal).
+        # We expect scores stored as (1, 2) — Spain's score first.
+        bracket = make_ko_bracket()
+        events = [make_espn_event('France', 'Spain', 2, 1,
+                                  season_slug='round-of-32',
+                                  home_winner=False, away_winner=True)]
+        results, scores = parse_ko_results_espn(events, bracket)
+        self.assertIn(73, results)
+        self.assertEqual(results[73], 'Spain')
+        self.assertIn(73, scores)
+        home_sc, away_sc = scores[73]
+        self.assertEqual(home_sc, 1)   # Spain (our home) scored 1
+        self.assertEqual(away_sc, 2)   # France (our away) scored 2
+
+    def test_reversed_ko_penalty_scores_swapped(self):
+        # M73: Spain=home, France=away. ESPN: France=home 1-1 Spain (AET), France wins 4-3.
+        # Stored: (1, 1, 3, 4) — Spain's scores first.
+        bracket = make_ko_bracket()
+        events = [make_espn_event('France', 'Spain', 1, 1,
+                                  season_slug='round-of-32',
+                                  home_pen=4, away_pen=3)]
+        results, scores = parse_ko_results_espn(events, bracket)
+        self.assertEqual(results[73], 'France')
+        self.assertEqual(len(scores[73]), 4)
+        self.assertEqual(scores[73], (1, 1, 3, 4))  # Spain pens=3, France pens=4
+
+    def test_normal_ko_order_unaffected(self):
+        # Bracket M73: Spain=home, France=away. ESPN agrees: Spain=home 2-0 France.
+        bracket = make_ko_bracket()
+        events = [make_espn_event('Spain', 'France', 2, 0,
+                                  season_slug='round-of-32')]
+        results, scores = parse_ko_results_espn(events, bracket)
+        self.assertEqual(results[73], 'Spain')
+        self.assertEqual(scores[73], (2, 0))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# compute_group_standings
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _make_results_dict(winners):
+    """Build a minimal results dict {match_num: (hs, as, outcome)} from a
+    {match_num: 'W1'|'W2'|'Draw'} dict, using score 1-0 or 0-0 as appropriate."""
+    out = {}
+    for num, outcome in winners.items():
+        if outcome == 'W1':   out[num] = (1, 0, 'W1')
+        elif outcome == 'W2': out[num] = (0, 1, 'W2')
+        else:                  out[num] = (0, 0, 'Draw')
+    return out
+
+
+class TestComputeGroupStandings(unittest.TestCase):
+    """compute_group_standings(results) returns (grp_standings, stats)."""
+
+    def test_all_groups_present(self):
+        results = _make_results_dict({num: 'W1' for num, *_ in GROUP_MATCHES})
+        grp_standings, stats = compute_group_standings(results)
+        self.assertEqual(set(grp_standings.keys()), set(GROUP_ORDER.keys()))
+
+    def test_winner_top_of_group(self):
+        # M1 Mexico W1 → Mexico should be first in group A
+        results = _make_results_dict({1: 'W1', 25: 'W1', 28: 'W1', 53: 'Draw', 54: 'Draw'})
+        grp_standings, _ = compute_group_standings(results)
+        group_a = grp_standings['A']
+        teams = [t for t, _ in group_a]
+        self.assertEqual(teams[0], 'Mexico')
+
+    def test_all_matches_produce_four_teams_per_group(self):
+        results = _make_results_dict({num: 'W1' for num, *_ in GROUP_MATCHES})
+        grp_standings, _ = compute_group_standings(results)
+        for grp, teams in grp_standings.items():
+            self.assertEqual(len(teams), 4, f'Group {grp} should have 4 teams')
+
+    def test_empty_results_still_returns_all_groups(self):
+        grp_standings, _ = compute_group_standings({})
+        self.assertEqual(set(grp_standings.keys()), set(GROUP_ORDER.keys()))
+
+    def test_points_accumulate_correctly(self):
+        # M16 Belgium(home) W1 (+3), M39 Belgium(home) W1 (+3), M64 New Zealand(home) W2=Belgium wins (+3) = 9
+        results = _make_results_dict({16: 'W1', 39: 'W1', 64: 'W2'})
+        grp_standings, _ = compute_group_standings(results)
+        group_g = grp_standings['G']
+        belgium_entry = next((s for t, s in group_g if t == 'Belgium'), None)
+        self.assertIsNotNone(belgium_entry)
+        self.assertEqual(belgium_entry['Pts'], 9)
+
+    def test_draw_gives_one_point_each(self):
+        results = _make_results_dict({16: 'Draw'})  # M16: Belgium vs Egypt
+        grp_standings, _ = compute_group_standings(results)
+        group_g = grp_standings['G']
+        pts = {t: s['Pts'] for t, s in group_g}
+        self.assertEqual(pts['Belgium'], 1)
+        self.assertEqual(pts['Egypt'], 1)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
