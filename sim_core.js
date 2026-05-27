@@ -43,7 +43,10 @@ const R32_TEAMS = {
   87:['Tunisia','Ghana'],        88:['Panama','Australia'],
 };
 
-// ── KO bracket topology (mirrors bracket.js / scoring.js internal constants) ──
+// ── KO bracket topology ───────────────────────────────────────────────────────
+// Canonical source: bracket.js (R16 / QF / SF).
+// This Node-only copy is used by simulation scripts that don't load bracket.js.
+// If you ever change the topology, update bracket.js first, then mirror here.
 const R16 = {89:[74,77],90:[73,75],91:[76,78],92:[79,80],93:[83,84],94:[81,82],95:[86,88],96:[85,87]};
 const QF  = {97:[89,90],98:[93,94],99:[91,92],100:[95,96]};
 const SF  = {101:[97,98],102:[99,100]};

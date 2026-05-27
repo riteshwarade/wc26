@@ -41,45 +41,50 @@ TEAM_CODES = {
     'COD': 'DR Congo',        'UZB': 'Uzbekistan',        'COL': 'Colombia',
 }
 
-# ── Match list: (team1, team2) → match number ─────────────────────────────────
-MATCH_LOOKUP = {
-    ('Mexico', 'South Africa'): 1,          ('South Korea', 'Czech Republic'): 2,
-    ('Canada', 'Bosnia and Herzegovina'): 3, ('United States', 'Paraguay'): 4,
-    ('Haiti', 'Scotland'): 5,               ('Australia', 'Turkey'): 6,
-    ('Brazil', 'Morocco'): 7,              ('Qatar', 'Switzerland'): 8,
-    ('Ivory Coast', 'Ecuador'): 9,          ('Germany', 'Curaçao'): 10,
-    ('Netherlands', 'Japan'): 11,           ('Sweden', 'Tunisia'): 12,
-    ('Saudi Arabia', 'Uruguay'): 13,        ('Spain', 'Cape Verde'): 14,
-    ('Iran', 'New Zealand'): 15,            ('Belgium', 'Egypt'): 16,
-    ('France', 'Senegal'): 17,             ('Iraq', 'Norway'): 18,
-    ('Argentina', 'Algeria'): 19,           ('Austria', 'Jordan'): 20,
-    ('Ghana', 'Panama'): 21,               ('England', 'Croatia'): 22,
-    ('Portugal', 'DR Congo'): 23,           ('Uzbekistan', 'Colombia'): 24,
-    ('Czech Republic', 'South Africa'): 25,        ('Switzerland', 'Bosnia and Herzegovina'): 26,
-    ('Canada', 'Qatar'): 27,               ('Mexico', 'South Korea'): 28,
-    ('Brazil', 'Haiti'): 29,               ('Scotland', 'Morocco'): 30,
-    ('Turkey', 'Paraguay'): 31,             ('United States', 'Australia'): 32,
-    ('Germany', 'Ivory Coast'): 33,         ('Ecuador', 'Curaçao'): 34,
-    ('Netherlands', 'Sweden'): 35,          ('Tunisia', 'Japan'): 36,
-    ('Uruguay', 'Cape Verde'): 37,          ('Spain', 'Saudi Arabia'): 38,
-    ('Belgium', 'Iran'): 39,               ('New Zealand', 'Egypt'): 40,
-    ('Norway', 'Senegal'): 41,             ('France', 'Iraq'): 42,
-    ('Argentina', 'Austria'): 43,           ('Jordan', 'Algeria'): 44,
-    ('England', 'Ghana'): 45,              ('Panama', 'Croatia'): 46,
-    ('Portugal', 'Uzbekistan'): 47,         ('Colombia', 'DR Congo'): 48,
-    ('Scotland', 'Brazil'): 49,             ('Morocco', 'Haiti'): 50,
-    ('Switzerland', 'Canada'): 51,          ('Bosnia and Herzegovina', 'Qatar'): 52,
-    ('Czech Republic', 'Mexico'): 53,              ('South Africa', 'South Korea'): 54,
-    ('Curaçao', 'Ivory Coast'): 55,         ('Ecuador', 'Germany'): 56,
-    ('Japan', 'Sweden'): 57,               ('Tunisia', 'Netherlands'): 58,
-    ('Turkey', 'United States'): 59,        ('Paraguay', 'Australia'): 60,
-    ('Norway', 'France'): 61,              ('Senegal', 'Iraq'): 62,
-    ('Egypt', 'Iran'): 63,                 ('New Zealand', 'Belgium'): 64,
-    ('Cape Verde', 'Saudi Arabia'): 65,     ('Uruguay', 'Spain'): 66,
-    ('Panama', 'England'): 67,             ('Croatia', 'Ghana'): 68,
-    ('Algeria', 'Austria'): 69,             ('Jordan', 'Argentina'): 70,
-    ('Colombia', 'Portugal'): 71,           ('DR Congo', 'Uzbekistan'): 72,
-}
+# ── All 72 group-stage matches: (num, group, home, away) ─────────────────────
+# Canonical source — also used by compute_group_standings().
+# Listed in match-number order; home/away must match scoring.js MATCHES exactly.
+GROUP_MATCHES = [
+    (1,'A','Mexico','South Africa'),(2,'A','South Korea','Czech Republic'),
+    (3,'B','Canada','Bosnia and Herzegovina'),(4,'D','United States','Paraguay'),
+    (5,'C','Haiti','Scotland'),(6,'D','Australia','Turkey'),
+    (7,'C','Brazil','Morocco'),(8,'B','Qatar','Switzerland'),
+    (9,'E','Ivory Coast','Ecuador'),(10,'E','Germany','Curaçao'),
+    (11,'F','Netherlands','Japan'),(12,'F','Sweden','Tunisia'),
+    (13,'H','Saudi Arabia','Uruguay'),(14,'H','Spain','Cape Verde'),
+    (15,'G','Iran','New Zealand'),(16,'G','Belgium','Egypt'),
+    (17,'I','France','Senegal'),(18,'I','Iraq','Norway'),
+    (19,'J','Argentina','Algeria'),(20,'J','Austria','Jordan'),
+    (21,'L','Ghana','Panama'),(22,'L','England','Croatia'),
+    (23,'K','Portugal','DR Congo'),(24,'K','Uzbekistan','Colombia'),
+    (25,'A','Czech Republic','South Africa'),(26,'B','Switzerland','Bosnia and Herzegovina'),
+    (27,'B','Canada','Qatar'),(28,'A','Mexico','South Korea'),
+    (29,'C','Brazil','Haiti'),(30,'C','Scotland','Morocco'),
+    (31,'D','Turkey','Paraguay'),(32,'D','United States','Australia'),
+    (33,'E','Germany','Ivory Coast'),(34,'E','Ecuador','Curaçao'),
+    (35,'F','Netherlands','Sweden'),(36,'F','Tunisia','Japan'),
+    (37,'H','Uruguay','Cape Verde'),(38,'H','Spain','Saudi Arabia'),
+    (39,'G','Belgium','Iran'),(40,'G','New Zealand','Egypt'),
+    (41,'I','Norway','Senegal'),(42,'I','France','Iraq'),
+    (43,'J','Argentina','Austria'),(44,'J','Jordan','Algeria'),
+    (45,'L','England','Ghana'),(46,'L','Panama','Croatia'),
+    (47,'K','Portugal','Uzbekistan'),(48,'K','Colombia','DR Congo'),
+    (49,'C','Scotland','Brazil'),(50,'C','Morocco','Haiti'),
+    (51,'B','Switzerland','Canada'),(52,'B','Bosnia and Herzegovina','Qatar'),
+    (53,'A','Czech Republic','Mexico'),(54,'A','South Africa','South Korea'),
+    (55,'E','Curaçao','Ivory Coast'),(56,'E','Ecuador','Germany'),
+    (57,'F','Japan','Sweden'),(58,'F','Tunisia','Netherlands'),
+    (59,'D','Turkey','United States'),(60,'D','Paraguay','Australia'),
+    (61,'I','Norway','France'),(62,'I','Senegal','Iraq'),
+    (63,'G','Egypt','Iran'),(64,'G','New Zealand','Belgium'),
+    (65,'H','Cape Verde','Saudi Arabia'),(66,'H','Uruguay','Spain'),
+    (67,'L','Panama','England'),(68,'L','Croatia','Ghana'),
+    (69,'J','Algeria','Austria'),(70,'J','Jordan','Argentina'),
+    (71,'K','Colombia','Portugal'),(72,'K','DR Congo','Uzbekistan'),
+]
+
+# ── Match list: (home, away) → match number — auto-derived from GROUP_MATCHES ─
+MATCH_LOOKUP = {(t1, t2): num for num, grp, t1, t2 in GROUP_MATCHES}
 
 
 # ── ESPN API (primary data source) ───────────────────────────────────────────
@@ -102,6 +107,9 @@ ESPN_TEAM_MAP = {
     'Congo DR':           'DR Congo',
     'Curacao':            'Curaçao',
 }
+
+# All valid internal team names — used to detect unexpected ESPN name mappings.
+KNOWN_TEAMS = set(TEAM_CODES.values())
 
 
 def _fetch_events(date_range):
@@ -129,7 +137,10 @@ def fetch_espn_ko_events():
 def espn_team_name(team_dict):
     """Normalise an ESPN team object's displayName to our internal team name."""
     raw = team_dict.get('displayName', '')
-    return ESPN_TEAM_MAP.get(raw, raw)
+    name = ESPN_TEAM_MAP.get(raw, raw)
+    if name not in KNOWN_TEAMS:
+        print(f'  Warning: unknown ESPN team name {raw!r} (mapped to {name!r}) — add to ESPN_TEAM_MAP?')
+    return name
 
 
 def parse_group_results_espn(events):
@@ -575,20 +586,10 @@ GROUP_ORDER = {
     'L': ['England','Croatia','Ghana','Panama'],
 }
 
-RANKINGS = {
-    'Mexico':15,'South Africa':60,'South Korea':25,'Czech Republic':41,
-    'Canada':30,'Bosnia and Herzegovina':65,'Qatar':55,'Switzerland':19,
-    'Brazil':6,'Morocco':8,'Haiti':83,'Scotland':43,
-    'United States':16,'Paraguay':40,'Australia':27,'Turkey':22,
-    'Germany':10,'Curaçao':82,'Ivory Coast':34,'Ecuador':23,
-    'Netherlands':7,'Japan':18,'Sweden':38,'Tunisia':44,
-    'Belgium':9,'Egypt':29,'Iran':21,'New Zealand':85,
-    'Spain':2,'Cape Verde':69,'Saudi Arabia':61,'Uruguay':17,
-    'France':1,'Senegal':14,'Iraq':57,'Norway':31,
-    'Argentina':3,'Algeria':28,'Austria':24,'Jordan':63,
-    'Portugal':5,'DR Congo':46,'Uzbekistan':50,'Colombia':13,
-    'England':4,'Croatia':11,'Ghana':74,'Panama':33,
-}
+# Load from canonical JSON source (data/rankings.json, two dirs up from this script).
+_rankings_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'rankings.json')
+with open(_rankings_path, encoding='utf-8') as _f:
+    RANKINGS = json.load(_f)
 
 # 495-combination table: key = sorted 8 qualifying group letters
 # value = [1A-opp, 1B-opp, 1D-opp, 1E-opp, 1G-opp, 1I-opp, 1K-opp, 1L-opp]
@@ -1098,45 +1099,7 @@ for _line in _RAW.strip().split('\n'):
     if len(_key) == 8:
         THIRD_COMBOS[_key] = _v.strip().split()
 
-
-GROUP_MATCHES = [
-    (1,'A','Mexico','South Africa'),(2,'A','South Korea','Czech Republic'),
-    (3,'B','Canada','Bosnia and Herzegovina'),(4,'D','United States','Paraguay'),
-    (5,'C','Haiti','Scotland'),(6,'D','Australia','Turkey'),
-    (7,'C','Brazil','Morocco'),(8,'B','Qatar','Switzerland'),
-    (9,'E','Ivory Coast','Ecuador'),(10,'E','Germany','Curaçao'),
-    (11,'F','Netherlands','Japan'),(12,'F','Sweden','Tunisia'),
-    (13,'H','Saudi Arabia','Uruguay'),(14,'H','Spain','Cape Verde'),
-    (15,'G','Iran','New Zealand'),(16,'G','Belgium','Egypt'),
-    (17,'I','France','Senegal'),(18,'I','Iraq','Norway'),
-    (19,'J','Argentina','Algeria'),(20,'J','Austria','Jordan'),
-    (21,'L','Ghana','Panama'),(22,'L','England','Croatia'),
-    (23,'K','Portugal','DR Congo'),(24,'K','Uzbekistan','Colombia'),
-    (25,'A','Czech Republic','South Africa'),(26,'B','Switzerland','Bosnia and Herzegovina'),
-    (27,'B','Canada','Qatar'),(28,'A','Mexico','South Korea'),
-    (29,'C','Brazil','Haiti'),(30,'C','Scotland','Morocco'),
-    (31,'D','Turkey','Paraguay'),(32,'D','United States','Australia'),
-    (33,'E','Germany','Ivory Coast'),(34,'E','Ecuador','Curaçao'),
-    (35,'F','Netherlands','Sweden'),(36,'F','Tunisia','Japan'),
-    (37,'H','Uruguay','Cape Verde'),(38,'H','Spain','Saudi Arabia'),
-    (39,'G','Belgium','Iran'),(40,'G','New Zealand','Egypt'),
-    (41,'I','Norway','Senegal'),(42,'I','France','Iraq'),
-    (43,'J','Argentina','Austria'),(44,'J','Jordan','Algeria'),
-    (45,'L','England','Ghana'),(46,'L','Panama','Croatia'),
-    (47,'K','Portugal','Uzbekistan'),(48,'K','Colombia','DR Congo'),
-    (49,'C','Scotland','Brazil'),(50,'C','Morocco','Haiti'),
-    (51,'B','Switzerland','Canada'),(52,'B','Bosnia and Herzegovina','Qatar'),
-    (53,'A','Czech Republic','Mexico'),(54,'A','South Africa','South Korea'),
-    (55,'E','Curaçao','Ivory Coast'),(56,'E','Ecuador','Germany'),
-    (57,'F','Japan','Sweden'),(58,'F','Tunisia','Netherlands'),
-    (59,'D','Turkey','United States'),(60,'D','Paraguay','Australia'),
-    (61,'I','Norway','France'),(62,'I','Senegal','Iraq'),
-    (63,'G','Egypt','Iran'),(64,'G','New Zealand','Belgium'),
-    (65,'H','Cape Verde','Saudi Arabia'),(66,'H','Uruguay','Spain'),
-    (67,'L','Panama','England'),(68,'L','Croatia','Ghana'),
-    (69,'J','Algeria','Austria'),(70,'J','Jordan','Argentina'),
-    (71,'K','Colombia','Portugal'),(72,'K','DR Congo','Uzbekistan'),
-]
+# GROUP_MATCHES is defined near the top of this file (before MATCH_LOOKUP).
 
 
 def compute_group_standings(results):

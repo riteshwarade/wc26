@@ -5,77 +5,13 @@ Run from repo root: python test_bracket.py
 """
 
 import csv
+import sys
+import os
 from collections import defaultdict
 
-# ── Group stage match data ────────────────────────────────────────────────────
-GROUP_MATCHES = [
-    (1,'A','Mexico','South Africa'), (2,'A','South Korea','Czech Republic'),
-    (3,'B','Canada','Bosnia and Herzegovina'), (4,'D','United States','Paraguay'),
-    (5,'C','Haiti','Scotland'), (6,'D','Australia','Turkey'),
-    (7,'C','Brazil','Morocco'), (8,'B','Qatar','Switzerland'),
-    (9,'E','Ivory Coast','Ecuador'), (10,'E','Germany','Curaçao'),
-    (11,'F','Netherlands','Japan'), (12,'F','Sweden','Tunisia'),
-    (13,'H','Saudi Arabia','Uruguay'), (14,'H','Spain','Cape Verde'),
-    (15,'G','Iran','New Zealand'), (16,'G','Belgium','Egypt'),
-    (17,'I','France','Senegal'), (18,'I','Iraq','Norway'),
-    (19,'J','Argentina','Algeria'), (20,'J','Austria','Jordan'),
-    (21,'L','Ghana','Panama'), (22,'L','England','Croatia'),
-    (23,'K','Portugal','DR Congo'), (24,'K','Uzbekistan','Colombia'),
-    (25,'A','Czech Republic','South Africa'), (26,'B','Switzerland','Bosnia and Herzegovina'),
-    (27,'B','Canada','Qatar'), (28,'A','Mexico','South Korea'),
-    (29,'C','Brazil','Haiti'), (30,'C','Scotland','Morocco'),
-    (31,'D','Turkey','Paraguay'), (32,'D','United States','Australia'),
-    (33,'E','Germany','Ivory Coast'), (34,'E','Ecuador','Curaçao'),
-    (35,'F','Netherlands','Sweden'), (36,'F','Tunisia','Japan'),
-    (37,'H','Uruguay','Cape Verde'), (38,'H','Spain','Saudi Arabia'),
-    (39,'G','Belgium','Iran'), (40,'G','New Zealand','Egypt'),
-    (41,'I','Norway','Senegal'), (42,'I','France','Iraq'),
-    (43,'J','Argentina','Austria'), (44,'J','Jordan','Algeria'),
-    (45,'L','England','Ghana'), (46,'L','Panama','Croatia'),
-    (47,'K','Portugal','Uzbekistan'), (48,'K','Colombia','DR Congo'),
-    (49,'C','Scotland','Brazil'), (50,'C','Morocco','Haiti'),
-    (51,'B','Switzerland','Canada'), (52,'B','Bosnia and Herzegovina','Qatar'),
-    (53,'A','Czech Republic','Mexico'), (54,'A','South Africa','South Korea'),
-    (55,'E','Curaçao','Ivory Coast'), (56,'E','Ecuador','Germany'),
-    (57,'F','Japan','Sweden'), (58,'F','Tunisia','Netherlands'),
-    (59,'D','Turkey','United States'), (60,'D','Paraguay','Australia'),
-    (61,'I','Norway','France'), (62,'I','Senegal','Iraq'),
-    (63,'G','Egypt','Iran'), (64,'G','New Zealand','Belgium'),
-    (65,'H','Cape Verde','Saudi Arabia'), (66,'H','Uruguay','Spain'),
-    (67,'L','Panama','England'), (68,'L','Croatia','Ghana'),
-    (69,'J','Algeria','Austria'), (70,'J','Jordan','Argentina'),
-    (71,'K','Colombia','Portugal'), (72,'K','DR Congo','Uzbekistan'),
-]
-
-RANKINGS = {
-    'Mexico':15,'South Africa':60,'South Korea':25,'Czech Republic':41,
-    'Canada':30,'Bosnia and Herzegovina':65,'Qatar':55,'Switzerland':19,
-    'Brazil':6,'Morocco':8,'Haiti':83,'Scotland':43,
-    'United States':16,'Paraguay':40,'Australia':27,'Turkey':22,
-    'Germany':10,'Curaçao':82,'Ivory Coast':34,'Ecuador':23,
-    'Netherlands':7,'Japan':18,'Sweden':38,'Tunisia':44,
-    'Belgium':9,'Egypt':29,'Iran':21,'New Zealand':85,
-    'Spain':2,'Cape Verde':69,'Saudi Arabia':61,'Uruguay':17,
-    'France':1,'Senegal':14,'Iraq':57,'Norway':31,
-    'Argentina':3,'Algeria':28,'Austria':24,'Jordan':63,
-    'Portugal':5,'DR Congo':46,'Uzbekistan':50,'Colombia':13,
-    'England':4,'Croatia':11,'Ghana':74,'Panama':33,
-}
-
-GROUP_ORDER = {
-    'A': ['Mexico','South Africa','South Korea','Czech Republic'],
-    'B': ['Canada','Bosnia and Herzegovina','Qatar','Switzerland'],
-    'C': ['Brazil','Morocco','Haiti','Scotland'],
-    'D': ['United States','Paraguay','Australia','Turkey'],
-    'E': ['Germany','Curaçao','Ivory Coast','Ecuador'],
-    'F': ['Netherlands','Japan','Sweden','Tunisia'],
-    'G': ['Belgium','Egypt','Iran','New Zealand'],
-    'H': ['Spain','Cape Verde','Saudi Arabia','Uruguay'],
-    'I': ['France','Senegal','Iraq','Norway'],
-    'J': ['Argentina','Algeria','Austria','Jordan'],
-    'K': ['Portugal','DR Congo','Uzbekistan','Colombia'],
-    'L': ['England','Croatia','Ghana','Panama'],
-}
+# Import canonical data from parse_results.py (one level up in .github/scripts/).
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '.github', 'scripts'))
+from parse_results import GROUP_MATCHES, RANKINGS, GROUP_ORDER
 
 # ── 495 combination table ─────────────────────────────────────────────────────
 # Raw data from Wikipedia (Annex C)

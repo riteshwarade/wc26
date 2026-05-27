@@ -46,6 +46,8 @@ const FLAGS = {
 
 // ── FIFA rankings ─────────────────────────────────────────
 // Used for tiebreaking, display, and "pick higher-ranked" shortcut.
+// Canonical source: data/rankings.json (parse_results.py loads from there).
+// Keep this copy in sync with data/rankings.json when updating rankings.
 const RANKINGS = {
   'Mexico':15,'South Africa':60,'South Korea':25,'Czech Republic':41,
   'Canada':30,'Bosnia and Herzegovina':65,'Qatar':55,'Switzerland':19,

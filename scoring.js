@@ -88,7 +88,10 @@ const MATCHES = [
   [72, 'K', 'Sat, Jun 27', '2026-06-27T23:30:00Z', 'DR Congo',              'Uzbekistan'],
 ];
 
-// ── KO bracket topology (duplicated from bracket.js for Node compatibility) ──
+// ── KO bracket topology ───────────────────────────────────────────────────────
+// Canonical source: bracket.js (R16 / QF / SF).
+// This copy exists for Node.js contexts where bracket.js is not loaded.
+// If you ever change the topology, update bracket.js first, then mirror here.
 const _R16 = {
    89:[74,77],  90:[73,75],  91:[76,78],  92:[79,80],
    93:[83,84],  94:[81,82],  95:[86,88],  96:[85,87],
@@ -99,6 +102,16 @@ const _QF = {
 const _SF = {
   101:[97,98], 102:[99,100],
 };
+// Browser sanity-check: assert this copy matches bracket.js at runtime.
+if (typeof R16 !== 'undefined') {
+  const _assertEq = (a, b, label) => {
+    if (JSON.stringify(a) !== JSON.stringify(b))
+      console.error(`scoring.js topology mismatch vs bracket.js: ${label}`);
+  };
+  _assertEq(_R16, R16, '_R16/R16');
+  _assertEq(_QF,  QF,  '_QF/QF');
+  _assertEq(_SF,  SF,  '_SF/SF');
+}
 
 function _isTbd(name) {
   return !name || name === 'TBD' || /^[WL]\d+$/.test(name) ||
