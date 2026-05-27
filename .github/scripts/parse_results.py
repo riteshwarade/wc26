@@ -151,12 +151,23 @@ def parse_group_results_espn(events):
             continue
         home_name  = espn_team_name(home_c.get('team', {}))
         away_name  = espn_team_name(away_c.get('team', {}))
-        home_score = int(home_c.get('score', 0))
-        away_score = int(away_c.get('score', 0))
-        match_num  = MATCH_LOOKUP.get((home_name, away_name))
-        if not match_num:
-            print(f'  Warning: no group match found for {home_name} vs {away_name}')
-            continue
+        espn_home_score = int(home_c.get('score', 0))
+        espn_away_score = int(away_c.get('score', 0))
+        # Look up by ESPN's home/away order first; fall back to reversed order in
+        # case ESPN swaps home/away on a neutral-site fixture.
+        match_num = MATCH_LOOKUP.get((home_name, away_name))
+        if match_num:
+            home_score, away_score = espn_home_score, espn_away_score
+        else:
+            match_num = MATCH_LOOKUP.get((away_name, home_name))
+            if match_num:
+                # ESPN labelled them reversed — swap scores to match our fixture order
+                home_score, away_score = espn_away_score, espn_home_score
+                print(f'  Note: ESPN home/away reversed for M{match_num} '
+                      f'({home_name} vs {away_name}) — scores swapped')
+            else:
+                print(f'  Warning: no group match found for {home_name} vs {away_name}')
+                continue
         if home_score > away_score:
             outcome = 'W1'
         elif away_score > home_score:
