@@ -22,8 +22,8 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 from parse_results import GROUP_MATCHES
 
-# Build (num, t1, t2) tuples used throughout this script.
-MATCHES = [(num, t1, t2) for num, grp, t1, t2 in GROUP_MATCHES]
+# Build (num, grp, t1, t2) tuples used throughout this script.
+MATCHES = [(num, grp, t1, t2) for num, grp, t1, t2 in GROUP_MATCHES]
 
 
 # ── Knockout bracket data ─────────────────────────────────────────────────────
@@ -70,6 +70,17 @@ KO_MATCH_ORDER = (
 )
 
 
+def ko_round_label(m):
+    """Return a short round label for a knockout match number."""
+    if 73 <= m <= 88:  return 'R32'
+    if 89 <= m <= 96:  return 'R16'
+    if 97 <= m <= 100: return 'QF'
+    if m in (101, 102): return 'SF'
+    if m == 103:        return '3rd'
+    if m == 104:        return 'Final'
+    return ''
+
+
 def simulate_ko_bracket(r32_teams):
     """Pick random winners round-by-round through the entire knockout bracket.
     Returns {match_num: winner_name} for all 32 matches (M73–M104).
@@ -99,7 +110,7 @@ def simulate_ko_bracket(r32_teams):
     match_teams[104] = (winners[101], winners[102])
     winners[104] = random.choice([winners[101], winners[102]])
 
-    return winners
+    return winners, match_teams
 
 
 def generate_knockout_bracket(r32_teams):
@@ -123,12 +134,13 @@ def generate_knockout_picks(pool_id, participant_num, r32_teams):
     folder = f'picks/knockout/{pool_id}'
     os.makedirs(folder, exist_ok=True)
     filename = f'{folder}/wc26_knockout_simulation-{participant_num}.csv'
-    winners = simulate_ko_bracket(r32_teams)
+    winners, match_teams = simulate_ko_bracket(r32_teams)
     with open(filename, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        writer.writerow(['match', 'winner'])
+        writer.writerow(['match', 'round', 'matchup', 'pick'])
         for m in KO_MATCH_ORDER:
-            writer.writerow([m, winners.get(m, '')])
+            home, away = match_teams.get(m, ('', ''))
+            writer.writerow([m, ko_round_label(m), f'{home} v {away}', winners.get(m, '')])
     print(f'  Generated: {filename}')
 
 
@@ -158,13 +170,14 @@ def random_score(outcome):
 def generate_picks(pool_id, participant_num):
     folder = f'picks/group/{pool_id}'
     os.makedirs(folder, exist_ok=True)
-    filename = f'{folder}/wc26group_{pool_id}_simulation-{participant_num}.csv'
+    filename = f'{folder}/wc26_group_simulation-{participant_num}.csv'
     with open(filename, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        for num, t1, t2 in MATCHES:
+        writer.writerow(['match', 'group', 'matchup', 'pick'])
+        for num, grp, t1, t2 in MATCHES:
             outcome = random_outcome()
             label   = outcome_label(outcome, t1, t2)
-            writer.writerow([num, f'{t1} v {t2}', label])
+            writer.writerow([num, grp, f'{t1} v {t2}', label])
     print(f'  Generated: {filename}')
 
 
@@ -172,7 +185,7 @@ def generate_ko_results(r32_teams):
     """Write results/knockout_results.csv with simulated winners for all 32 KO matches."""
     os.makedirs('results', exist_ok=True)
     path = 'results/knockout_results.csv'
-    winners = simulate_ko_bracket(r32_teams)
+    winners, _ = simulate_ko_bracket(r32_teams)
     with open(path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['match', 'winner'])
@@ -187,7 +200,7 @@ def generate_results():
     with open(path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['match', 'home_score', 'away_score', 'outcome'])
-        for num, t1, t2 in MATCHES:
+        for num, grp, t1, t2 in MATCHES:
             outcome    = random_outcome()
             home, away = random_score(outcome)
             writer.writerow([num, home, away, outcome])

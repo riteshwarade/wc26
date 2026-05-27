@@ -1260,13 +1260,13 @@ function runShortcut(mode) {
 
 function downloadCSV(name) {
   const escape = v => (String(v).includes(',') ? `"${v}"` : v);
-  const rows = [['match', 'result']];
+  const rows = [['match', 'group', 'matchup', 'pick']];
   MATCHES.forEach(m => {
-    const [num, , , , t1, t2] = m;
+    const [num, grp, , , t1, t2] = m;
     const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
-    const match = escape(`${t1} v ${t2}`);
-    const label = val === 'w1' ? t1 : val === 'draw' ? 'Draw' : t2;
-    rows.push([num, match, escape(label)]);
+    const matchup = escape(`${t1} v ${t2}`);
+    const pick = val === 'w1' ? t1 : val === 'draw' ? 'Draw' : t2;
+    rows.push([num, grp, matchup, escape(pick)]);
   });
   const csv  = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });

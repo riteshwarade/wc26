@@ -1,33 +1,33 @@
-match,winner
-73,Morocco
-74,France
-75,Spain
-76,Switzerland
-77,Argentina
-78,Netherlands
-79,Ivory Coast
-80,Colombia
-81,United States
-82,Japan
-83,Saudi Arabia
-84,Uruguay
-85,Turkey
-86,Sweden
-87,Tunisia
-88,Australia
-89,Argentina
-90,Morocco
-91,Switzerland
-92,Ivory Coast
-93,Saudi Arabia
-94,United States
-95,Sweden
-96,Turkey
-97,Morocco
-98,United States
-99,Switzerland
-100,Turkey
-101,Morocco
-102,Turkey
-103,Switzerland
-104,Turkey
+match,round,matchup,pick
+73,R32,Brazil v Morocco,Brazil
+74,R32,France v Norway,Norway
+75,R32,Spain v Ecuador,Spain
+76,R32,Germany v Switzerland,Switzerland
+77,R32,Argentina v Mexico,Argentina
+78,R32,Netherlands v Senegal,Senegal
+79,R32,England v Ivory Coast,England
+80,R32,Portugal v Colombia,Colombia
+81,R32,Belgium v United States,Belgium
+82,R32,Croatia v Japan,Japan
+83,R32,South Korea v Saudi Arabia,Saudi Arabia
+84,R32,Uruguay v Egypt,Egypt
+85,R32,Turkey v Canada,Canada
+86,R32,Austria v Sweden,Sweden
+87,R32,Tunisia v Ghana,Tunisia
+88,R32,Panama v Australia,Australia
+89,R16,Norway v Argentina,Norway
+90,R16,Brazil v Spain,Spain
+91,R16,Switzerland v Senegal,Switzerland
+92,R16,England v Colombia,Colombia
+93,R16,Saudi Arabia v Egypt,Egypt
+94,R16,Belgium v Japan,Belgium
+95,R16,Sweden v Australia,Australia
+96,R16,Canada v Tunisia,Canada
+97,QF,Norway v Spain,Norway
+98,QF,Egypt v Belgium,Belgium
+99,QF,Switzerland v Colombia,Colombia
+100,QF,Australia v Canada,Australia
+101,SF,Norway v Belgium,Belgium
+102,SF,Colombia v Australia,Australia
+103,3rd,Norway v Colombia,Colombia
+104,Final,Belgium v Australia,Belgium

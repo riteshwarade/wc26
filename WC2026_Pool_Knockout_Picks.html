@@ -411,6 +411,16 @@ const MATCH_ORDER = [
   103,104,                                           // 3rd place & Final
 ];
 
+function koRoundLabel(m) {
+  if (m >= 73 && m <= 88)  return 'R32';
+  if (m >= 89 && m <= 96)  return 'R16';
+  if (m >= 97 && m <= 100) return 'QF';
+  if (m === 101 || m === 102) return 'SF';
+  if (m === 103) return '3rd';
+  if (m === 104) return 'Final';
+  return '';
+}
+
 // ── Resolve teams for any match based on current picks ──
 function getTeams(m) {
   if (r32Teams[m]) return r32Teams[m];
@@ -672,9 +682,11 @@ function confirmSubmit() {
 
 function downloadCSV(name) {
   const escape = v => (String(v).includes(',') ? `"${v}"` : v);
-  const rows = [['match', 'winner']];
+  const rows = [['match', 'round', 'matchup', 'pick']];
   for (const m of MATCH_ORDER) {
-    rows.push([m, escape(picks[m] || '')]);
+    const [home, away] = getTeams(m);
+    const matchup = escape(`${home} v ${away}`);
+    rows.push([m, koRoundLabel(m), matchup, escape(picks[m] || '')]);
   }
   const csv  = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });

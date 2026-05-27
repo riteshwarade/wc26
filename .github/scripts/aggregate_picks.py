@@ -21,11 +21,12 @@ from parse_results import GROUP_MATCHES
 MATCH_TEAMS = {num: (t1, t2) for num, grp, t1, t2 in GROUP_MATCHES}
 
 
-def name_from_filename(filename, pool_id):
-    """Extract participant name from a group picks CSV filename."""
+def name_from_filename(filename):
+    """Extract participant name from a group picks CSV filename.
+    Expected pattern: wc26_group_firstname-lastname.csv
+    """
     base = os.path.basename(filename)
-    prefix = f'wc26group_{pool_id}_'
-    name_part = base.replace(prefix, '').replace('.csv', '')
+    name_part = base.replace('wc26_group_', '').replace('.csv', '')
     return name_part.replace('-', ' ').title()
 
 
@@ -42,11 +43,11 @@ def load_picks_csv(filepath, match_teams):
     picks = {}
     with open(filepath, newline='', encoding='utf-8') as f:
         for row in csv.reader(f):
-            if len(row) < 3:
+            if len(row) < 4:
                 continue
             try:
                 match_num = int(row[0])
-                label = row[2].strip()
+                label = row[3].strip()  # col 3: pick (after match, group, matchup)
                 t1, t2 = match_teams.get(match_num, ('', ''))
                 if label == 'Draw':
                     outcome = 'Draw'
@@ -63,18 +64,18 @@ def load_picks_csv(filepath, match_teams):
 
 
 def load_knockout_csv(filepath):
-    """Parse a knockout picks CSV (header: match,winner) into {match_num: winner_name}."""
+    """Parse a knockout picks CSV (header: match,round,matchup,pick) into {match_num: winner_name}."""
     picks = {}
     with open(filepath, newline='', encoding='utf-8') as f:
         reader = csv.reader(f)
         for i, row in enumerate(reader):
-            if i == 0 and len(row) >= 2 and row[0].strip().lower() == 'match':
+            if i == 0 and len(row) >= 1 and row[0].strip().lower() == 'match':
                 continue  # skip header row
-            if len(row) < 2:
+            if len(row) < 4:
                 continue
             try:
                 match_num = int(row[0].strip())
-                winner = row[1].strip()
+                winner = row[3].strip()  # col 3: pick (after match, round, matchup)
                 if winner:
                     picks[match_num] = winner
             except (ValueError, IndexError):
@@ -114,7 +115,7 @@ def aggregate_pool(stage, pool_id):
              if not os.path.basename(f).startswith('.')]
 
     for filepath in sorted(files):
-        name = name_from_filename(filepath, pool_id)
+        name = name_from_filename(filepath)
         picks = load_picks_csv(filepath, MATCH_TEAMS)
         if picks:
             all_picks[name] = picks
