@@ -28,7 +28,7 @@ jobs:
           echo "{}" > data/group_fandf_picks.json
           echo "{}" > data/knockout_swiftly_picks.json
           echo "{}" > data/knockout_fandf_picks.json
-          echo "Simulation bracket cleared" > data/knockout_bracket.json
+          echo "{}" > data/knockout_bracket.json
           echo "Results and data cleared"
 
       - name: Commit and push
