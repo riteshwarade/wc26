@@ -2262,7 +2262,7 @@ async function init(skipBracket = false) {
 setupLayout();
 
 // ── Auto-refresh every 15 minutes ────────────────────────
-const REFRESH_MS = 15 * 60 * 1000;
+const REFRESH_MS = 5 * 60 * 1000;
 let _lastUpdated = null;
 
 function _updateTimestamp() {
