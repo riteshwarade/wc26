@@ -305,7 +305,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.25em;
-    padding: 4px 8px;
+    padding: 8px 8px;
     border-radius: 5px;
     border: 1.5px solid var(--blue-light);
     font-family: 'Inter', sans-serif;
@@ -1198,7 +1198,7 @@ function teamHtmlPick(name) {
   const flag  = FLAGS[name] || '';
   const rank  = RANKINGS[name] || null;
   const rankHtml = rank ? ` <span class="team-rank">(${rank})</span>` : '';
-  const display  = (window.innerWidth <= 640 && SHORT_NAMES[name]) ? SHORT_NAMES[name] : name;
+  const display  = SHORT_NAMES[name] || name;
   return `${flag ? flag + ' ' : ''}${display}${rankHtml}`;
 }
 
