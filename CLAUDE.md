@@ -192,6 +192,25 @@ python3 test_bracket.py         # bracket + standings (self-contained, no CSV ne
 - `?games=N` — simulate tournament at match N (0–72 group, 73–104 KO); e.g. `?games=88` = R32 complete
 - `?ko=1` — force knockout mode without specifying a game count
 
+## GitHub Actions workflows
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| **Simulate picks and results** | Manual — set `participants` (default 5) and `stage` (group/knockout/all) | Runs `simulate.py` + `aggregate_picks.py`, commits + pushes sim data |
+| **Clear simulation data** | Manual | Deletes `*simulation*` pick CSVs, writes `{}` to all picks JSONs, commits + pushes, purges jsDelivr CDN |
+| **Auto-clear simulation data** | Automatic at 1pm ET Jun 11 + manual | Same as above — fires automatically 2hrs before first match |
+| **CI** | Every push/PR | Runs all 4 test suites |
+| **update** | Scheduled | Fetches latest results from ESPN, aggregates picks, pushes |
+
+**To simulate 10 users for github.io testing:**
+GitHub → Actions → "Simulate picks and results" → Run workflow → participants=10, stage=all
+
+**To clear simulation data:**
+GitHub → Actions → "Clear simulation data" → Run workflow
+- Only deletes files matching `*simulation*` — real picks are never touched
+- CDN purge is automatic (no manual browser steps needed)
+- Also fires automatically at 1pm ET on June 11
+
 ---
 
 ## Canonical data sources
