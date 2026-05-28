@@ -1,33 +1,33 @@
 match,round,matchup,pick
-73,R32,Brazil v Morocco,Morocco
-74,R32,France v Norway,France
-75,R32,Spain v Ecuador,Spain
-76,R32,Germany v Switzerland,Germany
+73,R32,Brazil v Morocco,Brazil
+74,R32,France v Norway,Norway
+75,R32,Spain v Ecuador,Ecuador
+76,R32,Germany v Switzerland,Switzerland
 77,R32,Argentina v Mexico,Mexico
 78,R32,Netherlands v Senegal,Senegal
 79,R32,England v Ivory Coast,England
-80,R32,Portugal v Colombia,Colombia
+80,R32,Portugal v Colombia,Portugal
 81,R32,Belgium v United States,Belgium
 82,R32,Croatia v Japan,Croatia
-83,R32,South Korea v Saudi Arabia,Saudi Arabia
+83,R32,South Korea v Saudi Arabia,South Korea
 84,R32,Uruguay v Egypt,Egypt
-85,R32,Turkey v Canada,Canada
-86,R32,Austria v Sweden,Austria
+85,R32,Turkey v Canada,Turkey
+86,R32,Austria v Sweden,Sweden
 87,R32,Tunisia v Ghana,Tunisia
 88,R32,Panama v Australia,Australia
-89,R16,France v Mexico,France
-90,R16,Morocco v Spain,Morocco
-91,R16,Germany v Senegal,Senegal
-92,R16,England v Colombia,England
-93,R16,Saudi Arabia v Egypt,Egypt
-94,R16,Belgium v Croatia,Belgium
-95,R16,Austria v Australia,Austria
-96,R16,Canada v Tunisia,Tunisia
-97,QF,France v Morocco,France
-98,QF,Egypt v Belgium,Belgium
-99,QF,Senegal v England,Senegal
-100,QF,Austria v Tunisia,Tunisia
-101,SF,France v Belgium,Belgium
-102,SF,Senegal v Tunisia,Senegal
-103,3rd,France v Tunisia,Tunisia
-104,Final,Belgium v Senegal,Belgium
+89,R16,Norway v Mexico,Mexico
+90,R16,Brazil v Ecuador,Brazil
+91,R16,Switzerland v Senegal,Switzerland
+92,R16,England v Portugal,Portugal
+93,R16,South Korea v Egypt,Egypt
+94,R16,Belgium v Croatia,Croatia
+95,R16,Sweden v Australia,Sweden
+96,R16,Turkey v Tunisia,Tunisia
+97,QF,Mexico v Brazil,Brazil
+98,QF,Egypt v Croatia,Egypt
+99,QF,Switzerland v Portugal,Portugal
+100,QF,Sweden v Tunisia,Sweden
+101,SF,Brazil v Egypt,Egypt
+102,SF,Portugal v Sweden,Portugal
+103,3rd,Brazil v Sweden,Brazil
+104,Final,Egypt v Portugal,Egypt
