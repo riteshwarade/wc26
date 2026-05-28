@@ -803,7 +803,7 @@ const POOL_NAME = 'Swiftly';
 // ──────────────────────────────────────────────────────────
 
 
-// All data files → raw.githubusercontent.com + cache buster (avoids CDN stale cache)
+// All data files → raw.githubusercontent.com with cache: 'no-store' (always fresh, no CDN)
 const _RAW = 'https://raw.githubusercontent.com/riteshwarade/wc26/main';
 const _T   = Date.now();
 const PICKS_URL      = `${_RAW}/data/group_${POOL_ID}_picks.json`;
