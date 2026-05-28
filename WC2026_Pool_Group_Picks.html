@@ -160,6 +160,7 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 24px 16px 64px;
+    visibility: hidden;
   }
 
   /* ── Name card ───────────────────────────────────────────── */
@@ -1288,6 +1289,7 @@ document.getElementById('headerSubtitle').textContent =
   'Pick a result (win for either team or draw) for all 72 group stage matches';
 buildForm();
 renderPickGroupTables();
+document.querySelector('.container').style.visibility = 'visible';
 </script>
 </body>
 </html>
