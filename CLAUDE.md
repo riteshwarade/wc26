@@ -196,20 +196,40 @@ python3 test_bracket.py         # bracket + standings (self-contained, no CSV ne
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| **Simulate picks and results** | Manual — set `participants` (default 5) and `stage` (group/knockout/all) | Runs `simulate.py` + `aggregate_picks.py`, commits + pushes sim data |
-| **Clear simulation data** | Manual | Deletes `*simulation*` pick CSVs, writes `{}` to all picks JSONs, commits + pushes, purges jsDelivr CDN |
+| **Simulate picks and results** | Manual — set `participants` (default 5) and `stage` (group/knockout/all) | Installs `requests`, runs `simulate.py` + `aggregate_picks.py`, commits + pushes sim data |
+| **Clear simulation data** | Manual | Deletes `*simulation*` pick CSVs, writes `{}` to all picks/bracket JSONs, clears both results CSVs, commits + pushes |
 | **Auto-clear simulation data** | Automatic at 1pm ET Jun 11 + manual | Same as above — fires automatically 2hrs before first match |
 | **CI** | Every push/PR | Runs all 4 test suites |
 | **update** | Scheduled | Fetches latest results from ESPN, aggregates picks, pushes |
 
-**To simulate 10 users for github.io testing:**
-GitHub → Actions → "Simulate picks and results" → Run workflow → participants=10, stage=all
+**To simulate N users for github.io testing:**
+GitHub → Actions → "Simulate picks and results" → Run workflow → participants=N, stage=all
 
 **To clear simulation data:**
 GitHub → Actions → "Clear simulation data" → Run workflow
 - Only deletes files matching `*simulation*` — real picks are never touched
-- CDN purge is automatic (no manual browser steps needed)
+- Clears both `group_results.csv` and `knockout_results.csv`
 - Also fires automatically at 1pm ET on June 11
+- No CDN purge needed — leaderboard uses `raw.githubusercontent.com` directly
+
+## Leaderboard data fetching
+
+All data files are fetched from `raw.githubusercontent.com` with `cache: 'no-store'` — no CDN involved, always fresh on every reload. No cache purging ever needed.
+
+```js
+const _RAW = 'https://raw.githubusercontent.com/riteshwarade/wc26/main';
+const PICKS_URL      = `${_RAW}/data/group_${POOL_ID}_picks.json`;
+const RESULTS_URL    = `${_RAW}/results/group_results.csv`;
+const BRACKET_URL    = `${_RAW}/data/knockout_bracket.json`;
+const KO_PICKS_URL   = `${_RAW}/data/knockout_${POOL_ID}_picks.json`;
+const KO_RESULTS_URL = `${_RAW}/results/knockout_results.csv`;
+```
+
+**Git push conflicts** — GitHub Actions workflows commit to main, which causes local push rejections. Fix:
+```bash
+git pull --rebase && git push
+```
+Set once to avoid the prompt: `git config --global pull.rebase true`
 
 ---
 

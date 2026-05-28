@@ -441,14 +441,15 @@ All match times are stored as UTC ISO 8601 strings and converted to the viewer's
 - Floating blue pill (`.bk-mob-pair-pill`) between the two matches in each group: "winners meet in R16 · M89"
 - Team rows use group-picks button style: white bg + `1.5px solid var(--blue-light)` unselected; solid `var(--swiftly-blue)` fill + white text when picked; borderless muted when loser
 - `.team-rank` inherits white at 75% opacity on picked/winner rows (matching group picks behaviour)
-- Results fetched from `raw.githubusercontent.com?t=Date.now()` (bypasses CDN cache)
+- All data fetched from `raw.githubusercontent.com` with `cache: 'no-store'` — no CDN, always fresh
 - **Auto-advance:** when all matches in the current tab are picked, a centered toast appears — "Moving to Round of 16 in 3s…" — counts down 3→2→1, then switches tab and scrolls to top. Only triggers on manual picks (`pickTeam`), not shortcuts.
 
 ### GitHub Actions
 - `ci.yml` — runs on every push and PR: `test_parse_results.py -v` → `test_aggregate_picks.py -v` → `test_bracket.py` → `node test_e2e.js`. No simulate.py required — test_bracket.py generates its own fallback data.
 - `update.yml` — runs every 15 min, Jun 11–Jul 19
-- `simulate.yml` — generates test picks + results (supports `--seed N` for reproducibility)
-- `clear_simulation.yml` — wipes simulation data
+- `simulate.yml` — generates test picks + results (supports `--seed N` for reproducibility); installs `requests` before running
+- `clear_simulation.yml` — wipes simulation data: deletes `*simulation*` CSVs, clears both results CSVs, writes `{}` to all picks/bracket JSONs; no CDN purge needed
+- `auto_clear_simulation.yml` — same as above, fires automatically at 1pm ET Jun 11 (2hrs before kickoff)
 
 ### `data/knockout_bracket.json` format
 ```json
