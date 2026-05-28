@@ -24,6 +24,7 @@ jobs:
       - name: Clear results and data files
         run: |
           echo "" > results/group_results.csv
+          echo "" > results/knockout_results.csv
           echo "{}" > data/group_swiftly_picks.json
           echo "{}" > data/group_fandf_picks.json
           echo "{}" > data/knockout_swiftly_picks.json
