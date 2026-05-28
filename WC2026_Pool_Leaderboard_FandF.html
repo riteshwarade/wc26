@@ -2189,13 +2189,13 @@ async function init(skipBracket = false) {
     let picksData, resultsCSV, koPicksData = {}, koResultsCSV = '';
     let bracketData = null;
 
-    const ts = Date.now();
+    const _nc = { cache: 'no-store' };
       const [picksResp, resultsResp, bracketResp, koPicksResp, koResultsResp] = await Promise.all([
-        fetch(`${PICKS_URL}?t=${ts}`),
-        fetch(`${RESULTS_URL}?t=${ts}`),
-        fetch(`${BRACKET_URL}?t=${ts}`).catch(() => null),
-        fetch(`${KO_PICKS_URL}?t=${ts}`).catch(() => null),
-        fetch(`${KO_RESULTS_URL}?t=${ts}`).catch(() => null),
+        fetch(PICKS_URL, _nc),
+        fetch(RESULTS_URL, _nc),
+        fetch(BRACKET_URL, _nc).catch(() => null),
+        fetch(KO_PICKS_URL, _nc).catch(() => null),
+        fetch(KO_RESULTS_URL, _nc).catch(() => null),
       ]);
       if (!picksResp.ok) throw new Error('Could not load picks');
       if (!resultsResp.ok) throw new Error('Could not load results');
