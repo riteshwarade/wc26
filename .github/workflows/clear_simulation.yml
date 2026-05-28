@@ -38,3 +38,11 @@ jobs:
           git add picks/ results/ data/
           git diff --staged --quiet || git commit -m "simulation: cleared all test data"
           git push
+
+      - name: Purge jsDelivr CDN cache
+        run: |
+          curl -s "https://purge.jsdelivr.net/gh/riteshwarade/wc26@main/data/group_swiftly_picks.json"
+          curl -s "https://purge.jsdelivr.net/gh/riteshwarade/wc26@main/data/group_fandf_picks.json"
+          curl -s "https://purge.jsdelivr.net/gh/riteshwarade/wc26@main/data/knockout_swiftly_picks.json"
+          curl -s "https://purge.jsdelivr.net/gh/riteshwarade/wc26@main/data/knockout_fandf_picks.json"
+          curl -s "https://purge.jsdelivr.net/gh/riteshwarade/wc26@main/data/knockout_bracket.json"
