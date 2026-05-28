@@ -29,6 +29,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install Python dependencies
+        run: pip install requests
+
       - name: Generate simulation data
         run: python .github/scripts/simulate.py --participants ${{ github.event.inputs.participants }} --stage ${{ github.event.inputs.stage }}
 
