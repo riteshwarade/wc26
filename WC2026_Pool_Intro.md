@@ -21,8 +21,8 @@ Good luck! 🏆
 
 ## WhatsApp version (FandF)
 
-🏆 *World Cup 2026 Pool — Welcome!*
-The 2026 FIFA World Cup runs June 12 – July 19. As I have for every World Cup since 2010, I've put together a picks pool to make it more fun to follow. No football knowledge required, everyone welcome! Hope you join!
+🏆 *World Cup 2026 Pool — Welcome!* 🏆
+The 2026 FIFA World Cup runs from June 12 to July 19. As I have for every World Cup since 2010, I've put together a picks pool to make it more fun to follow. No football knowledge required, everyone welcome! Hope you join!
 
 *Round 1 — Group stage (due June 11)*
 Predict the result of all 72 group matches (win for either team or draw). 2 points per correct pick.
