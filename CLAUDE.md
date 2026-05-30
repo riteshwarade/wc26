@@ -136,6 +136,23 @@ No `border-top` divider — row separation comes from `margin-top` only.
 
 ---
 
+## Group picks page
+
+- **Pick button padding (desktop):** `padding: 6px 8px` — middle ground between too tight (4px) and too tall (8px) across 72 rows
+- **`SHORT_NAMES`** applies on **all screen sizes** (not just mobile). Provides shortened display names inside pick buttons to avoid overflow: `'Bosnia and Herzegovina' → 'Bosnia…'`, `'Czech Republic' → 'Czech…'`
+- **JS content flash fix:** `.container` has `visibility: hidden` in CSS; set to `visible` synchronously after `buildForm()` + `renderPickGroupTables()` — page paints once with content already in place
+
+---
+
+## Page load flash fixes (all pages)
+
+- **Google Fonts:** all pages use `display=block` (not `display=swap`) — prevents font-swap flash at the cost of a brief invisible-text period on first load. Do not revert to `display=swap`.
+- **Group picks:** `visibility: hidden` on `.container`, revealed after sync JS build (see above)
+- **Knockout picks:** `bracketContainer` has a static "Loading bracket…" placeholder in HTML — shown while async fetch is in flight
+- **Leaderboard:** cards already have static `⏳ Loading…` placeholders in HTML — no JS fix needed
+
+---
+
 ## Group match results table
 
 - Column order: `#` · `Grp` · `Date` · `Time (TZ)` · `Result` · `Score`

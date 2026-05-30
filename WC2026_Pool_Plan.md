@@ -66,6 +66,7 @@ wc26/
 ├── scoring.js                                 ← shared scoring module (browser + Node); MATCHES, KO_POINTS, scoring fns; mirrors bracket.js topology with runtime assertion
 ├── sim_core.js                                ← seeded PRNG + KO generators for Node sim/test; mirrors bracket.js topology
 ├── make_fandf.py                              ← regenerate FandF from Swiftly (4 substitutions); never edit FandF directly
+├── WC2026_Pool_Intro.md                       ← pool announcement text (3 versions: Original FandF, WhatsApp FandF, Slack Swiftly)
 ├── WC2026_Pool_Plan.md                        ← this document
 ├── test_bracket.py                             ← bracket end-to-end test (all 495 3rd-place combos); self-contained — runs without CSV
 ├── test_leaderboard.js                        ← unit tests: group scoring, KO scoring, cascade rules, tiebreakers (80 tests)
@@ -557,7 +558,7 @@ Same cards as Variant 1. `mkCard` reads from `koResults`: completed matches show
 
 ## Still To Do
 
-- [ ] Clear simulation data (`Actions → Clear simulation data`) before Jun 11 — or auto-clear fires at 1pm ET Jun 11
+- [x] Clear simulation data (`Actions → Clear simulation data`) before Jun 11 — or auto-clear fires at 1pm ET Jun 11
 - [ ] Share group pick page links with participants, collect and upload CSVs to `picks/group/swiftly/` and `picks/group/fandf/`
 - [ ] Share knockout pick page link before Jun 28, collect and upload CSVs to `picks/knockout/swiftly/` and `picks/knockout/fandf/`
 
@@ -703,7 +704,7 @@ All 4 pages are mobile-friendly. Breakpoint: `@media (max-width: 640px)`.
 |---|---|
 | `.header-title` | `font-size: clamp(0.82rem, 3.6vw, 1.2rem); white-space: nowrap` — fits on one line |
 | Group picks match rows | 2-row CSS grid: meta (# date time grp) on row 1, pick buttons on row 2 spanning full width |
-| Pick buttons | `padding: 7px 6px; min-height: 38px`; long team names use `SHORT_NAMES` map (e.g. Bosnia → Bosnia…) |
+| Pick buttons | `padding: 7px 6px; min-height: 38px`; long team names use `SHORT_NAMES` map (e.g. Bosnia → Bosnia…) — applies on all screen sizes, not just mobile |
 | Leaderboard: squares column | Hidden (`display: none`) |
 | Leaderboard: max pts column | Hidden |
 | Leaderboard: group tables | Appear below match results (CSS `order` swap on `.side-left`/`.side-right`) |
@@ -756,7 +757,7 @@ Only appear once all 4 teams in the group have ≥1 result/pick.
 
 **Secondary / shortcut:** Inter 700, `0.78rem`, white bg, `border: 1.5px solid --neutral-light`, `border-radius: 5px`, `padding: 4px 12px`. Hover: blue border + blue text + `--blue-lightest` bg.
 
-**Pick buttons (W1/Draw/W2):** Same as secondary. Selected state: `--swiftly-blue` bg, white text. Always include `overflow: hidden; text-overflow: ellipsis; min-width: 0` to prevent long team names expanding the row.
+**Pick buttons (W1/Draw/W2):** Same as secondary but `padding: 6px 8px` (desktop). Selected state: `--swiftly-blue` bg, white text. Always include `overflow: hidden; text-overflow: ellipsis; min-width: 0` to prevent long team names expanding the row.
 
 ### Progress Bar
 
@@ -817,7 +818,7 @@ The leaderboard always fetches live data from GitHub — there is no embedded si
 ## Notes
 
 - GitHub Actions free tier: well within limits (date-gated, only runs Jun 11–Jul 19)
-- ESPN API updates within ~5 min of match end; leaderboard reflects within ~15 min (next Actions run)
+- ESPN API updates within ~5 min of match end; leaderboard reflects within ~5 min (next Actions run + leaderboard auto-refreshes every 5 min)
 - Pick submission is download-only — Ritesh uploads CSVs manually to GitHub
 - Every participant's picks exist as individual CSV in `picks/` — fully auditable
 - Leaderboard URLs use exact filenames: `WC2026_Pool_Leaderboard_Swiftly.html` (not `WC2026_Leaderboard_Swiftly.html`)
