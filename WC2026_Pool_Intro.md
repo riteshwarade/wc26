@@ -1,4 +1,4 @@
-# FIFA Men’s 2026 World Cup
+## About the World Cup
 
 The FIFA Men's World Cup is arguably the world's greatest sporting event. The 2026 version drew 206 teams into a two-year qualifying campaign and will culminate in 48 national teams playing 104 matches in 16 cities over 38 days, with the first game on June 11 and the final on July 19. For the first time ever, the tournament is hosted by three countries: the USA, Canada, and Mexico. The expanded field with 48 teams (up from 32) means more underdogs and more upsets.
 
