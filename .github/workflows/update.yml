@@ -2,8 +2,11 @@ name: Update results and aggregate picks
 
 on:
   schedule:
-    - cron: '*/15 * * * *'   # every 15 minutes
+    - cron: '*/15 * * * *'   # every 15 minutes (Jun 11–Jul 20 only; see date check below)
   workflow_dispatch:           # allows manual trigger from GitHub UI
+  push:
+    paths:
+      - 'picks/**'             # run immediately when new pick CSVs are pushed
 
 jobs:
   update:
@@ -14,40 +17,45 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-      - name: Check tournament dates (May 31 – Jul 20 2026)
+      - name: Decide what to run
         id: check
         run: |
           python3 -c "
+          import os
           from datetime import date
+          event = os.environ.get('GITHUB_EVENT_NAME', '')
           today = date.today()
-          in_range = date(2026, 5, 31) <= today <= date(2026, 7, 20)
-          print(f'in_range={str(in_range).lower()}')
+          tournament = date(2026, 6, 11) <= today <= date(2026, 7, 20)
+          # Push and workflow_dispatch always proceed; schedule only during tournament
+          proceed = event in ('push', 'workflow_dispatch') or tournament
+          print(f'proceed={str(proceed).lower()}')
+          print(f'parse_results={str(tournament).lower()}')
           " >> $GITHUB_OUTPUT
 
       - name: Check out repo
-        if: steps.check.outputs.in_range == 'true'
+        if: steps.check.outputs.proceed == 'true'
         uses: actions/checkout@v6.0.2
 
       - name: Set up Python
-        if: steps.check.outputs.in_range == 'true'
+        if: steps.check.outputs.proceed == 'true'
         uses: actions/setup-python@v6.2.0
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-        if: steps.check.outputs.in_range == 'true'
+        if: steps.check.outputs.proceed == 'true'
         run: pip install requests
 
-      - name: Parse results
-        if: steps.check.outputs.in_range == 'true'
-        run: python .github/scripts/parse_results.py
-
       - name: Aggregate picks
-        if: steps.check.outputs.in_range == 'true'
+        if: steps.check.outputs.proceed == 'true'
         run: python .github/scripts/aggregate_picks.py
 
+      - name: Parse results
+        if: steps.check.outputs.parse_results == 'true'
+        run: python .github/scripts/parse_results.py
+
       - name: Commit and push if changed
-        if: steps.check.outputs.in_range == 'true'
+        if: steps.check.outputs.proceed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

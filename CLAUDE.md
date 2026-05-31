@@ -226,7 +226,7 @@ python3 test_bracket.py         # bracket + standings (self-contained, no CSV ne
 | **Clear simulation data** | Manual | Deletes `*simulation*` pick CSVs, writes `{}` to all picks/bracket JSONs, clears both results CSVs, commits + pushes |
 | **Auto-clear simulation data** | Automatic at 1pm ET Jun 11 + manual | Same as above — fires automatically 2hrs before first match |
 | **CI** | Every push/PR | Runs all 4 test suites |
-| **update** | Every 15 min, May 31 – Jul 20 | Fetches latest results from ESPN, aggregates picks, pushes |
+| **update** | Push to `picks/**` (always) · Every 15 min Jun 11–Jul 20 (schedule) · Manual | Push trigger: aggregates picks immediately. Schedule: aggregates picks + fetches ESPN results. |
 
 **To simulate N users for github.io testing:**
 GitHub → Actions → "Simulate picks and results" → Run workflow → participants=N, stage=all
