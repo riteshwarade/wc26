@@ -1376,8 +1376,8 @@ function renderGroupTables(results) {
 
   // ── Pass 2: render each group ──────────────────────────────
   const cards = completedGroups.map(grp => {
-    const teams = sortedStandings(grp);
     const grpStarted = isGroupStarted(grp);
+    const teams = grpStarted ? sortedStandings(grp) : (GROUP_ORDER[grp] || groups[grp]);
 
     const rowClassFn = (t, i) => {
       if (!grpStarted) return '';
