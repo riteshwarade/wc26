@@ -14,13 +14,13 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-      - name: Check tournament dates (Jun 11 – Jul 19 2026)
+      - name: Check tournament dates (May 31 – Jul 20 2026)
         id: check
         run: |
           python3 -c "
           from datetime import date
           today = date.today()
-          in_range = date(2026, 6, 11) <= today <= date(2026, 7, 19)
+          in_range = date(2026, 5, 31) <= today <= date(2026, 7, 20)
           print(f'in_range={str(in_range).lower()}')
           " >> $GITHUB_OUTPUT
 
@@ -38,7 +38,7 @@ jobs:
         if: steps.check.outputs.in_range == 'true'
         run: pip install requests
 
-      - name: Parse Wikipedia results
+      - name: Parse results
         if: steps.check.outputs.in_range == 'true'
         run: python .github/scripts/parse_results.py
 
