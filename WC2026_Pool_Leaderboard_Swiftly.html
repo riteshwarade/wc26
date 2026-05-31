@@ -1308,15 +1308,7 @@ function renderGroupTables(results) {
     }
   });
 
-  const completedGroups = Object.keys(groups)
-    .filter(g => groups[g].some(t => stats[t] && stats[t].P > 0))
-    .sort();
-
-  if (!completedGroups.length) {
-    document.getElementById('groupTablesCard').innerHTML =
-      '<div class="state-msg"><span class="emoji">⚽</span>Group tables will appear once matches start on Jun 11.</div>';
-    return;
-  }
+  const completedGroups = Object.keys(groups).sort();
 
   // H2H stats between two teams using actual results
   function h2hStats(teamA, teamB, grpMatches) {
@@ -1388,12 +1380,13 @@ function renderGroupTables(results) {
     const grpStarted = isGroupStarted(grp);
 
     const rowClassFn = (t, i) => {
+      if (!grpStarted) return '';
       if (i < 2) return 'qualified';
       if (i === 2) {
         if (allGroupsStarted) return qualifiedThirds.has(t) ? 'third-qual' : 'eliminated';
         return 'third-pending';
       }
-      return grpStarted ? 'eliminated' : '';
+      return 'eliminated';
     };
 
     return renderGroupTableCard(grp, teams, stats, { rowClassFn, showGD: true });
