@@ -159,6 +159,15 @@ No `border-top` divider — row separation comes from `margin-top` only.
 - Mobile (`max-width: 680px`): Time column hidden; `#` and `Grp` also hidden
 - Group picks CSS grid: `grid-template-columns: 30px 28px 88px 72px auto`; mobile breakpoint `max-width: 640px`
 
+### Group table pre-tournament state
+
+Group tables render immediately (before Jun 11). Before any matches in a group have played:
+- Teams are shown in `GROUP_ORDER` (Wikipedia order), same as the group picks page
+- No qualified/eliminated row highlighting — all rows unstyled
+- All stats show 0
+
+Once the first match in a group kicks off, `sortedStandings()` takes over and row highlighting activates.
+
 ### Correctness pill
 
 Shows `N/total` for completed matches. Locations: appended to `td-score` cell (group table, `margin-left: 8px` via `.td-score .cp-pill`); right-aligned in `.bk-mnum` header (KO desktop); inline in `.bk-mob-meta` (KO mobile). `bracket.js` is not modified — injected entirely in the leaderboard.
@@ -217,7 +226,7 @@ python3 test_bracket.py         # bracket + standings (self-contained, no CSV ne
 | **Clear simulation data** | Manual | Deletes `*simulation*` pick CSVs, writes `{}` to all picks/bracket JSONs, clears both results CSVs, commits + pushes |
 | **Auto-clear simulation data** | Automatic at 1pm ET Jun 11 + manual | Same as above — fires automatically 2hrs before first match |
 | **CI** | Every push/PR | Runs all 4 test suites |
-| **update** | Scheduled | Fetches latest results from ESPN, aggregates picks, pushes |
+| **update** | Every 15 min, May 31 – Jul 20 | Fetches latest results from ESPN, aggregates picks, pushes |
 
 **To simulate N users for github.io testing:**
 GitHub → Actions → "Simulate picks and results" → Run workflow → participants=N, stage=all
