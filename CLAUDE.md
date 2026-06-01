@@ -34,6 +34,7 @@ If `index.lock` error: `rm ~/Documents/GitHub/wc26/.git/index.lock` first.
 | `WC2026_Pool_Group_Picks.html` | Group stage picks entry page |
 | `make_fandf.py` | Regenerates FandF from Swiftly (4 substitutions) |
 | `data/rankings.json` | **Canonical** FIFA rankings — single source of truth for all scripts |
+| `WC2026_Pool_Intro.pptx` | Swiftly-branded intro deck (12 slides) — share with pool participants before Jun 11 |
 | `test_aggregate_picks.py` | Python unit tests for aggregate_picks.py: CSV parsing + filename extraction (28 tests) |
 | `test_parse_results.py` | Python unit tests for parse_results.py (84 tests) |
 | `test_e2e.js` | JS end-to-end: 10-user full-tournament + 105 invariant checks |
