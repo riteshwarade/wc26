@@ -1131,7 +1131,7 @@ function renderStandings(standings, results) {
           <th>#</th>
           <th>Name</th>
           <th>Pts</th>
-          <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · grey = wrong · empty = pending)</span></th>
+          <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · empty = pending)</span></th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -1376,8 +1376,8 @@ function renderGroupTables(results) {
 
   // ── Pass 2: render each group ──────────────────────────────
   const cards = completedGroups.map(grp => {
-    const teams = sortedStandings(grp);
     const grpStarted = isGroupStarted(grp);
+    const teams = grpStarted ? sortedStandings(grp) : (GROUP_ORDER[grp] || groups[grp]);
 
     const rowClassFn = (t, i) => {
       if (!grpStarted) return '';
