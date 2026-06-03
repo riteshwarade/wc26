@@ -805,7 +805,6 @@ const POOL_NAME = 'Swiftly';
 
 // All data files → raw.githubusercontent.com with cache: 'no-store' (always fresh, no CDN)
 const _RAW = 'https://raw.githubusercontent.com/riteshwarade/wc26/main';
-const _T   = Date.now();
 const PICKS_URL      = `${_RAW}/data/group_${POOL_ID}_picks.json`;
 const RESULTS_URL    = `${_RAW}/results/group_results.csv`;
 const BRACKET_URL    = `${_RAW}/data/knockout_bracket.json`;
@@ -2183,12 +2182,13 @@ async function init(skipBracket = false) {
     let bracketData = null;
 
     const _nc = { cache: 'no-store' };
+    const _bust = `?t=${Date.now()}`;
       const [picksResp, resultsResp, bracketResp, koPicksResp, koResultsResp] = await Promise.all([
-        fetch(PICKS_URL, _nc),
-        fetch(RESULTS_URL, _nc),
-        fetch(BRACKET_URL, _nc).catch(() => null),
-        fetch(KO_PICKS_URL, _nc).catch(() => null),
-        fetch(KO_RESULTS_URL, _nc).catch(() => null),
+        fetch(PICKS_URL    + _bust, _nc),
+        fetch(RESULTS_URL  + _bust, _nc),
+        fetch(BRACKET_URL  + _bust, _nc).catch(() => null),
+        fetch(KO_PICKS_URL + _bust, _nc).catch(() => null),
+        fetch(KO_RESULTS_URL + _bust, _nc).catch(() => null),
       ]);
       if (!picksResp.ok) throw new Error('Could not load picks');
       if (!resultsResp.ok) throw new Error('Could not load results');
