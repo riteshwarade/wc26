@@ -207,6 +207,7 @@
     font-weight: 700;
     color: var(--neutral-darkest);
     min-width: 120px;
+    white-space: nowrap;
   }
 
   .td-points {
@@ -708,6 +709,7 @@
     /* Standings: hide per-match squares and max-pts — too wide for phones */
     .th-squares, .td-squares   { display: none; }
     .th-max-pts, .td-max-pts   { display: none; }
+    .td-name                   { white-space: normal; }
 
     /* Results table: hide # date & time columns; score stays pinned */
     .th-date, .td-date, .th-time, .td-time { display: none; }
