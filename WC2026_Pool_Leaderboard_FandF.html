@@ -643,6 +643,7 @@
   }
 
   .state-msg .emoji { font-size: 2rem; display: block; margin-bottom: 12px; }
+  .state-msg--loading { visibility: hidden; }
 
 
   /* ── KO teaser ── */
@@ -756,7 +757,7 @@
   <div id="koBracketSection" style="display:none">
     <p class="section-label">Knockout bracket</p>
     <div class="section-body">
-      <div id="koBracketCard"><div class="state-msg"><span class="emoji">⏳</span>Loading…</div></div>
+      <div id="koBracketCard"><div class="state-msg state-msg--loading"><span class="emoji">⏳</span>Loading…</div></div>
     </div>
   </div>
 
@@ -771,25 +772,25 @@
     <div id="groupSectionBody">
       <p class="section-label" id="groupStandingsLabel">Standings</p>
       <div class="section-body" id="standings-body">
-        <div class="card" id="standingsCard"><div class="state-msg"><span class="emoji">⏳</span>Loading picks and results…</div></div>
+        <div class="card" id="standingsCard"><div class="state-msg state-msg--loading"><span class="emoji">⏳</span>Loading picks and results…</div></div>
       </div>
       <div class="side-by-side-layout">
         <div class="side-left">
           <p class="section-label">Group tables</p>
           <div class="section-body" id="groups-body">
-            <div id="groupTablesCard"><div class="state-msg"><span class="emoji">⏳</span>Loading…</div></div>
+            <div id="groupTablesCard"><div class="state-msg state-msg--loading"><span class="emoji">⏳</span>Loading…</div></div>
           </div>
         </div>
         <div class="side-right">
           <p class="section-label">Match results</p>
           <div class="section-body" id="results-body">
-            <div class="card" id="resultsCard"><div class="state-msg"><span class="emoji">⏳</span>Loading…</div></div>
+            <div class="card" id="resultsCard"><div class="state-msg state-msg--loading"><span class="emoji">⏳</span>Loading…</div></div>
           </div>
         </div>
       </div>
       <p class="section-label" id="bracketSectionLabel">Provisional bracket</p>
       <div class="section-body" id="bracket-body">
-        <div id="bracketCard"><div class="state-msg"><span class="emoji">⏳</span>Loading…</div></div>
+        <div id="bracketCard"><div class="state-msg state-msg--loading"><span class="emoji">⏳</span>Loading…</div></div>
       </div>
       <!-- KO teaser rendered here in group mode -->
       <div id="koTeaserSection"></div>
