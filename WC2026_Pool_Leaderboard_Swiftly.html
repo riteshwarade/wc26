@@ -1276,6 +1276,25 @@ function renderGroupTableCard(grp, teams, stats, opts={}) {
   return `<div class="group-table-card"><div class="group-table-header">Group ${grp}</div><div class="group-table"><table><thead><tr><th class="th-team">Team</th><th title="Played">P</th><th title="Won">W</th><th title="Drawn">D</th><th title="Lost">L</th>${gdHeaders}<th title="Points">Pts</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 
+// ── H2H stats helper (module-scope so both renderGroupTables and computeGroupStandings can use it) ──
+function h2hStats(teamA, teamB, grpMatches, results) {
+  let Pts = 0, GF = 0, GA = 0;
+  grpMatches.forEach(([num, , , , t1, t2]) => {
+    const r = results[num];
+    if (!r) return;
+    if (t1===teamA && t2===teamB) {
+      GF += r.home; GA += r.away;
+      if (r.outcome==='W1') Pts += 3;
+      else if (r.outcome==='Draw') Pts += 1;
+    } else if (t1===teamB && t2===teamA) {
+      GF += r.away; GA += r.home;
+      if (r.outcome==='W2') Pts += 3;
+      else if (r.outcome==='Draw') Pts += 1;
+    }
+  });
+  return { Pts, GF, GA };
+}
+
 function renderGroupTables(results) {
   // Build team stats from MATCHES + results
   const groups = {};
@@ -1311,26 +1330,7 @@ function renderGroupTables(results) {
 
   const completedGroups = Object.keys(groups).sort();
 
-  // H2H stats between two teams using actual results
-  function h2hStats(teamA, teamB, grpMatches) {
-    let Pts = 0, GF = 0, GA = 0;
-    grpMatches.forEach(([num, , , , t1, t2]) => {
-      const r = results[num];
-      if (!r) return;
-      if (t1===teamA && t2===teamB) {
-        GF += r.home; GA += r.away;
-        if (r.outcome==='W1') Pts += 3;
-        else if (r.outcome==='Draw') Pts += 1;
-      } else if (t1===teamB && t2===teamA) {
-        GF += r.away; GA += r.home;
-        if (r.outcome==='W2') Pts += 3;
-        else if (r.outcome==='Draw') Pts += 1;
-      }
-    });
-    return { Pts, GF, GA };
-  }
-
-  // FIFA rankings for tiebreaker g (now global — see RANKINGS below)
+  // h2hStats is defined at module scope above
 
   // ── Pass 1: compute sorted standings for all completed groups ──
   function sortedStandings(grp) {
@@ -1340,7 +1340,7 @@ function renderGroupTables(results) {
       const sa = stats[a] || {Pts:0,GF:0,GA:0};
       const sb = stats[b] || {Pts:0,GF:0,GA:0};
       if (sb.Pts !== sa.Pts) return sb.Pts - sa.Pts;
-      const ha = h2hStats(a, b, grpMatches), hb = h2hStats(b, a, grpMatches);
+      const ha = h2hStats(a, b, grpMatches, results), hb = h2hStats(b, a, grpMatches, results);
       if (hb.Pts !== ha.Pts) return hb.Pts - ha.Pts;
       if ((hb.GF-hb.GA) !== (ha.GF-ha.GA)) return (hb.GF-hb.GA) - (ha.GF-ha.GA);
       if (hb.GF !== ha.GF) return hb.GF - ha.GF;
@@ -2032,8 +2032,15 @@ function computeGroupStandings(results) {
     grpStandings[grp] = [...grpOrder[grp]].sort((a,b) => {
       const sa=stats[a]||{Pts:0,GF:0,GA:0}, sb=stats[b]||{Pts:0,GF:0,GA:0};
       if (sb.Pts!==sa.Pts) return sb.Pts-sa.Pts;
+      // H2H: criteria a, b, c
+      const ha=h2hStats(a,b,gm,results), hb=h2hStats(b,a,gm,results);
+      if (hb.Pts!==ha.Pts) return hb.Pts-ha.Pts;
+      if ((hb.GF-hb.GA)!==(ha.GF-ha.GA)) return (hb.GF-hb.GA)-(ha.GF-ha.GA);
+      if (hb.GF!==ha.GF) return hb.GF-ha.GF;
+      // Overall: criteria d, e
       if ((sb.GF-sb.GA)!==(sa.GF-sa.GA)) return (sb.GF-sb.GA)-(sa.GF-sa.GA);
       if (sb.GF!==sa.GF) return sb.GF-sa.GF;
+      // FIFA ranking: criterion g
       return (RANKINGS[a]??999)-(RANKINGS[b]??999);
     }).map(t => [t, stats[t]||{P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0}]);
   });
