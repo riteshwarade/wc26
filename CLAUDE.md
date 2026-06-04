@@ -11,7 +11,7 @@ Always edit `WC2026_Pool_Leaderboard_Swiftly.html`, then run:
 ```
 python3 make_fandf.py
 ```
-The two files are identical except 4 lines (title, header, POOL_ID, POOL_NAME).
+The two files are identical except 3 lines (title, header, POOL_ID). POOL_NAME was removed as it was never referenced.
 
 **Git pushes must be done from Mac** — the sandbox can't push via SSH:
 ```
@@ -32,9 +32,9 @@ If `index.lock` error: `rm ~/Documents/GitHub/wc26/.git/index.lock` first.
 | `WC2026_Pool_Leaderboard_FandF.html` | Auto-generated from Swiftly via `make_fandf.py` |
 | `WC2026_Pool_Knockout_Picks.html` | KO picks entry page |
 | `WC2026_Pool_Group_Picks.html` | Group stage picks entry page |
-| `make_fandf.py` | Regenerates FandF from Swiftly (4 substitutions) |
+| `make_fandf.py` | Regenerates FandF from Swiftly (3 substitutions: title, header, POOL_ID) |
 | `data/rankings.json` | **Canonical** FIFA rankings — single source of truth for all scripts |
-| `WC2026_Pool_Intro.pptx` | Swiftly-branded intro deck (12 slides) — share with pool participants before Jun 11 |
+| `WC2026_Intro.pptx` | Swiftly-branded intro deck (13 slides, incl. host cities map as slide 6) — share with pool participants before Jun 11 |
 | `test_aggregate_picks.py` | Python unit tests for aggregate_picks.py: CSV parsing + filename extraction (28 tests) |
 | `test_parse_results.py` | Python unit tests for parse_results.py (84 tests) |
 | `test_e2e.js` | JS end-to-end: 10-user full-tournament + 105 invariant checks |
@@ -150,7 +150,10 @@ No `border-top` divider — row separation comes from `margin-top` only.
 - **Google Fonts:** all pages use `display=block` (not `display=swap`) — prevents font-swap flash at the cost of a brief invisible-text period on first load. Do not revert to `display=swap`.
 - **Group picks:** `visibility: hidden` on `.container`, revealed after sync JS build (see above)
 - **Knockout picks:** `bracketContainer` has a static "Loading bracket…" placeholder in HTML — shown while async fetch is in flight
-- **Leaderboard:** cards already have static `⏳ Loading…` placeholders in HTML — no JS fix needed
+- **Leaderboard — header + sticky bar:** `visibility: hidden` in CSS; revealed by `document.fonts.ready.then(_revealChrome)`. A `setTimeout(_revealChrome, 3000)` fallback fires if fonts never load (e.g. offline).
+- **Leaderboard — section labels + card bodies:** `.section-label` and `.section-body` have `visibility: hidden` in CSS; revealed by `_revealSections()` called at the end of `init()` (both success and error paths).
+- **Leaderboard — static loading placeholders:** static `⏳ Loading…` text uses class `.state-msg--loading` which has `visibility: hidden`. When `init()` replaces card `innerHTML`, the new content renders normally. Error (`⚠️`) and empty (`📭`) states use plain `.state-msg` (visible).
+- **`_updateTimestamp()`** — called inside `init()` after `_lastUpdated = new Date()`. Populates `#updatedAt` with "Updated HH:MM".
 
 ---
 
@@ -168,6 +171,27 @@ Group tables render immediately (before Jun 11). Before any matches in a group h
 - All stats show 0
 
 Once the first match in a group kicks off, `sortedStandings()` takes over and row highlighting activates.
+
+### Group stage tiebreaker chain (FIFA official, source: Wikipedia)
+
+Applied when two or more teams are level on points. Criteria in order:
+
+- **a.** H2H points (among tied teams only)
+- **b.** H2H goal difference (among tied teams only)
+- **c.** H2H goals scored (among tied teams only)
+- *(if still tied: re-apply a–c exclusively among the still-level subset)*
+- **d.** Overall goal difference
+- **e.** Overall goals scored
+- **f.** Fair play score — yellow: −1, indirect red: −3, direct red: −4, yellow+direct red: −5 *(not implemented — no card data)*
+- **g.** FIFA ranking (most recent) *(implemented)*
+- **h.** Progressively older FIFA rankings *(not implemented — single ranking only)*
+
+Two sorting functions implement this chain:
+
+- **`sortedStandings(grp)`** — used by group tables in `renderGroupTables`. Full chain a–e, g implemented via pairwise sort. `h2hStats(teamA, teamB, grpMatches, results)` is a module-scope helper used here.
+- **`computeGroupStandings(results)`** — used by the bracket display and 3rd-place ranking. Same chain. Uses the same `h2hStats` module-scope helper.
+
+Both functions must stay in sync. The group picks page uses a simplified chain (no GD/GF since users don't pick scores) — this is intentional.
 
 ### Correctness pill
 
@@ -241,7 +265,7 @@ GitHub → Actions → "Clear simulation data" → Run workflow
 
 ## Leaderboard data fetching
 
-All data files are fetched from `raw.githubusercontent.com` with `cache: 'no-store'` — no CDN involved, always fresh on every reload. No cache purging ever needed.
+All data files are fetched from `raw.githubusercontent.com` with `cache: 'no-store'` and a `?t=${Date.now()}` cache-buster appended inside `init()` on every call — bypasses both browser cache and the Fastly CDN (which caches raw.githubusercontent.com responses for 5 minutes). No cache purging ever needed.
 
 ```js
 const _RAW = 'https://raw.githubusercontent.com/riteshwarade/wc26/main';
