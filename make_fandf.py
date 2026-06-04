@@ -24,10 +24,6 @@ SUBSTITUTIONS = [
         "const POOL_ID   = 'swiftly';",
         "const POOL_ID   = 'fandf';",
     ),
-    (
-        "const POOL_NAME = 'Swiftly';",
-        "const POOL_NAME = 'Friends & Family';",
-    ),
 ]
 
 with open(SRC, 'r') as f:

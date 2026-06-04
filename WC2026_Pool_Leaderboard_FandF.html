@@ -764,14 +764,8 @@
     </div>
   </div>
 
-  <!-- Divider between KO and group sections (shown in KO mode only) -->
-  <div id="koSectionDivider" style="display:none;border-top:2px solid var(--neutral-light);margin:8px 0 20px"></div>
-
-  <!-- Group section: flat in group mode, no toggle in KO mode -->
+  <!-- Group section -->
   <div id="groupSection">
-    <div id="groupAccordionHeader" style="display:none">
-      <!-- rendered by JS in KO mode -->
-    </div>
     <div id="groupSectionBody">
       <p class="section-label" id="groupStandingsLabel">Standings</p>
       <div class="section-body" id="standings-body">
@@ -805,7 +799,6 @@
 <script>
 // ── Pool config ───────────────────────────────────────────
 const POOL_ID   = 'fandf';
-const POOL_NAME = 'Friends & Family';
 // ──────────────────────────────────────────────────────────
 
 
@@ -877,8 +870,8 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
       const pickStr = pr.pick || '—';
       const resultStr = pr.winner || 'Not played yet';
       koSquareParts.push(`<span class="sq sq-${pr.status}"
-        data-match="M${m}" data-teams="${teamsStr}"
-        data-pick="${pickStr}" data-result="${resultStr}" data-status="${pr.status}"></span>`);
+        data-match="M${m}" data-teams="${_esc(teamsStr)}"
+        data-pick="${_esc(pickStr)}" data-result="${_esc(resultStr)}" data-status="${pr.status}"></span>`);
       if (KO_ROUND_BREAKS.has(m)) koSquareParts.push('<span class="sq-divider"></span>');
     }
     const koSquares = koSquareParts.join('');
@@ -890,7 +883,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
                      : champPr.status === 'cascaded' ? 'champ-cascaded'
                      : '';
     const champIcon = champPr.pick ? '🥇 ' : '';
-    const champLabel = `<span class="champ-pick ${champClass}">${champIcon}${champName}</span>`;
+    const champLabel = `<span class="champ-pick ${champClass}">${champIcon}${_esc(champName)}</span>`;
 
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
@@ -1014,8 +1007,8 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts) {
         aScTxt = String(sc.away);
       }
     }
-    const hHtml  = hTbd ? `<span class="bk-mob-tbd">${h}</span>` : teamHtml(h);
-    const aHtml  = aTbd ? `<span class="bk-mob-tbd">${a}</span>` : teamHtml(a);
+    const hHtml  = hTbd ? h : teamHtml(h);
+    const aHtml  = aTbd ? a : teamHtml(a);
     const hScHtml = hScTxt ? `<span class="bk-mob-sc">${hScTxt}</span>` : '';
     const aScHtml = aScTxt ? `<span class="bk-mob-sc">${aScTxt}</span>` : '';
     const upCls  = !winner ? ' bk-mob-upcoming' : '';
@@ -1068,7 +1061,6 @@ function setupLayout() {
   if (knockoutMode) {
     // Show KO bracket section only; hide everything group-stage related
     document.getElementById('koBracketSection').style.display = '';
-    document.getElementById('koSectionDivider').style.display = 'none';
     document.getElementById('groupSection').style.display = 'none';
     // Update sticky bar label
     document.getElementById('stageLabel').textContent = 'Knockout stage';
@@ -1263,6 +1255,9 @@ function renderGroupTableCard(grp, teams, stats, opts={}) {
   const gdHeaders = showGD ? `<th title="Goals for">GF</th><th title="Goals against">GA</th><th title="Goal difference">GD</th>` : '';
   return `<div class="group-table-card"><div class="group-table-header">Group ${grp}</div><div class="group-table"><table><thead><tr><th class="th-team">Team</th><th title="Played">P</th><th title="Won">W</th><th title="Drawn">D</th><th title="Lost">L</th>${gdHeaders}<th title="Points">Pts</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
+
+// ── HTML attribute escape helper ──────────────────────────
+function _esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
 
 // ── H2H stats helper (module-scope so both renderGroupTables and computeGroupStandings can use it) ──
 function h2hStats(teamA, teamB, grpMatches, results) {
@@ -2097,13 +2092,13 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed) {
     const [h, a] = slotTeams(m);
     const date  = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
     const hTbd  = isTbd(h), aTbd = isTbd(a);
-    const hHtml = hTbd ? `<span class="bk-mob-tbd">${h}</span>` : teamHtml(h);
-    const aHtml = aTbd ? `<span class="bk-mob-tbd">${a}</span>` : teamHtml(a);
+    const hHtml = hTbd ? h : teamHtml(h);
+    const aHtml = aTbd ? a : teamHtml(a);
     return `<div class="bk-mob-match">
       <div class="bk-mob-meta">M${m}${date}</div>
       <div class="bk-mob-teams">
-        <div class="bk-mob-team${hTbd ? ' tbd' : ''}">${hHtml}</div>
-        <div class="bk-mob-team${aTbd ? ' tbd' : ''}">${aHtml}</div>
+        <div class="bk-mob-team${hTbd ? ' tbd' : ''}"><span class="bk-mob-team-name">${hHtml}</span></div>
+        <div class="bk-mob-team${aTbd ? ' tbd' : ''}"><span class="bk-mob-team-name">${aHtml}</span></div>
       </div>
     </div>`;
   }
@@ -2215,7 +2210,6 @@ async function init() {
 
     // Sticky bar
     if (knockoutMode) {
-      document.getElementById('stageLabel').textContent = 'Knockout stage';
       document.getElementById('matchesPlayed').textContent = `${koPlayed} / 32 knockout matches played`;
       document.getElementById('progressFill').style.width = `${(koPlayed / 32) * 100}%`;
     } else {

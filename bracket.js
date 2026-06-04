@@ -90,7 +90,7 @@ const KO_SCHEDULE = {
 };
 
 // ── Format a KO match time for display ────────────────────
-// Returns e.g. "Jun 28 · 3:00 PM EDT" in the viewer's local timezone.
+// Returns e.g. "Mon, Jun 28 · 3:00 PM" in the viewer's local timezone (TZ abbreviation omitted).
 function koDisplay(num) {
   const utc = KO_SCHEDULE[num];
   if (!utc) return '';
