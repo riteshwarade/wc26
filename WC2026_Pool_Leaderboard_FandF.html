@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>World Cup 2026 Pool · Leaderboard – Friends &amp; Family</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Inter:wght@400;700&display=block" rel="stylesheet">
 <style>
   :root {
@@ -709,6 +710,9 @@
     /* Standings: hide per-match squares and max-pts — too wide for phones */
     .th-squares, .td-squares   { display: none; }
     .th-max-pts, .td-max-pts   { display: none; }
+    /* KO standings: hide split pts columns, keep total */
+    .th-grp-pts, .td-grp-pts   { display: none; }
+    .th-ko-pts,  .td-ko-pts    { display: none; }
     .td-name                   { white-space: normal; }
 
     /* Results table: hide # date & time columns; score stays pinned */
@@ -863,18 +867,6 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
     if (p.totalPts !== prevPts) { rank = i + 1; prevPts = p.totalPts; }
     const topClass = rank <= 3 ? ' top3' : '';
 
-    // Group squares (72 matches)
-    const grpSquares = MATCHES.map(([num, , , , t1, t2]) => {
-      const pr = p.pickResults[num] || { status: 'empty', pick: null, result: null };
-      const myPick = pr.pick ? pickLabel(pr.pick, t1, t2) : '—';
-      const res = pr.result
-        ? `${pr.result.home}–${pr.result.away} (${pickLabel(pr.result.outcome, t1, t2)})`
-        : 'Not played yet';
-      return `<span class="sq sq-${pr.status}"
-        data-match="${num}" data-teams="${t1} v ${t2}"
-        data-pick="${myPick}" data-result="${res}" data-status="${pr.status}"></span>`;
-    }).join('');
-
     // KO squares (32 matches) with round dividers after R32/R16/QF/SF
     const KO_ROUND_BREAKS = new Set([88, 96, 100, 102, 103]);
     const koSquareParts = [];
@@ -979,10 +971,8 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts) {
 
   // Determine podium teams
   const champion  = koResults[104] || null;
-  const finalist1 = koResults[101] ? getKoTeams(101, bracketData, koResults)[0] : null;
-  const finalist2 = koResults[101] ? getKoTeams(101, bracketData, koResults)[1] : null;
   let runnerUp = null;
-  if (champion && koResults[104]) {
+  if (champion) {
     const [f1, f2] = getKoTeams(104, bracketData, koResults);
     runnerUp = champion === f1 ? f2 : f1;
   }
@@ -1096,8 +1086,6 @@ function renderStandings(standings, results) {
       '<div class="state-msg"><span class="emoji">📭</span>No picks submitted yet.</div>';
     return;
   }
-
-  const completedNums = new Set(Object.keys(results).map(Number));
 
   let rank = 1, prevPts = null, rows = '';
   standings.forEach((p, i) => {
@@ -1917,7 +1905,7 @@ EFGHIJKL:E J I F H G L K
 
 // R32_SLOTS, THIRD_MATCH_COL, R16/QF/SF bracket topology come from bracket.js
 
-function computeBracket(grpStandings, qualifiedThirds, results) {
+function computeBracket(grpStandings, qualifiedThirds) {
   // Build position lookup
   const pos = {};
   Object.entries(grpStandings).forEach(([grp, teams]) => {
@@ -2067,7 +2055,7 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed) {
   const statusBadge = isConfirmed
     ? '<span style="margin-left:8px;font-size:0.6rem;background:#22863a;color:#fff;padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:0">Confirmed ✓</span>'
     : '<span style="margin-left:8px;font-size:0.6rem;background:#ff9e16;color:#131e27;padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:0">Provisional</span>';
-  const bracketLabel = document.querySelector('[onclick*="bracket"]');
+  const bracketLabel = document.getElementById('bracketSectionLabel');
   if (bracketLabel && !bracketLabel.querySelector('.bracket-badge')) {
     const span = document.createElement('span');
     span.className = 'bracket-badge';
@@ -2076,7 +2064,7 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed) {
   }
 
   const { grpStandings, thirds } = computeGroupStandings(results);
-  const { r32teams } = computeBracket(grpStandings, thirds, results);
+  const { r32teams } = computeBracket(grpStandings, thirds);
 
   // Resolve teams for a match slot — returns [home, away]
   function slotTeams(m) {
@@ -2164,11 +2152,15 @@ document.addEventListener('mouseover', e => {
                    : '—';
 
   tooltip.innerHTML = `
-    <div class="tt-match">Match ${match} · ${teams}</div>
-    <div class="tt-pick">Your pick: <strong>${pick}</strong></div>
-    <div class="tt-result">Result: ${result}</div>
-    <div class="tt-status ${status}">${statusText}</div>
+    <div class="tt-match"></div>
+    <div class="tt-pick">Your pick: <strong></strong></div>
+    <div class="tt-result"></div>
+    <div class="tt-status ${status}"></div>
   `;
+  tooltip.querySelector('.tt-match').textContent   = `Match ${match} · ${teams}`;
+  tooltip.querySelector('.tt-pick strong').textContent = pick;
+  tooltip.querySelector('.tt-result').textContent  = `Result: ${result}`;
+  tooltip.querySelector('.tt-status').textContent  = statusText;
   tooltip.style.display = 'block';
 });
 
@@ -2185,7 +2177,7 @@ document.addEventListener('mouseout', e => {
 });
 
 // ── Main ──────────────────────────────────────────────────
-async function init(skipBracket = false) {
+async function init() {
   try {
     let picksData, resultsCSV, koPicksData = {}, koResultsCSV = '';
     let bracketData = null;
@@ -2233,7 +2225,7 @@ async function init(skipBracket = false) {
     _lastUpdated = new Date();
     _updateTimestamp();
 
-    const GRP_SAMPLE = {A:1,B:3,C:5,D:4,E:9,F:11,G:15,H:13,I:17,J:19,K:23,L:21};
+    const GRP_SAMPLE = {A:1,B:3,C:7,D:4,E:10,F:11,G:16,H:14,I:17,J:19,K:23,L:22};
     const allGrpsStarted = Object.values(GRP_SAMPLE).every(m => results[m]);
     const bracketConfirmed = bracketData ? bracketData.confirmed === true : false;
 
@@ -2241,15 +2233,17 @@ async function init(skipBracket = false) {
       const combined = computeCombinedStandings(standings, koPicksData, koResults, bracketData);
       const koCounts = buildKoCounts(combined);
       renderKoStandings(combined, koResults, bracketData);
-      if (!skipBracket) renderKoBracket(bracketData, koResults, koScores, koCounts);
+      renderKoBracket(bracketData, koResults, koScores, koCounts);
       renderStandings(standings, results);  // group-only in group section
     } else {
       renderStandings(standings, results);
     }
 
-    renderResults(results, grpCounts);
-    renderGroupTables(results);
-    renderBracket(results, allGrpsStarted, bracketConfirmed);
+    if (!knockoutMode) {
+      renderResults(results, grpCounts);
+      renderGroupTables(results);
+      renderBracket(results, allGrpsStarted, bracketConfirmed);
+    }
     _revealSections();
 
   } catch (err) {
@@ -2270,7 +2264,7 @@ function _revealSections() {
 
 setupLayout();
 
-// ── Auto-refresh every 15 minutes ────────────────────────
+// ── Auto-refresh every 5 minutes ────────────────────────
 const REFRESH_MS = 5 * 60 * 1000;
 let _lastUpdated = null;
 
