@@ -887,7 +887,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
 
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
-      <td class="td-name">${p.name}</td>
+      <td class="td-name">${_esc(p.name)}</td>
       <td class="td-grp-pts">${p.groupPts}</td>
       <td class="td-ko-pts">${p.koPts}</td>
       <td class="td-total-pts">${p.totalPts}</td>
@@ -1072,18 +1072,18 @@ function setupLayout() {
 
 
 // ── Render standings ──────────────────────────────────────
-function renderStandings(standings, results) {
+function renderStandings(standings) {
   if (!standings.length) {
     document.getElementById('standingsCard').innerHTML =
       '<div class="state-msg"><span class="emoji">📭</span>No picks submitted yet.</div>';
     return;
   }
 
+  const GRP_ROUND_BREAKS = new Set([24, 48]);
   let rank = 1, prevPts = null, rows = '';
   standings.forEach((p, i) => {
     if (p.points !== prevPts) { rank = i + 1; prevPts = p.points; }
     const topClass = rank <= 3 ? ' top3' : '';
-    const GRP_ROUND_BREAKS = new Set([24, 48]);
     const squareParts = [];
     for (const [num, , , , t1, t2] of MATCHES) {
       const pr = p.pickResults[num] || { status: 'empty', pick: null, result: null };
@@ -1092,14 +1092,14 @@ function renderStandings(standings, results) {
         ? `${pr.result.home}–${pr.result.away} (${pickLabel(pr.result.outcome, t1, t2)})`
         : 'Not played yet';
       squareParts.push(`<span class="sq sq-sm sq-${pr.status}"
-        data-match="${num}" data-teams="${t1} v ${t2}"
-        data-pick="${myPick}" data-result="${res}" data-status="${pr.status}"></span>`);
+        data-match="${num}" data-teams="${_esc(`${t1} v ${t2}`)}"
+        data-pick="${_esc(myPick)}" data-result="${_esc(res)}" data-status="${pr.status}"></span>`);
       if (GRP_ROUND_BREAKS.has(num)) squareParts.push('<span class="sq-divider-sm"></span>');
     }
     const squares = squareParts.join('');
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
-      <td class="td-name">${p.name}</td>
+      <td class="td-name">${_esc(p.name)}</td>
       <td class="td-points">${p.points}</td>
       <td class="td-squares"><div class="squares-wrap nowrap">${squares}</div></td>
     </tr>`;
@@ -1354,7 +1354,6 @@ function renderGroupTables(results) {
     return (RANKINGS[a.team]??999) - (RANKINGS[b.team]??999);
   });
 
-  const allGroupsDone    = completedGroups.length === 12 && completedGroups.every(isGroupDone);
   const allGroupsStarted = completedGroups.length === 12 && completedGroups.every(isGroupStarted);
   const qualifiedThirds = new Set(sortedThirds.slice(0, 8).map(t => t.team));
 
@@ -2228,9 +2227,8 @@ async function init() {
       const koCounts = buildKoCounts(combined);
       renderKoStandings(combined, koResults, bracketData);
       renderKoBracket(bracketData, koResults, koScores, koCounts);
-      renderStandings(standings, results);  // group-only in group section
     } else {
-      renderStandings(standings, results);
+      renderStandings(standings);
     }
 
     if (!knockoutMode) {

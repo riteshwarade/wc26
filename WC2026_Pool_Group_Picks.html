@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>World Cup 2026 Pool – entry form</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Inter:wght@400;700&display=block" rel="stylesheet">
 <style>
   :root {
@@ -174,14 +175,6 @@
     display: flex;
     align-items: center;
     gap: 14px;
-  }
-
-  .name-card label {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    font-size: 0.78rem;
-    color: var(--swiftly-blue);
-    white-space: nowrap;
   }
 
   .name-card input {
@@ -394,12 +387,6 @@
 
   .confirm-row.visible { display: flex; }
 
-  .confirm-note {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.68rem;
-    color: var(--neutral-dark);
-  }
-
   .confirm-btn {
     font-family: 'Poppins', sans-serif;
     font-weight: 600;
@@ -427,156 +414,6 @@
     display: none;
     text-align: left;
   }
-
-  /* ── Summary modal ───────────────────────────────────────── */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(19,30,39,0.6);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-  }
-
-  .modal-overlay.open { display: flex; }
-
-  .modal {
-    background: #ffffff;
-    border-radius: 14px;
-    max-width: 700px;
-    width: 100%;
-    max-height: 88vh;
-    overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-  }
-
-  .modal-header {
-    background: var(--swiftly-blue);
-    color: #ffffff;
-    padding: 20px 24px;
-    border-radius: 14px 14px 0 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .modal-header h2 {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    font-size: 1.5rem;
-  }
-
-  .modal-close {
-    background: rgba(255,255,255,0.15);
-    border: none;
-    color: #ffffff;
-    width: 30px; height: 30px;
-    border-radius: 50%;
-    font-size: 0.78rem;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s;
-  }
-
-  .modal-close:hover { background: rgba(255,255,255,0.25); }
-
-  .modal-body { padding: 24px 28px; }
-
-  .summary-name {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    font-size: 1.5rem;
-    color: var(--swiftly-blue);
-    margin-bottom: 16px;
-    text-align: center;
-  }
-
-  .summary-stats {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-bottom: 22px;
-    flex-wrap: wrap;
-  }
-
-  .stat-pill {
-    padding: 7px 18px;
-    border-radius: 20px;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.78rem;
-    font-weight: 700;
-  }
-
-  .stat-w1   { background: var(--blue-lightest); color: var(--swiftly-blue); }
-  .stat-draw { background: #fff4e0; color: #8a5500; }
-  .stat-w2   { background: var(--neutral-lightest); color: var(--neutral-darkest); border: 1px solid var(--neutral-light); }
-
-  .summary-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.78rem;
-  }
-
-  .summary-table th {
-    background: var(--neutral-lightest);
-    padding: 8px 10px;
-    text-align: left;
-    font-weight: 700;
-    color: var(--neutral-dark);
-    border-bottom: 2px solid var(--neutral-light);
-  }
-
-  .summary-table td {
-    padding: 7px 10px;
-    border-bottom: 1px solid var(--neutral-light);
-    vertical-align: middle;
-    color: var(--neutral-darkest);
-  }
-
-  .summary-table tr:last-child td { border-bottom: none; }
-
-  .pick-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 0.68rem;
-    font-weight: 700;
-  }
-
-  .badge-w1   { background: var(--swiftly-blue); color: #ffffff; }
-  .badge-draw { background: var(--swiftly-orange); color: var(--neutral-darkest); }
-  .badge-w2   { background: var(--neutral-darkest); color: #ffffff; }
-
-  .modal-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 22px;
-  }
-
-  .copy-btn, .csv-btn {
-    background: var(--swiftly-blue);
-    color: #ffffff;
-    border: none;
-    padding: 11px 28px;
-    border-radius: 7px;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    font-size: 0.78rem;
-    cursor: pointer;
-    transition: background 0.18s;
-  }
-
-  .copy-btn:hover, .csv-btn:hover { background: #0089c3; }
-
-  .csv-btn {
-    background: var(--neutral-darkest);
-  }
-
-  .csv-btn:hover { background: #2a3f52; }
 
   /* ── Responsive (≤ 640 px — phones) ─────────────────────── */
   @media (max-width: 640px) {
@@ -625,12 +462,6 @@
     /* Hide group tables on mobile — pick form is the focus */
     #pickGroupTables { display: none; }
 
-    /* Modal: full-width with less padding on small screens */
-    .modal { max-height: 96vh; border-radius: 10px; }
-    .modal-header { padding: 14px 18px; }
-    .modal-body   { padding: 14px 16px; }
-    .modal-actions { flex-direction: column; align-items: stretch; }
-    .copy-btn, .csv-btn { text-align: center; }
   }
 
   /* ── Pick page two-column layout ── */
@@ -648,7 +479,6 @@
   .pick-main { flex: 1; min-width: 0; }
 
   /* ── Group tables (same as leaderboard) ── */
-  .group-tables-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
   .group-tables-grid {
     display: flex;
     flex-direction: column;
@@ -789,17 +619,6 @@
 
   </div>
 
-</div>
-
-<!-- ── Summary modal ──────────────────────────────────── -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <div class="modal-header">
-      <h2>Entry summary</h2>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="modal-body" id="modalBody"></div>
-  </div>
 </div>
 
 <script>
@@ -1087,70 +906,6 @@ function handleSubmit() {
   document.querySelector('.submit-btn').style.display = 'none';
 }
 
-// ── Summary modal ─────────────────────────────────────────
-function showSummary(name) {
-  let w1 = 0, draws = 0, w2 = 0;
-  let rows = '';
-
-  MATCHES.forEach(m => {
-    const [num, grp, date, , t1, t2] = m;
-    const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
-    let pickLabel = '', badgeClass = '';
-
-    if (val === 'w1')   { pickLabel = teamHtml(t1, false);  badgeClass = 'badge-w1';   w1++; }
-    if (val === 'draw') { pickLabel = 'Draw';                badgeClass = 'badge-draw'; draws++; }
-    if (val === 'w2')   { pickLabel = teamHtml(t2, false);  badgeClass = 'badge-w2';   w2++; }
-
-    rows += `<tr>
-      <td style="color:var(--neutral-medium);font-size:0.78rem">#${num}</td>
-      <td>
-        ${teamHtml(t1, false)} vs ${teamHtml(t2, false)}
-        <br><span style="font-size:0.72rem;color:var(--neutral-dark)">Group ${grp} · ${date}</span>
-      </td>
-      <td><span class="pick-badge ${badgeClass}">${pickLabel}</span></td>
-    </tr>`;
-  });
-
-  document.getElementById('modalBody').innerHTML = `
-    <div class="summary-name">${name}</div>
-    <div class="summary-stats">
-      <span class="stat-pill stat-w1">Team 1 wins: ${w1}</span>
-      <span class="stat-pill stat-draw">Draws: ${draws}</span>
-      <span class="stat-pill stat-w2">Team 2 wins: ${w2}</span>
-    </div>
-    <table class="summary-table">
-      <thead><tr><th>#</th><th>Match</th><th>Your pick</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div class="modal-actions">
-      <button class="copy-btn" onclick="copyToClipboard('${name.replace(/'/g,"\\'")}')">Copy to clipboard</button>
-      <button class="csv-btn" onclick="downloadCSV('${name.replace(/'/g,"\\'")}')">Download CSV</button>
-    </div>
-  `;
-
-  document.getElementById('modalOverlay').classList.add('open');
-}
-
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open');
-}
-
-function copyToClipboard(name) {
-  let text = `World Cup 2026 pool entry\nName: ${name}\n\n`;
-  MATCHES.forEach(m => {
-    const [num, grp, date, time, t1, t2] = m;
-    const val = document.querySelector(`input[name="m${num}"]:checked`)?.value;
-    const pick = val === 'w1' ? t1 : val === 'draw' ? 'Draw' : t2;
-    text += `Match ${num} (${date}, Group ${grp}): ${t1} vs ${t2} → ${pick}\n`;
-  });
-
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.querySelector('.copy-btn');
-    btn.textContent = 'Copied!';
-    setTimeout(() => btn.textContent = 'Copy picks to clipboard', 2200);
-  });
-}
-
 // FIFA rankings (lower = better)
 const FLAGS = {
   'Mexico':'🇲🇽','South Africa':'🇿🇦','South Korea':'🇰🇷','Czech Republic':'🇨🇿',
@@ -1278,11 +1033,6 @@ function downloadCSV(name) {
   a.click();
   URL.revokeObjectURL(url);
 }
-
-// Close modal when clicking the overlay
-document.getElementById('modalOverlay').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
 
 // Init
 document.getElementById('headerSubtitle').textContent =
