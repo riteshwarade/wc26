@@ -2272,8 +2272,8 @@ function _updateTimestamp() {
 setInterval(() => { init(); }, REFRESH_MS);
 
 document.fonts.ready.then(() => {
-  document.querySelector('header').style.visibility = '';
-  document.querySelector('.sticky-bar').style.visibility = '';
+  document.querySelector('header').style.visibility = 'visible';
+  document.querySelector('.sticky-bar').style.visibility = 'visible';
 });
 
 init();
