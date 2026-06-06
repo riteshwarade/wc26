@@ -20,6 +20,18 @@ from parse_results import GROUP_MATCHES
 # Match number → (team1, team2) — auto-derived from canonical GROUP_MATCHES.
 MATCH_TEAMS = {num: (t1, t2) for num, grp, t1, t2 in GROUP_MATCHES}
 
+# Name overrides — applied after .title() to fix names that .title() mangles.
+# Python's .title() lowercases everything then capitalises word-starts, so names
+# like "McCarren" become "Mccarren". Add entries here as needed.
+# Key = what .title() produces, Value = correct display name.
+NAME_OVERRIDES = {
+    'Cole Mccarren': 'Cole McCarren',
+}
+
+
+def _apply_overrides(name):
+    return NAME_OVERRIDES.get(name, name)
+
 
 def name_from_filename(filename):
     """Extract participant name from a group picks CSV filename.
@@ -27,7 +39,7 @@ def name_from_filename(filename):
     """
     base = os.path.basename(filename)
     name_part = base.replace('wc26_group_', '').replace('.csv', '')
-    return name_part.replace('-', ' ').title()
+    return _apply_overrides(name_part.replace('-', ' ').title())
 
 
 def name_from_knockout_filename(filename):
@@ -36,7 +48,7 @@ def name_from_knockout_filename(filename):
     """
     base = os.path.basename(filename)
     name_part = base.replace('wc26_knockout_', '').replace('.csv', '')
-    return name_part.replace('-', ' ').title()
+    return _apply_overrides(name_part.replace('-', ' ').title())
 
 
 def load_picks_csv(filepath, match_teams):
