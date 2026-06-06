@@ -265,7 +265,7 @@ GitHub → Actions → "Clear simulation data" → Run workflow
 
 ## Leaderboard data fetching
 
-All data files are fetched from `raw.githubusercontent.com` with `cache: 'no-store'` and a `?t=${Date.now()}` cache-buster appended inside `init()` on every call — bypasses both browser cache and the Fastly CDN (which caches raw.githubusercontent.com responses for 5 minutes). No cache purging ever needed.
+All data files are fetched from `raw.githubusercontent.com` with `cache: 'no-store'` and a `?t=${Date.now()}` cache-buster appended inside `init()` on every call — bypasses browser cache. Note: Fastly CDN (which serves raw.githubusercontent.com) ignores query parameters and caches responses for 5 minutes (`max-age=300`), so there is an independent up-to-5-minute lag between a GitHub push and the leaderboard reflecting it. No cache purging is possible or needed — just wait up to 5 minutes.
 
 ```js
 const _RAW = 'https://raw.githubusercontent.com/riteshwarade/wc26/main';
