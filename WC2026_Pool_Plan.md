@@ -144,7 +144,7 @@ Ritesh routes the CSV to the correct pool folder on upload (`picks/group/swiftly
 
 ### Name display format
 
-Participant names are shown as **"First L"** (last name abbreviated to initial, no period). Implemented via `_format_name()` in `aggregate_picks.py`, applied after `.title()`. Examples: `cole-mccarren` → `Cole M`, `mary-anne-jones` → `Mary Anne J`. If the last word starts with a non-letter (e.g. `simulation-1`), no abbreviation is applied.
+Participant names are shown as **"First L"** (last name abbreviated to initial, no period). Abbreviation is **UI-only** via `_abbrevName()` in the leaderboard JS — full names are stored in the picks JSON and used by analytics scripts. Examples: stored as `Cole Mccarren`, displayed as `Cole M`. Numeric suffixes are not abbreviated (`Simulation 1` stays as-is). This sidesteps `.title()` mangling since the mangled last name is never visible.
 
 Benefits: avoids `.title()` mangling of names like McCarren → Mccarren; keeps the leaderboard name column narrow; provides light privacy on last names.
 

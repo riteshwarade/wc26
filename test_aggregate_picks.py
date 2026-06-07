@@ -48,7 +48,7 @@ class TestNameFromFilename(unittest.TestCase):
         self.assertEqual(name_from_filename('wc26_group_alice.csv'), 'Alice')
 
     def test_hyphenated_name(self):
-        self.assertEqual(name_from_filename('wc26_group_john-smith.csv'), 'John S')
+        self.assertEqual(name_from_filename('wc26_group_john-smith.csv'), 'John Smith')
 
     def test_simulation_name(self):
         # Numeric suffix: last part not alphabetic, so no abbreviation
@@ -57,13 +57,13 @@ class TestNameFromFilename(unittest.TestCase):
     def test_full_path_ignored(self):
         self.assertEqual(
             name_from_filename('/some/path/picks/group/swiftly/wc26_group_jane-doe.csv'),
-            'Jane D'
+            'Jane Doe'
         )
 
     def test_multi_part_name(self):
         self.assertEqual(
             name_from_filename('wc26_group_mary-anne-jones.csv'),
-            'Mary Anne J'
+            'Mary Anne Jones'
         )
 
 
@@ -77,7 +77,7 @@ class TestNameFromKnockoutFilename(unittest.TestCase):
         self.assertEqual(name_from_knockout_filename('wc26_knockout_alice.csv'), 'Alice')
 
     def test_hyphenated_name(self):
-        self.assertEqual(name_from_knockout_filename('wc26_knockout_john-smith.csv'), 'John S')
+        self.assertEqual(name_from_knockout_filename('wc26_knockout_john-smith.csv'), 'John Smith')
 
     def test_simulation_name(self):
         # Numeric suffix: last part not alphabetic, so no abbreviation
@@ -89,7 +89,7 @@ class TestNameFromKnockoutFilename(unittest.TestCase):
     def test_full_path_ignored(self):
         self.assertEqual(
             name_from_knockout_filename('/picks/knockout/fandf/wc26_knockout_bob-jones.csv'),
-            'Bob J'
+            'Bob Jones'
         )
 
 

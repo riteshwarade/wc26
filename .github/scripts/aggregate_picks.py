@@ -20,37 +20,22 @@ from parse_results import GROUP_MATCHES
 # Match number → (team1, team2) — auto-derived from canonical GROUP_MATCHES.
 MATCH_TEAMS = {num: (t1, t2) for num, grp, t1, t2 in GROUP_MATCHES}
 
-def _format_name(full_name):
-    """Abbreviate last name to initial: 'Cole McCarren' → 'Cole M.'
-    Handles single-word names (no change) and compound first names.
-    Does not abbreviate if the last word starts with a non-letter (e.g. 'Simulation 1').
-    """
-    parts = full_name.split()
-    if len(parts) <= 1 or not parts[-1][0].isalpha():
-        return full_name
-    first = ' '.join(parts[:-1])
-    last_initial = parts[-1][0]
-    return f"{first} {last_initial}"
-
-
 def name_from_filename(filename):
     """Extract participant name from a group picks CSV filename.
     Expected pattern: wc26_group_firstname-lastname.csv
-    Returns 'First L.' format (last name abbreviated to initial).
     """
     base = os.path.basename(filename)
     name_part = base.replace('wc26_group_', '').replace('.csv', '')
-    return _format_name(name_part.replace('-', ' ').title())
+    return name_part.replace('-', ' ').title()
 
 
 def name_from_knockout_filename(filename):
     """Extract participant name from a knockout picks CSV filename.
     Expected pattern: wc26_knockout_firstname-lastname.csv
-    Returns 'First L.' format (last name abbreviated to initial).
     """
     base = os.path.basename(filename)
     name_part = base.replace('wc26_knockout_', '').replace('.csv', '')
-    return _format_name(name_part.replace('-', ' ').title())
+    return name_part.replace('-', ' ').title()
 
 
 def load_picks_csv(filepath, match_teams):

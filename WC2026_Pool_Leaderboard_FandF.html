@@ -887,7 +887,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
 
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
-      <td class="td-name">${_esc(p.name)}</td>
+      <td class="td-name">${_esc(_abbrevName(p.name))}</td>
       <td class="td-grp-pts">${p.groupPts}</td>
       <td class="td-ko-pts">${p.koPts}</td>
       <td class="td-total-pts">${p.totalPts}</td>
@@ -1099,7 +1099,7 @@ function renderStandings(standings) {
     const squares = squareParts.join('');
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
-      <td class="td-name">${_esc(p.name)}</td>
+      <td class="td-name">${_esc(_abbrevName(p.name))}</td>
       <td class="td-points">${p.points}</td>
       <td class="td-squares"><div class="squares-wrap nowrap">${squares}</div></td>
     </tr>`;
@@ -1258,6 +1258,14 @@ function renderGroupTableCard(grp, teams, stats, opts={}) {
 
 // ── HTML attribute escape helper ──────────────────────────
 function _esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+
+// ── Display name: "First L" (last name abbreviated to initial, UI-only) ──
+// Full name is stored in the JSON; abbreviation is only for display.
+function _abbrevName(name) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length <= 1 || !parts[parts.length - 1][0].match(/[a-zA-ZÀ-ɏ]/)) return name;
+  return parts.slice(0, -1).join(' ') + ' ' + parts[parts.length - 1][0];
+}
 
 // ── H2H stats helper (module-scope so both renderGroupTables and computeGroupStandings can use it) ──
 function h2hStats(teamA, teamB, grpMatches, results) {

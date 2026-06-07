@@ -265,7 +265,7 @@ GitHub → Actions → "Clear simulation data" → Run workflow
 
 ## Participant name format
 
-Names are stored as keys in the picks JSON and displayed on the leaderboard. Format: **"First L"** — first name(s) in full, last name abbreviated to initial (no period). Produced by `_format_name()` in `aggregate_picks.py` after `.title()`. Examples: `cole-mccarren.csv` → `Cole M`, `mary-anne-jones.csv` → `Mary Anne J`. Numeric suffixes are not abbreviated (`simulation-1` → `Simulation 1`). No override table needed — the abbreviation sidesteps `.title()` mangling entirely.
+Names are stored as keys in the picks JSON and displayed on the leaderboard. Format: **"First L"** — first name(s) in full, last name abbreviated to initial (no period). Abbreviation is UI-only via `_abbrevName(name)` in the leaderboard JS — full names are stored in the picks JSON. Examples: stored as `Cole Mccarren`, displayed as `Cole M`. Numeric suffixes are not abbreviated (`Simulation 1` stays as-is). This sidesteps `.title()` mangling (McCarren → Mccarren) since the mangled last name is never visible.
 
 ---
 
