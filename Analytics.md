@@ -15,7 +15,16 @@ Shows which group stage matches everyone agrees on (100% consensus) and which ar
 
 **Data:** `data/group_swiftly_picks.json` + match list from `scoring.js`
 **Output:** Two lists — 100% consensus matches, and matches with <60% agreement with full breakdown.
-**Last run:** May 31, 2026 (10 participants, Swiftly pool)
+**Last run:** Jun 7, 2026 (26 unique participants, both pools combined)
+
+---
+
+### #2 — Most upset picks per participant
+Ranks participants by how many times they picked the lower-ranked (worse FIFA ranking) team to win. Higher count = more contrarian / willing to back underdogs. An upset pick is any match where a participant picks the team with the higher rank number to beat the team with the lower rank number.
+
+**Data:** `data/group_{pool}_picks.json` + `RANKINGS` from `bracket.js`
+**Output:** Ranked list of participants with their upset pick count and the specific upsets they backed.
+**Last run:** —
 
 ---
 
