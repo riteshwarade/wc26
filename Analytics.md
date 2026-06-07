@@ -19,7 +19,7 @@ Shows which group stage matches everyone agrees on (100% consensus) and which ar
 
 ---
 
-### #2 — Most upset picks per participant
+### #2 — Contrarian picks
 Ranks participants by how many times they picked the lower-ranked (worse FIFA ranking) team to win. Higher count = more contrarian / willing to back underdogs. An upset pick is any match where a participant picks the team with the higher rank number to beat the team with the lower rank number.
 
 **Data:** `data/group_{pool}_picks.json` + `RANKINGS` from `bracket.js`
