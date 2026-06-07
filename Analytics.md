@@ -4,6 +4,8 @@ Run any analysis by number: "run analysis #N" or "run analysis #N for fandf".
 
 Default pool is **swiftly** unless otherwise specified.
 
+**Cross-pool note:** Ritesh Warade participates in both pools. When running analytics across all participants, count him once (use his Swiftly picks; skip the FandF duplicate). Merge with: Swiftly first, then FandF entries only if the name doesn't already exist.
+
 ---
 
 ## Completed
