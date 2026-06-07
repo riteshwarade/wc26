@@ -29,7 +29,7 @@ def _format_name(full_name):
     if len(parts) <= 1 or not parts[-1][0].isalpha():
         return full_name
     first = ' '.join(parts[:-1])
-    last_initial = parts[-1][0] + '.'
+    last_initial = parts[-1][0]
     return f"{first} {last_initial}"
 
 
