@@ -23,9 +23,10 @@ MATCH_TEAMS = {num: (t1, t2) for num, grp, t1, t2 in GROUP_MATCHES}
 def _format_name(full_name):
     """Abbreviate last name to initial: 'Cole McCarren' → 'Cole M.'
     Handles single-word names (no change) and compound first names.
+    Does not abbreviate if the last word starts with a non-letter (e.g. 'Simulation 1').
     """
     parts = full_name.split()
-    if len(parts) <= 1:
+    if len(parts) <= 1 or not parts[-1][0].isalpha():
         return full_name
     first = ' '.join(parts[:-1])
     last_initial = parts[-1][0] + '.'
