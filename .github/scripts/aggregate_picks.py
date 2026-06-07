@@ -20,35 +20,36 @@ from parse_results import GROUP_MATCHES
 # Match number → (team1, team2) — auto-derived from canonical GROUP_MATCHES.
 MATCH_TEAMS = {num: (t1, t2) for num, grp, t1, t2 in GROUP_MATCHES}
 
-# Name overrides — applied after .title() to fix names that .title() mangles.
-# Python's .title() lowercases everything then capitalises word-starts, so names
-# like "McCarren" become "Mccarren". Add entries here as needed.
-# Key = what .title() produces, Value = correct display name.
-NAME_OVERRIDES = {
-    'Cole Mccarren': 'Cole McCarren',
-}
-
-
-def _apply_overrides(name):
-    return NAME_OVERRIDES.get(name, name)
+def _format_name(full_name):
+    """Abbreviate last name to initial: 'Cole McCarren' → 'Cole M.'
+    Handles single-word names (no change) and compound first names.
+    """
+    parts = full_name.split()
+    if len(parts) <= 1:
+        return full_name
+    first = ' '.join(parts[:-1])
+    last_initial = parts[-1][0] + '.'
+    return f"{first} {last_initial}"
 
 
 def name_from_filename(filename):
     """Extract participant name from a group picks CSV filename.
     Expected pattern: wc26_group_firstname-lastname.csv
+    Returns 'First L.' format (last name abbreviated to initial).
     """
     base = os.path.basename(filename)
     name_part = base.replace('wc26_group_', '').replace('.csv', '')
-    return _apply_overrides(name_part.replace('-', ' ').title())
+    return _format_name(name_part.replace('-', ' ').title())
 
 
 def name_from_knockout_filename(filename):
     """Extract participant name from a knockout picks CSV filename.
     Expected pattern: wc26_knockout_firstname-lastname.csv
+    Returns 'First L.' format (last name abbreviated to initial).
     """
     base = os.path.basename(filename)
     name_part = base.replace('wc26_knockout_', '').replace('.csv', '')
-    return _apply_overrides(name_part.replace('-', ' ').title())
+    return _format_name(name_part.replace('-', ' ').title())
 
 
 def load_picks_csv(filepath, match_teams):
