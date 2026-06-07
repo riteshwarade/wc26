@@ -20,6 +20,8 @@ Two pools running in parallel on the same codebase:
 - **Swiftly** — company pool
 - **FandF** — friends & family pool
 
+**Note:** Ritesh Warade (ritesh@goswift.ly) participates in both pools with separate pick CSVs. When running cross-pool analytics, deduplicate or suffix his name (e.g. `Ritesh Warade (F&F)`) to avoid key collision in merged data.
+
 Pick pages, leaderboard, and automation all live in a single GitHub repo (`riteshwarade/wc26`) served via GitHub Pages.
 
 ---
