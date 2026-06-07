@@ -10,7 +10,7 @@ Default pool is **swiftly** unless otherwise specified.
 
 ## Completed
 
-### #1 — Group picks consensus
+### #1 — Consensus picks
 Shows which group stage matches everyone agrees on (100% consensus) and which are most contested (split picks). Useful for seeing where the pool will diverge.
 
 **Data:** `data/group_swiftly_picks.json` + match list from `scoring.js`
