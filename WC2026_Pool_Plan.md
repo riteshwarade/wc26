@@ -142,15 +142,11 @@ match,round,matchup,pick
 
 Ritesh routes the CSV to the correct pool folder on upload (`picks/group/swiftly/` or `picks/group/fandf/` etc.).
 
-### Name display fix
+### Name display format
 
-Participant names are derived from the CSV filename using Python's `.title()`, which mangles names like "McCarren" → "Mccarren". A `NAME_OVERRIDES` dict in `aggregate_picks.py` corrects known cases. Key = what `.title()` produces, value = correct display name. Add new entries there whenever a name appears incorrectly on the leaderboard.
+Participant names are shown as **"First L."** (last name abbreviated to initial). Implemented via `_format_name()` in `aggregate_picks.py`, applied after `.title()`. Examples: `cole-mccarren` → `Cole M.`, `mary-anne-jones` → `Mary Anne J.`. If the last word starts with a non-letter (e.g. `simulation-1`), no abbreviation is applied.
 
-```python
-NAME_OVERRIDES = {
-    'Cole Mccarren': 'Cole McCarren',
-}
-```
+Benefits: avoids `.title()` mangling of names like McCarren → Mccarren; keeps the leaderboard name column narrow; provides light privacy on last names.
 
 Long-term fix (Option B): embed the display name inside the CSV itself so filenames don't matter.
 

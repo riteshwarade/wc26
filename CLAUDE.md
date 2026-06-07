@@ -263,6 +263,12 @@ GitHub → Actions → "Clear simulation data" → Run workflow
 - Also fires automatically at 1pm ET on June 11
 - No CDN purge needed — leaderboard uses `raw.githubusercontent.com` directly
 
+## Participant name format
+
+Names are stored as keys in the picks JSON and displayed on the leaderboard. Format: **"First L."** — first name(s) in full, last name abbreviated to initial. Produced by `_format_name()` in `aggregate_picks.py` after `.title()`. Examples: `cole-mccarren.csv` → `Cole M.`, `mary-anne-jones.csv` → `Mary Anne J.`. Numeric suffixes are not abbreviated (`simulation-1` → `Simulation 1`). No override table needed — the abbreviation sidesteps `.title()` mangling entirely.
+
+---
+
 ## Leaderboard data fetching
 
 All data files are fetched from `raw.githubusercontent.com` with `cache: 'no-store'` and a `?t=${Date.now()}` cache-buster appended inside `init()` on every call — bypasses browser cache. Note: Fastly CDN (which serves raw.githubusercontent.com) ignores query parameters and caches responses for 5 minutes (`max-age=300`), so there is an independent up-to-5-minute lag between a GitHub push and the leaderboard reflecting it. No cache purging is possible or needed — just wait up to 5 minutes.
