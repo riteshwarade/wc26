@@ -123,6 +123,22 @@
     padding: 24px 16px 64px;
   }
 
+  /* ── Standings participant count pill ── */
+  .standings-count {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--swiftly-blue);
+    border: 1px solid #cce8f4;
+    border-radius: 20px;
+    padding: 1px 7px;
+    text-transform: none;
+    letter-spacing: 0;
+    display: inline-block;
+    line-height: 1.6;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
   /* ── Section label ── */
   .section-label {
     font-size: 0.68rem;
@@ -897,7 +913,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
   });
 
   document.getElementById('koStandingsSection').innerHTML = `
-    <p class="section-label">Knockout Standings</p>
+    <p class="section-label">Knockout Standings <span class="standings-count">${combinedStandings.length} players</span></p>
     <div class="section-body">
       <div class="card">
         <table class="standings-table">
@@ -1078,6 +1094,10 @@ function renderStandings(standings) {
       '<div class="state-msg"><span class="emoji">📭</span>No picks submitted yet.</div>';
     return;
   }
+
+  // Update standings label with participant count pill
+  const lbl = document.getElementById('groupStandingsLabel');
+  if (lbl) lbl.innerHTML = `Standings <span class="standings-count">${standings.length} players</span>`;
 
   const GRP_ROUND_BREAKS = new Set([24, 48]);
   let rank = 1, prevPts = null, rows = '';
