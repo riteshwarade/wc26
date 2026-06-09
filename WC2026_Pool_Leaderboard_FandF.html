@@ -263,15 +263,15 @@
   .sq-correct        { background: var(--swiftly-blue); }
   .sq-correct-upset  { background: var(--swiftly-blue); position: relative; }
   .sq-correct-upset::after {
-    content: '';
+    content: '✦';
     position: absolute;
-    width: 3px; height: 3px;
-    border-radius: 50%;
-    background: #ffffff;
+    font-size: 6px;
+    line-height: 1;
+    color: #ffffff;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
   }
-  .sq.sq-sm.sq-correct-upset::after { width: 2.5px; height: 2.5px; }
+  .sq.sq-sm.sq-correct-upset::after { font-size: 5px; }
   .sq-wrong     { background: var(--swiftly-red); }
   .sq-cascaded  { background: var(--swiftly-red); }
   .sq-pending   { background: transparent; border: 1px solid var(--neutral-light); }
@@ -2191,7 +2191,7 @@ document.addEventListener('mouseover', e => {
   const status = sq.dataset.status;
 
   const statusText = status === 'correct'        ? '✓ Correct'
-                   : status === 'correct-upset' ? '✓ Correct ⚡ Upset'
+                   : status === 'correct-upset' ? '✓ Correct ✦ Upset'
                    : status === 'wrong'          ? '✗ Wrong'
                    : status === 'cascaded'       ? '⚡ Void — team eliminated earlier'
                    : status === 'pending'        ? '⏳ Pending'
