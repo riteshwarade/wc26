@@ -573,7 +573,7 @@ Same cards as Variant 1. `mkCard` reads from `koResults`: completed matches show
 
 - [x] Clear simulation data (`Actions → Clear simulation data`) before Jun 11 — or auto-clear fires at 1pm ET Jun 11
 - [ ] Share group pick page links with participants, collect and upload CSVs to `picks/group/swiftly/` and `picks/group/fandf/`
-- [ ] Share knockout pick page link before Jun 28, collect and upload CSVs to `picks/knockout/swiftly/` and `picks/knockout/fandf/`
+- [ ] Share knockout pick page link **after final group stage game (Jun 27)** — KO picks are submitted once group stage is complete; deadline is **before M73 (Jun 28, 3:00 PM ET / 19:00 UTC)**. Collect and upload CSVs to `picks/knockout/swiftly/` and `picks/knockout/fandf/`
 
 ---
 

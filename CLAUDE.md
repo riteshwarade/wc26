@@ -4,6 +4,13 @@ Full design doc: `WC2026_Pool_Plan.md`
 
 ---
 
+## Pick submission timeline
+
+- **Group picks** — submitted before the tournament starts (deadline: first group match, Jun 11)
+- **KO picks** — submitted *after* the final group stage game; deadline is **before the first R32 game (M73, Jun 28 at 3:00 PM ET / 19:00 UTC)**. Nobody will have KO picks until late June — this is expected and correct.
+
+---
+
 ## Hard rules
 
 **Never edit `WC2026_Pool_Leaderboard_FandF.html` directly.**

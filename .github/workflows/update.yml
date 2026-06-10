@@ -2,7 +2,7 @@ name: Update results and aggregate picks
 
 on:
   schedule:
-    - cron: '*/15 * * * *'   # every 15 minutes (Jun 11–Jul 20 only; see date check below)
+    - cron: '*/5 * * * *'    # every 5 minutes (Jun 11–Jul 20 only; see date check below)
   workflow_dispatch:           # allows manual trigger from GitHub UI
   push:
     paths:
