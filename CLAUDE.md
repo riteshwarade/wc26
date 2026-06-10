@@ -307,6 +307,30 @@ Each piece of shared data has exactly one canonical source. All other copies mus
 
 ## Pick status values
 
-Group `pickResults[num].status`: `correct` · `wrong` · `pending` (result not yet in) · `empty` (no pick made)
+Group `pickResults[num].status`: `correct` · `correct-upset` · `wrong` · `pending` (result not yet in) · `empty` (no pick made)
 
-KO `koPickResults[num].status`: same four + `cascaded` (team already eliminated, pick voids)
+KO `koPickResults[num].status`: same five + `cascaded` (team already eliminated, pick voids)
+
+### Upset detection (`correct-upset`)
+
+A pick is promoted from `correct` to `correct-upset` when the winning team had a worse FIFA ranking (higher rank number) than the loser.
+
+```js
+function _isUpsetResult(t1, t2, outcome) {
+  if (!outcome || outcome === 'Draw') return false;
+  const r1 = RANKINGS[t1] || 999, r2 = RANKINGS[t2] || 999;
+  if (r1 === r2) return false;
+  const favWon = r1 < r2 ? outcome === 'W1' : outcome === 'W2';
+  return !favWon;
+}
+```
+
+`sqStatus` in the square builder:
+```js
+const sqStatus = pr.status === 'correct' && _isUpsetResult(t1, t2, pr.result?.outcome)
+  ? 'correct-upset' : pr.status;
+```
+
+**Visual:** `.sq-correct-upset` — same Swiftly Blue background as `.sq-correct`, with a white ✦ (U+2726, 4-pointed star) via `::after` pseudo-element at 6px font-size (5px for `.sq-sm`).
+
+**Tooltip:** `'✓ Correct ✦ Upset'` — uses `.correct` CSS class for the status line color (same green as a normal correct pick).
