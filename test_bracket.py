@@ -560,6 +560,9 @@ def load_results(path='results/group_results.csv'):
     except FileNotFoundError:
         print(f"Note: {path} not found — using deterministic fallback results for CI.")
         results = _generate_fallback_results()
+    if not results:
+        print(f"Note: {path} is empty — using deterministic fallback results for CI.")
+        results = _generate_fallback_results()
     return results
 
 def h2h(teamA, teamB, grp_matches, results):
