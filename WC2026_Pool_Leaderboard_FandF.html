@@ -759,6 +759,8 @@
     .side-by-side-layout { flex-direction: column; }
     .side-left  { width: 100%; order: 2; }
     .side-right { order: 1; }
+    /* Standings: allow horizontal scroll instead of clipping */
+    #standings-body .card { overflow-x: auto; }
   }
 </style>
 <script src="bracket.js"></script>
