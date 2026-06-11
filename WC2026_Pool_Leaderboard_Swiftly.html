@@ -753,6 +753,13 @@
     .bk-outer { display: none; }
     .bk-mobile-tabs { display: block; }
   }
+
+  @media (max-width: 896px) and (orientation: landscape) {
+    /* Stack group tables and match results vertically in landscape on phones */
+    .side-by-side-layout { flex-direction: column; }
+    .side-left  { width: 100%; order: 2; }
+    .side-right { order: 1; }
+  }
 </style>
 <script src="bracket.js"></script>
 <script src="scoring.js"></script>
