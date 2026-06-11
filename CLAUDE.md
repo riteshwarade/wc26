@@ -152,6 +152,15 @@ No `border-top` divider — row separation comes from `margin-top` only.
 
 ---
 
+## Mobile breakpoints (leaderboard)
+
+Two media queries govern mobile layout:
+
+- **Portrait** — `@media (max-width: 640px)`: stacks group tables/results, hides squares + max-pts columns, hides date/time/# in results table, shows mobile bracket tabs.
+- **Landscape** — `@media (max-width: 896px) and (orientation: landscape)`: stacks group tables/results (same order as portrait); standings card is `overflow-x: auto` (horizontally scrollable). Landscape phones (~667–896px wide) miss the 640px portrait breakpoint entirely, hence the separate query.
+
+---
+
 ## Page load flash fixes (all pages)
 
 - **Google Fonts:** all pages use `display=block` (not `display=swap`) — prevents font-swap flash at the cost of a brief invisible-text period on first load. Do not revert to `display=swap`.
