@@ -21,16 +21,20 @@ jobs:
           find picks/knockout/swiftly picks/knockout/fandf -name "*simulation*" -delete 2>/dev/null || true
           echo "Simulation pick files removed"
 
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: '3.11'
+
       - name: Clear results and data files
         run: |
-          echo "" > results/group_results.csv
-          echo "" > results/knockout_results.csv
-          echo "{}" > data/group_swiftly_picks.json
-          echo "{}" > data/group_fandf_picks.json
-          echo "{}" > data/knockout_swiftly_picks.json
-          echo "{}" > data/knockout_fandf_picks.json
+          printf "match,home_score,away_score,outcome\n" > results/group_results.csv
+          printf "match,winner\n" > results/knockout_results.csv
           echo "{}" > data/knockout_bracket.json
-          echo "Results and data cleared"
+          echo "Results and bracket cleared"
+
+      - name: Rebuild picks JSONs from real CSVs
+        run: python .github/scripts/aggregate_picks.py
 
       - name: Commit and push
         run: |
