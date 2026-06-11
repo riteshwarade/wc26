@@ -1304,10 +1304,35 @@ function _isUpsetResult(t1, t2, outcome) {
 
 // ── Display name: "First L" (last name abbreviated to initial, UI-only) ──
 // Full name is stored in the JSON; abbreviation is only for display.
+const _abbrevMap = new Map();
+function _buildAbbrevMap(names) {
+  _abbrevMap.clear();
+  const _short = (name, len) => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length <= 1 || !parts[parts.length - 1][0].match(/[a-zA-ZÀ-ɏ]/)) return name;
+    return parts.slice(0, -1).join(' ') + ' ' + parts[parts.length - 1].slice(0, len);
+  };
+  // Group names by their 1-char abbreviation to find collisions
+  const byAbbrev = new Map();
+  for (const name of names) {
+    const ab = _short(name, 1);
+    if (!byAbbrev.has(ab)) byAbbrev.set(ab, []);
+    byAbbrev.get(ab).push(name);
+  }
+  for (const [, group] of byAbbrev) {
+    if (group.length === 1) { _abbrevMap.set(group[0], _short(group[0], 1)); continue; }
+    // Collision: expand last name until all unique
+    for (let len = 2; len <= 20; len++) {
+      const expanded = group.map(n => _short(n, len));
+      if (new Set(expanded).size === group.length) {
+        group.forEach((n, i) => _abbrevMap.set(n, expanded[i]));
+        break;
+      }
+    }
+  }
+}
 function _abbrevName(name) {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length <= 1 || !parts[parts.length - 1][0].match(/[a-zA-ZÀ-ɏ]/)) return name;
-  return parts.slice(0, -1).join(' ') + ' ' + parts[parts.length - 1][0];
+  return _abbrevMap.get(name) || name;
 }
 
 // ── H2H stats helper (module-scope so both renderGroupTables and computeGroupStandings can use it) ──
@@ -2256,6 +2281,7 @@ async function init() {
     const koResults = parseKoResults(koResultsCSV);
     const koScores  = parseKoScores(koResultsCSV);
     const standings = computeStandings(picksData, results);
+    _buildAbbrevMap(standings.map(p => p.name));
     const grpCounts = buildGrpCounts(standings);
     const played    = Object.keys(results).length;
     const koPlayed  = Object.keys(koResults).length;
