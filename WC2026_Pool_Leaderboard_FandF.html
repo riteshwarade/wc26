@@ -284,7 +284,7 @@
   .live-pulse      { animation: sq-pulse 1.8s ease-in-out infinite; font-weight: 500; }
 
   /* ── Mobile recent-squares column (last 5, current stage only) ── */
-  .th-mob-sq, .td-mob-sq { display: none; }
+  .th-mob-sq, .td-mob-sq { display: none; text-align: center; }
   .sq-row-mob { display: flex; gap: 2px; align-items: center; justify-content: center; }
 
   /* ── Tooltip ── */
@@ -1164,7 +1164,11 @@ function renderStandings(standings, liveData = {}) {
 
   const GRP_ROUND_BREAKS = new Set([24, 48]);
   const MOB_LAST = 5;
-  const mobMatchNums = new Set(MATCHES.slice(-MOB_LAST).map(([num]) => num));
+  const mobMatchNums = new Set(
+    MATCHES.map(([num]) => num)
+      .filter(num => (_lastResults && _lastResults[num]) || (liveData && liveData[num]))
+      .slice(-MOB_LAST)
+  );
   let rank = 1, prevPts = null, rows = '';
   standings.forEach((p, i) => {
     if (p.points !== prevPts) { rank = i + 1; prevPts = p.points; }

@@ -167,7 +167,7 @@ No `border-top` divider — row separation comes from `margin-top` only.
 
 A `.td-mob-sq` / `.th-mob-sq` column is hidden on desktop and revealed at `max-width: 640px`. Shows the **last 5 squares** for the current stage only — no carryover between group and KO.
 
-- **Group mode** (`renderStandings`): last 5 of `MATCHES` (M1–M72). `mobMatchNums = new Set(MATCHES.slice(-5).map(([num]) => num))`. Squares reuse the same `sq-sm` + live-correct/live-wrong pulsing logic as the full squares column. `MOB_LAST = 5`.
+- **Group mode** (`renderStandings`): last 5 of played/live group matches. `mobMatchNums` filters `MATCHES` to entries in `_lastResults` or `liveData`, then takes the last 5 match numbers. Squares reuse the same `sq-sm` + live-correct/live-wrong pulsing logic as the full squares column. `MOB_LAST = 5`.
 - **KO mode** (`renderKoStandings`): last 5 of `KO_MATCH_ORDER` (M100–M104 = QF4/SF1/SF2/3rd/Final). Uses `sq-sm` size. No live override yet (KO live scores not built). `KO_MOB_LAST = 5`.
 - Column header: `Recent`. Tooltip data attributes are present on every mob square — existing tooltip handler works automatically.
 
