@@ -1294,7 +1294,16 @@ function renderResults(results, grpCounts, liveData = {}) {
       }
       const isLive  = lm.state === 'in';
       const pulse   = s => isLive ? `<span class="live-pulse">${s}</span>` : s;
-      resultCell  = `${teamHtml(t1)} v ${teamHtml(t2)}`;
+      if (cur === 'Draw') {
+        resultCell = `<span class="res-loser">${teamHtml(t1)}</span>`
+                   + `<span class="res-verb">${isLive ? 'drawing' : 'drew'}</span>`
+                   + `<span class="res-loser">${teamHtml(t2)}</span>`;
+      } else {
+        const [liveWinner, liveLoseer] = cur === 'W1' ? [t1, t2] : [t2, t1];
+        resultCell = `<span class="res-winner">${teamHtml(liveWinner)}</span>`
+                   + `<span class="res-verb">${isLive ? 'leading' : 'beat'}</span>`
+                   + `<span class="res-loser">${teamHtml(liveLoseer)}</span>`;
+      }
       const liveScore = cur === 'W2'
         ? `${lm.awayScore} – ${lm.homeScore}`
         : `${lm.homeScore} – ${lm.awayScore}`;
@@ -2399,7 +2408,12 @@ async function fetchLiveScores() {
     for (const [mNum,,, utcKick] of MATCHES) {
       if (_lastResults?.[mNum]) continue;       // already confirmed in CSV
       if (_pendingResults.has(mNum)) continue;  // already tracked
-      if (nowMs > new Date(utcKick).getTime() + 110 * 60 * 1000) { // kickoff + 110 min
+      const kickMs = new Date(utcKick).getTime();
+      const elapsed = nowMs - kickMs;
+      if (elapsed > 110 * 60 * 1000 && elapsed < 24 * 60 * 60 * 1000) {
+        // Past expected end time but less than 24 hours ago — seed for bridge polling.
+        // Cap at 24 h: if CSV still hasn't confirmed after a full day something is wrong
+        // and we shouldn't keep polling indefinitely.
         _pendingResults.add(mNum);
       }
     }

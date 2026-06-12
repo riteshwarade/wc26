@@ -265,7 +265,7 @@ Both functions must stay in sync. The group picks page uses a simplified chain (
 
 ### Correctness pill
 
-Shows `N/total` for completed matches. Locations: appended to `td-score` cell (group table, `margin-left: 8px` via `.td-score .cp-pill`); right-aligned in `.bk-mnum` header (KO desktop); inline in `.bk-mob-meta` (KO mobile). `bracket.js` is not modified — injected entirely in the leaderboard.
+Shows `N/total` for completed matches. Locations: in its own `td-correct` column in the group results table; right-aligned in `.bk-mnum` header (KO desktop); inline in `.bk-mob-meta` (KO mobile). `bracket.js` is not modified — injected entirely in the leaderboard.
 
 **Color classes** (% of participants correct):
 - ≥ 67%: `.cp-hi` — `#d4f0fb` bg / `#00628a` text
