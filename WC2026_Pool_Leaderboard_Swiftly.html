@@ -1165,6 +1165,8 @@ function renderStandings(standings, liveData = {}) {
       if (lm && pr.status === 'pending' && pr.pick) {
         const cur = lm.homeScore > lm.awayScore ? 'W1' : lm.awayScore > lm.homeScore ? 'W2' : 'Draw';
         sqStatus = pr.pick === cur ? 'live-correct' : 'live-wrong';
+        // Post-bridge: show non-pulsing live colors until CSV confirms
+        if (lm.state === 'post') sqStatus = sqStatus === 'live-correct' ? 'correct' : 'wrong';
       }
       squareParts.push(`<span class="sq sq-sm sq-${sqStatus}"
         data-match="${num}" data-teams="${_esc(`${t1} v ${t2}`)}"
@@ -1252,10 +1254,10 @@ function buildKoCounts(combined) {
 function renderResults(results, grpCounts, liveData = {}) {
   const rows = MATCHES.map(([num, grp, date, time, t1, t2]) => {
     const r = results[num];
-    const lm = liveData[num];
+    const lm = r ? null : liveData[num]; // ignore live data once CSV confirms result
     let resultCell, scoreCell, timeCell, correctCell = '';
     if (lm) {
-      // In-progress: compute live correct count from standings + current score
+      // Live or post-bridge: compute correct count from standings + current score
       const cur = lm.homeScore > lm.awayScore ? 'W1' : lm.awayScore > lm.homeScore ? 'W2' : 'Draw';
       let liveCorrect = 0, liveTotal = 0;
       if (_lastStandings) {
@@ -1264,10 +1266,12 @@ function renderResults(results, grpCounts, liveData = {}) {
           if (pr && pr.pick) { liveTotal++; if (pr.pick === cur) liveCorrect++; }
         }
       }
+      const isLive  = lm.state === 'in';
+      const pulse   = s => isLive ? `<span class="live-pulse">${s}</span>` : s;
       resultCell  = `${teamHtml(t1)} v ${teamHtml(t2)}`;
-      scoreCell   = `<span class="live-pulse">${lm.homeScore} – ${lm.awayScore}</span>`;
-      timeCell    = `<span class="live-pulse">${lm.minute}′</span>`;
-      correctCell = liveTotal ? `<span class="live-pulse">${correctnessPill(liveCorrect, liveTotal)}</span>` : '';
+      scoreCell   = pulse(`${lm.homeScore} – ${lm.awayScore}`);
+      timeCell    = isLive ? `<span class="live-pulse">${lm.minute}′</span>` : 'FT';
+      correctCell = liveTotal ? pulse(correctnessPill(liveCorrect, liveTotal)) : '';
     } else if (!r) {
       resultCell = `${teamHtml(t1)} v ${teamHtml(t2)}`;
       scoreCell  = `–`;
@@ -2340,8 +2344,11 @@ async function fetchLiveScores() {
     ];
 
     const newLive = {};
+    let anyIn = false;
+
     for (const event of allEvents) {
-      if (event.status?.type?.state !== 'in') continue;
+      const state = event.status?.type?.state;
+      if (state !== 'in' && state !== 'post') continue;
       const comp = event.competitions?.[0];
       const home = comp?.competitors?.find(c => c.homeAway === 'home');
       const away = comp?.competitors?.find(c => c.homeAway === 'away');
@@ -2362,7 +2369,18 @@ async function fetchLiveScores() {
       const clock = event.status?.displayClock || '';
       const minute = clock === 'HT' ? 'HT' : (clock.split(':')[0] || '');
 
-      newLive[num] = { minute, homeScore: h, awayScore: a };
+      // Detect in→post transition: trigger init() immediately to pick up CSV result
+      if (state === 'post' && _liveData[num]?.state === 'in') setTimeout(init, 0);
+
+      newLive[num] = { minute, homeScore: h, awayScore: a, state };
+      if (state === 'in') anyIn = true;
+    }
+
+    // Drop post-game entries already confirmed by CSV — no need to bridge anymore
+    if (_lastResults) {
+      for (const num of Object.keys(newLive)) {
+        if (_lastResults[Number(num)]) delete newLive[Number(num)];
+      }
     }
 
     _liveData = newLive;
@@ -2373,8 +2391,8 @@ async function fetchLiveScores() {
       renderResults(_lastResults, _lastGrpCounts, _liveData);
     }
 
-    // Stop polling once no live matches remain
-    if (Object.keys(newLive).length === 0) stopLivePolling();
+    // Stop polling once no in-progress matches remain
+    if (!anyIn) stopLivePolling();
 
   } catch (e) { /* silent — live scores are best-effort */ }
 }
