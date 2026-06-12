@@ -242,6 +242,8 @@ Group tables render immediately (before Jun 11). Before any matches in a group h
 
 Once the first match in a group kicks off, `sortedStandings()` takes over and row highlighting activates.
 
+**Third-place qualification highlighting** only activates once ALL 12 groups are fully played (`isGroupDone` for every group). This gate uses `isGroupDone` (all 6 matches played), not `isGroupStarted`. `thirdPlaceTeams` also filters out groups where the 3rd-place team has `P === 0` to prevent ghost entries from corrupting the cross-group ranking.
+
 ### Group stage tiebreaker chain (FIFA official, source: Wikipedia)
 
 Applied when two or more teams are level on points. Criteria in order:

@@ -1531,7 +1531,11 @@ function renderGroupTables(results) {
   // Collect 3rd-place teams from all completed groups
   const thirdPlaceTeams = completedGroups.map(grp => {
     const s = sortedStandings(grp);
-    return s[2] ? { team: s[2], grp, stats: stats[s[2]] || {Pts:0,GF:0,GA:0} } : null;
+    const t = s[2];
+    if (!t) return null;
+    const st = stats[t];
+    if (!st || st.P === 0) return null; // skip groups with no matches played yet
+    return { team: t, grp, stats: st };
   }).filter(Boolean);
 
   // Sort 3rd-place teams (cross-group: overall stats only)
@@ -1543,7 +1547,7 @@ function renderGroupTables(results) {
     return (RANKINGS[a.team]??999) - (RANKINGS[b.team]??999);
   });
 
-  const allGroupsStarted = completedGroups.length === 12 && completedGroups.every(isGroupStarted);
+  const allGroupsStarted = completedGroups.length === 12 && completedGroups.every(isGroupDone);
   const qualifiedThirds = new Set(sortedThirds.slice(0, 8).map(t => t.team));
 
   // ── Pass 2: render each group ──────────────────────────────
