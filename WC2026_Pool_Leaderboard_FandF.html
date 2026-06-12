@@ -2346,6 +2346,21 @@ async function fetchLiveScores() {
     const newLive = {};
     let anyIn = false;
 
+    // Seed _pendingResults from schedule for any match past its expected end time
+    // that has no CSV result yet. Catches cases where ESPN dropped the post-game event
+    // before the user loaded the page (ESPN removes post events within minutes of FT).
+    // 110 min = 90 min game + ~20 min stoppage buffer. Group games only (fetchLiveScores
+    // returns early in knockoutMode). KO matches need a larger buffer (~150 min) to
+    // account for extra time + penalties — handle when KO live scores are added.
+    const nowMs = Date.now();
+    for (const [mNum,,, utcKick] of MATCHES) {
+      if (_lastResults?.[mNum]) continue;       // already confirmed in CSV
+      if (_pendingResults.has(mNum)) continue;  // already tracked
+      if (nowMs > new Date(utcKick).getTime() + 110 * 60 * 1000) { // kickoff + 110 min
+        _pendingResults.add(mNum);
+      }
+    }
+
     for (const event of allEvents) {
       const state = event.status?.type?.state;
       if (state !== 'in' && state !== 'post') continue;
