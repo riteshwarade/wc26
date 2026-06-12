@@ -2314,13 +2314,22 @@ const ESPN_SCOREBOARD = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fi
 async function fetchLiveScores() {
   if (!LIVE_SCORES_ENABLED || knockoutMode) return;
   try {
-    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const resp = await fetch(`${ESPN_SCOREBOARD}?dates=${today}`);
-    if (!resp.ok) return;
-    const data = await resp.json();
+    // Fetch today AND tomorrow UTC — late-evening ET matches spill into the next UTC day
+    const now = new Date();
+    const tom = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const d1  = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const d2  = tom.toISOString().slice(0, 10).replace(/-/g, '');
+    const [r1, r2] = await Promise.all([
+      fetch(`${ESPN_SCOREBOARD}?dates=${d1}`),
+      fetch(`${ESPN_SCOREBOARD}?dates=${d2}`),
+    ]);
+    const allEvents = [
+      ...((r1.ok ? await r1.json() : {}).events || []),
+      ...((r2.ok ? await r2.json() : {}).events || []),
+    ];
 
     const newLive = {};
-    for (const event of data.events || []) {
+    for (const event of allEvents) {
       if (event.status?.type?.state !== 'in') continue;
       const comp = event.competitions?.[0];
       const home = comp?.competitors?.find(c => c.homeAway === 'home');
