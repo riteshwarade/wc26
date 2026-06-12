@@ -168,6 +168,8 @@ No `border-top` divider — row separation comes from `margin-top` only.
 
 **Scope:** Group stage only for now. KO live scores to be added later — same architecture applies.
 
+**KO bracket live treatment (planned):** During a live KO match, both team rows in the bracket card pulse (1→0.3→1, 1.8s). Currently winning team: pulsing solid blue (same as final winner style). Currently losing team: pulsing muted/transparent (same as final loser style). Minute shown pulsing in `.bk-mnum` alongside the match number. On FT, both rows snap to solid winner/loser state.
+
 ---
 
 ## Mobile breakpoints (leaderboard)
