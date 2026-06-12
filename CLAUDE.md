@@ -287,7 +287,7 @@ python3 test_bracket.py         # bracket + standings (self-contained, no CSV ne
 | **Clear simulation data** | Manual | Deletes `*simulation*` pick CSVs, writes `{}` to all picks/bracket JSONs, clears both results CSVs, commits + pushes |
 | **Auto-clear simulation data** | Automatic at 1pm ET Jun 11 + manual | Same as above — fires automatically 2hrs before first match |
 | **CI** | Every push/PR | Runs all 4 test suites |
-| **update** | Push to `picks/**` (always) · Every 15 min Jun 11–Jul 20 (schedule) · Manual | Push trigger: aggregates picks immediately. Schedule: aggregates picks + fetches ESPN results. |
+| **update** | Push to `picks/**` (always) · Every 5 min Jun 11–Jul 20 (schedule) · Manual | Push trigger: aggregates picks immediately. Schedule: aggregates picks + fetches ESPN results. |
 
 **To simulate N users for github.io testing:**
 GitHub → Actions → "Simulate picks and results" → Run workflow → participants=N, stage=all
@@ -323,6 +323,15 @@ const KO_RESULTS_URL = `${_RAW}/results/knockout_results.csv`;
 git pull --rebase && git push
 ```
 Set once to avoid the prompt: `git config --global pull.rebase true`
+
+**GitHub Actions schedule reliability** — GitHub throttles high-frequency cron jobs on low-traffic repos. The 5-min schedule may silently skip runs. Workaround: use **cron-job.org** to externally trigger the workflow via `workflow_dispatch`. TODO (planned):
+1. Create a GitHub PAT with `Actions: write` scope
+2. On cron-job.org, create a job that POSTs every 5 min to:
+   ```
+   https://api.github.com/repos/riteshwarade/wc26/actions/workflows/update.yml/dispatches
+   ```
+   with header `Authorization: Bearer <PAT>` and body `{"ref":"main"}`
+Until this is set up: manually trigger the `update` workflow from GitHub Actions after big games end.
 
 ---
 
