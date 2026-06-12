@@ -857,9 +857,10 @@ const ESPN_TEAM_MAP_JS = {
 // ──────────────────────────────────────────────────────────
 
 // ── Live scores state ─────────────────────────────────────
-let _liveData       = {};   // { matchNum: { minute, homeScore, awayScore } }
+let _liveData       = {};   // { matchNum: { minute, homeScore, awayScore, state } }
 let _lastStandings  = null;
 let _lastResults    = null;
+let _inInit         = false; // guard: prevents fetchLiveScores from re-entering init()
 let _lastGrpCounts  = null;
 let _livePoller     = null;
 // ──────────────────────────────────────────────────────────
@@ -1165,8 +1166,6 @@ function renderStandings(standings, liveData = {}) {
       if (lm && pr.status === 'pending' && pr.pick) {
         const cur = lm.homeScore > lm.awayScore ? 'W1' : lm.awayScore > lm.homeScore ? 'W2' : 'Draw';
         sqStatus = pr.pick === cur ? 'live-correct' : 'live-wrong';
-        // Post-bridge: show non-pulsing live colors until CSV confirms
-        if (lm.state === 'post') sqStatus = sqStatus === 'live-correct' ? 'correct' : 'wrong';
       }
       squareParts.push(`<span class="sq sq-sm sq-${sqStatus}"
         data-match="${num}" data-teams="${_esc(`${t1} v ${t2}`)}"
@@ -2391,8 +2390,15 @@ async function fetchLiveScores() {
       renderResults(_lastResults, _lastGrpCounts, _liveData);
     }
 
-    // Stop polling once no in-progress matches remain
-    if (!anyIn) stopLivePolling();
+    // Stop polling (or switch to bridge polling) once no in-progress matches remain
+    if (!anyIn) {
+      stopLivePolling();
+      // Bridge state: game ended but CSV not confirmed yet.
+      // Call init() to re-fetch CSV so standings + points update when results land.
+      // Guard _inInit so we don't recurse when fetchLiveScores is called from inside init().
+      const hasBridge = Object.values(newLive).some(lm => lm.state === 'post');
+      if (hasBridge && !_inInit) init();
+    }
 
   } catch (e) { /* silent — live scores are best-effort */ }
 }
@@ -2409,6 +2415,7 @@ function stopLivePolling() {
 
 // ── Main ──────────────────────────────────────────────────
 async function init() {
+  _inInit = true;
   try {
     let picksData, resultsCSV, koPicksData = {}, koResultsCSV = '';
     let bracketData = null;
@@ -2495,6 +2502,8 @@ async function init() {
     document.getElementById('koStandingsSection').innerHTML = msg;
     document.getElementById('matchesPlayed').textContent = 'Could not load data';
     _revealSections();
+  } finally {
+    _inInit = false;
   }
 }
 
