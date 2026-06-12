@@ -358,7 +358,7 @@
   .res-loser    { color: var(--neutral-dark); white-space: nowrap; }
   .res-verb     { font-size: 0.75rem; font-style: italic; color: var(--neutral-dark); margin: 0 5px; }
   .res-row-upcoming { opacity: 0.45; }
-  .td-score     { font-weight: 700; color: var(--neutral-dark); white-space: nowrap; width: 1%; text-align: center; }
+  .td-score     { font-weight: 700; color: var(--neutral-dark); white-space: nowrap; width: 1%; }
 
   /* ── Side-by-side layout ── */
   .side-by-side-layout {
@@ -1299,7 +1299,7 @@ function renderResults(results, grpCounts, liveData = {}) {
           <th class="th-date">Date</th>
           <th class="th-time">Time (${_tzAbbr})</th>
           <th>Result</th>
-          <th style="text-align:center">Score</th>
+          <th>Score</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
