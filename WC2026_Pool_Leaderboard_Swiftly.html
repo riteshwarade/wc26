@@ -278,6 +278,11 @@
   .sq-empty     { background: transparent; }
   .sq           { cursor: pointer; }
 
+  @keyframes sq-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .sq-live-correct { background: var(--swiftly-blue); animation: sq-pulse 1.8s ease-in-out infinite; }
+  .sq-live-wrong   { background: var(--swiftly-red);  animation: sq-pulse 1.8s ease-in-out infinite; }
+  .live-pulse      { animation: sq-pulse 1.8s ease-in-out infinite; font-weight: 500; }
+
   /* ── Tooltip ── */
   #sq-tooltip {
     position: fixed;
@@ -837,6 +842,28 @@
 const POOL_ID   = 'swiftly';
 // ──────────────────────────────────────────────────────────
 
+// ── Live scores toggle (internal — not a URL param) ───────
+const LIVE_SCORES_ENABLED = true;
+// ──────────────────────────────────────────────────────────
+
+// ── ESPN team name map (5 names differ from internal) ─────
+const ESPN_TEAM_MAP_JS = {
+  'Czechia':             'Czech Republic',
+  'Türkiye':             'Turkey',
+  'Bosnia-Herzegovina':  'Bosnia and Herzegovina',
+  'Congo DR':            'DR Congo',
+  'Curacao':             'Curaçao',
+};
+// ──────────────────────────────────────────────────────────
+
+// ── Live scores state ─────────────────────────────────────
+let _liveData       = {};   // { matchNum: { minute, homeScore, awayScore } }
+let _lastStandings  = null;
+let _lastResults    = null;
+let _lastGrpCounts  = null;
+let _livePoller     = null;
+// ──────────────────────────────────────────────────────────
+
 
 // All data files → raw.githubusercontent.com with cache: 'no-store' (always fresh, no CDN)
 const _RAW = 'https://raw.githubusercontent.com/riteshwarade/wc26/main';
@@ -1108,7 +1135,7 @@ function setupLayout() {
 
 
 // ── Render standings ──────────────────────────────────────
-function renderStandings(standings) {
+function renderStandings(standings, liveData = {}) {
   if (!standings.length) {
     document.getElementById('standingsCard').innerHTML =
       '<div class="state-msg"><span class="emoji">📭</span>No picks submitted yet.</div>';
@@ -1131,8 +1158,14 @@ function renderStandings(standings) {
       const res = pr.result
         ? `${pr.result.home}–${pr.result.away} (${pickLabel(pr.result.outcome, t1, t2)})`
         : 'Not played yet';
-      const sqStatus = pr.status === 'correct' && _isUpsetResult(t1, t2, pr.result?.outcome)
+      let sqStatus = pr.status === 'correct' && _isUpsetResult(t1, t2, pr.result?.outcome)
         ? 'correct-upset' : pr.status;
+      // Override with live status if match is in-progress and pick is still pending
+      const lm = liveData && liveData[num];
+      if (lm && pr.status === 'pending' && pr.pick) {
+        const cur = lm.homeScore > lm.awayScore ? 'W1' : lm.awayScore > lm.homeScore ? 'W2' : 'Draw';
+        sqStatus = pr.pick === cur ? 'live-correct' : 'live-wrong';
+      }
       squareParts.push(`<span class="sq sq-sm sq-${sqStatus}"
         data-match="${num}" data-teams="${_esc(`${t1} v ${t2}`)}"
         data-pick="${_esc(myPick)}" data-result="${_esc(res)}" data-status="${sqStatus}"></span>`);
@@ -1216,19 +1249,27 @@ function buildKoCounts(combined) {
   return counts;
 }
 
-function renderResults(results, grpCounts) {
+function renderResults(results, grpCounts, liveData = {}) {
   const rows = MATCHES.map(([num, grp, date, time, t1, t2]) => {
     const r = results[num];
-    let resultCell, scoreCell;
-    if (!r) {
+    const lm = liveData[num];
+    let resultCell, scoreCell, timeCell;
+    if (lm) {
+      // In-progress: show live score + pulsing minute, no winner/loser styling yet
+      resultCell = `${teamHtml(t1)} v ${teamHtml(t2)}`;
+      scoreCell  = `<span class="live-pulse">${lm.homeScore}–${lm.awayScore}</span>`;
+      timeCell   = `<span class="live-pulse">${lm.minute}′</span>`;
+    } else if (!r) {
       resultCell = `${teamHtml(t1)} v ${teamHtml(t2)}`;
       scoreCell  = `–`;
+      timeCell   = localMatchTime(time);
     } else if (r.outcome === 'Draw') {
       resultCell = `<span class="res-loser">${teamHtml(t1)}</span>`
                  + `<span class="res-verb">drew</span>`
                  + `<span class="res-loser">${teamHtml(t2)}</span>`;
       const c = grpCounts && grpCounts[num];
       scoreCell  = `${r.home} – ${r.away}${c ? ' ' + correctnessPill(c.correct, c.total) : ''}`;
+      timeCell   = 'FT';
     } else {
       const [winner, loser] = r.outcome === 'W1' ? [t1, t2] : [t2, t1];
       resultCell = `<span class="res-winner">${teamHtml(winner)}</span>`
@@ -1237,12 +1278,13 @@ function renderResults(results, grpCounts) {
       const score = r.outcome === 'W2' ? `${r.away} – ${r.home}` : `${r.home} – ${r.away}`;
       const c = grpCounts && grpCounts[num];
       scoreCell  = `${score}${c ? ' ' + correctnessPill(c.correct, c.total) : ''}`;
+      timeCell   = 'FT';
     }
-    return `<tr class="${r ? '' : 'res-row-upcoming'}">
+    return `<tr class="${r || lm ? '' : 'res-row-upcoming'}">
       <td class="td-match-num">${num}</td>
       <td class="td-grp">${grp}</td>
       <td class="td-date">${date}</td>
-      <td class="td-time">${localMatchTime(time)}</td>
+      <td class="td-time">${timeCell}</td>
       <td class="td-result-cell">${resultCell}</td>
       <td class="td-score">${scoreCell}</td>
     </tr>`;
@@ -2225,13 +2267,18 @@ document.addEventListener('mouseover', e => {
   const status = sq.dataset.status;
 
   const statusText = status === 'correct'        ? '✓ Correct'
-                   : status === 'correct-upset' ? '✓ Correct ✦ Upset'
+                   : status === 'correct-upset'  ? '✓ Correct ✦ Upset'
                    : status === 'wrong'          ? '✗ Wrong'
                    : status === 'cascaded'       ? '⚡ Void — team eliminated earlier'
                    : status === 'pending'        ? '⏳ Pending'
+                   : status === 'live-correct'   ? '🔴 Live · correct so far'
+                   : status === 'live-wrong'     ? '🔴 Live · wrong so far'
                    : '—';
 
-  const ttStatusCls = status === 'correct-upset' ? 'correct' : status;
+  const ttStatusCls = status === 'correct-upset' ? 'correct'
+                    : status === 'live-correct'   ? 'correct'
+                    : status === 'live-wrong'     ? 'wrong'
+                    : status;
   tooltip.innerHTML = `
     <div class="tt-match"></div>
     <div class="tt-pick">Your pick: <strong></strong></div>
@@ -2256,6 +2303,67 @@ document.addEventListener('mousemove', e => {
 document.addEventListener('mouseout', e => {
   if (!e.target.closest('.sq')) tooltip.style.display = 'none';
 });
+
+// ── Live scores fetch + polling ───────────────────────────
+const ESPN_SCOREBOARD = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard';
+
+async function fetchLiveScores() {
+  if (!LIVE_SCORES_ENABLED || knockoutMode) return;
+  try {
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const resp = await fetch(`${ESPN_SCOREBOARD}?dates=${today}`);
+    if (!resp.ok) return;
+    const data = await resp.json();
+
+    const newLive = {};
+    for (const event of data.events || []) {
+      if (event.status?.type?.state !== 'in') continue;
+      const comp = event.competitions?.[0];
+      const home = comp?.competitors?.find(c => c.homeAway === 'home');
+      const away = comp?.competitors?.find(c => c.homeAway === 'away');
+      if (!home || !away) continue;
+
+      const hn = ESPN_TEAM_MAP_JS[home.team.displayName] || home.team.displayName;
+      const an = ESPN_TEAM_MAP_JS[away.team.displayName] || away.team.displayName;
+      const match = MATCHES.find(([,,,, t1, t2]) =>
+        (t1 === hn && t2 === an) || (t2 === hn && t1 === an));
+      if (!match) continue;
+
+      const [num,,,, t1] = match;
+      const hs = parseInt(home.score) || 0;
+      const as_ = parseInt(away.score) || 0;
+      // If ESPN reversed home/away vs our MATCHES ordering, swap scores
+      const [h, a] = t1 === hn ? [hs, as_] : [as_, hs];
+
+      const clock = event.status?.displayClock || '';
+      const minute = clock === 'HT' ? 'HT' : (clock.split(':')[0] || '');
+
+      newLive[num] = { minute, homeScore: h, awayScore: a };
+    }
+
+    _liveData = newLive;
+
+    // Re-render affected sections with live overlay
+    if (_lastStandings && _lastResults !== null) {
+      renderStandings(_lastStandings, _liveData);
+      renderResults(_lastResults, _lastGrpCounts, _liveData);
+    }
+
+    // Stop polling once no live matches remain
+    if (Object.keys(newLive).length === 0) stopLivePolling();
+
+  } catch (e) { /* silent — live scores are best-effort */ }
+}
+
+function startLivePolling() {
+  if (_livePoller) return;
+  _livePoller = setInterval(fetchLiveScores, 60 * 1000);
+}
+
+function stopLivePolling() {
+  if (_livePoller) { clearInterval(_livePoller); _livePoller = null; }
+}
+// ──────────────────────────────────────────────────────────
 
 // ── Main ──────────────────────────────────────────────────
 async function init() {
@@ -2316,13 +2424,23 @@ async function init() {
       renderKoStandings(combined, koResults, bracketData);
       renderKoBracket(bracketData, koResults, koScores, koCounts);
     } else {
-      renderStandings(standings);
+      // Store for live polling re-renders
+      _lastStandings = standings;
+      _lastResults   = results;
+      _lastGrpCounts = grpCounts;
+      renderStandings(standings, _liveData);
     }
 
     if (!knockoutMode) {
-      renderResults(results, grpCounts);
+      renderResults(results, grpCounts, _liveData);
       renderGroupTables(results);
       renderBracket(results, allGrpsStarted, bracketConfirmed);
+      // Kick off live polling (fetches ESPN, starts interval if games are live)
+      if (LIVE_SCORES_ENABLED) {
+        fetchLiveScores().then(() => {
+          if (Object.keys(_liveData).length > 0) startLivePolling();
+        });
+      }
     }
     _revealSections();
 
