@@ -945,7 +945,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
       const pickStr = pr.pick || '—';
       const resultStr = pr.winner || 'Not played yet';
       const koSqHtml = `<span class="sq sq-${pr.status}"
-        data-match="M${m}" data-teams="${_esc(teamsStr)}"
+        data-match="${m}" data-teams="${_esc(teamsStr)}"
         data-pick="${_esc(pickStr)}" data-result="${_esc(resultStr)}" data-status="${pr.status}"></span>`;
       koSquareParts.push(koSqHtml);
       if (koMobMatchNums.has(m)) koMobSquareParts.push(koSqHtml.replace('class="sq sq-', 'class="sq sq-sm sq-'));
@@ -2487,6 +2487,7 @@ function stopLivePolling() {
 
 // ── Main ──────────────────────────────────────────────────
 async function init() {
+  if (_inInit) return;
   _inInit = true;
   try {
     let picksData, resultsCSV, koPicksData = {}, koResultsCSV = '';
@@ -2519,7 +2520,6 @@ async function init() {
     const koResults = parseKoResults(koResultsCSV);
     const koScores  = parseKoScores(koResultsCSV);
     const standings = computeStandings(picksData, results);
-    _buildAbbrevMap(standings.map(p => p.name));
     const grpCounts = buildGrpCounts(standings);
     const played    = Object.keys(results).length;
     const koPlayed  = Object.keys(koResults).length;
@@ -2541,10 +2541,12 @@ async function init() {
 
     if (knockoutMode) {
       const combined = computeCombinedStandings(standings, koPicksData, koResults, bracketData);
+      _buildAbbrevMap(combined.map(p => p.name));
       const koCounts = buildKoCounts(combined);
       renderKoStandings(combined, koResults, bracketData);
       renderKoBracket(bracketData, koResults, koScores, koCounts);
     } else {
+      _buildAbbrevMap(standings.map(p => p.name));
       // Store for live polling re-renders
       _lastStandings = standings;
       _lastResults   = results;
