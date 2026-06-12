@@ -130,12 +130,13 @@ const THIRD_MATCH_COL = { 79:0, 85:1, 81:2, 74:3, 82:4, 77:5, 87:6, 80:7 };
 
 // ── Reusable team display: flag + name + rank ─────────────
 // showRank=false when rank is shown separately (e.g. pick form rank column)
-function teamHtml(name, showRank=true) {
+// display=string overrides the visible name text (e.g. shortened names in group tables)
+function teamHtml(name, showRank=true, display=null) {
   if (!name) return '';
   const flag  = FLAGS[name] || '';
   const rank  = showRank ? (RANKINGS[name] || null) : null;
   const rankHtml = rank ? ` <span class="team-rank">(${rank})</span>` : '';
-  return `${flag ? flag + ' ' : ''}${name}${rankHtml}`;
+  return `${flag ? flag + ' ' : ''}${display || name}${rankHtml}`;
 }
 
 // ── TBD slot detection ────────────────────────────────────

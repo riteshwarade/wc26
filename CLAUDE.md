@@ -155,6 +155,10 @@ No `border-top` divider — row separation comes from `margin-top` only.
 
 - **Pick button padding (desktop):** `padding: 6px 8px` — middle ground between too tight (4px) and too tall (8px) across 72 rows
 - **`SHORT_NAMES`** applies on **all screen sizes** (not just mobile). Provides shortened display names inside pick buttons to avoid overflow: `'Bosnia and Herzegovina' → 'Bosnia…'`, `'Czech Republic' → 'Czech…'`
+
+## Group table team name truncation (leaderboard)
+
+`_GRP_SHORT_NAMES` in `WC2026_Pool_Leaderboard_Swiftly.html` mirrors the picks page `SHORT_NAMES`. Applied in `renderGroupTableCard` via the optional `display` parameter added to `teamHtml()` in `bracket.js`. Needed because `.side-left` is a fixed `380px` on iPad portrait, leaving only ~120px for the team name cell after stat columns. Entries: `'Bosnia and Herzegovina' → 'Bosnia…'`, `'Czech Republic' → 'Czech…'`.
 - **JS content flash fix:** `.container` has `visibility: hidden` in CSS; set to `visible` synchronously after `buildForm()` + `renderPickGroupTables()` — page paints once with content already in place
 
 ---

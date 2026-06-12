@@ -1341,6 +1341,12 @@ const GROUP_ORDER = {
 };
 
 // ── Group tables ─────────────────────────────────────────
+// Shortened display names for group table team cells (mirrors picks page SHORT_NAMES)
+const _GRP_SHORT_NAMES = {
+  'Bosnia and Herzegovina': 'Bosnia…',
+  'Czech Republic':         'Czech…',
+};
+
 // ── Group table card template (reusable across leaderboard + picks) ──
 // teams: ordered array of team names
 // stats: { teamName: {P,W,D,L,GF,GA,Pts} }
@@ -1352,7 +1358,8 @@ function renderGroupTableCard(grp, teams, stats, opts={}) {
     const s = stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0};
     const rc = rowClassFn(t, i);
     const gdCell = showGD ? `<td>${s.GF}</td><td>${s.GA}</td><td>${(s.GF-s.GA)>=0?'+':''}${s.GF-s.GA}</td>` : '';
-    return `<tr${rc ? ` class="${rc}"` : ''}><td class="td-team">${teamHtml(t)}</td><td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>${gdCell}<td class="td-pts">${s.Pts}</td></tr>`;
+    const display = _GRP_SHORT_NAMES[t] || t;
+    return `<tr${rc ? ` class="${rc}"` : ''}><td class="td-team">${teamHtml(t, true, display)}</td><td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>${gdCell}<td class="td-pts">${s.Pts}</td></tr>`;
   }).join('');
   const gdHeaders = showGD ? `<th title="Goals for">GF</th><th title="Goals against">GA</th><th title="Goal difference">GD</th>` : '';
   return `<div class="group-table-card"><div class="group-table-header">Group ${grp}</div><div class="group-table"><table><thead><tr><th class="th-team">Team</th><th title="Played">P</th><th title="Won">W</th><th title="Drawn">D</th><th title="Lost">L</th>${gdHeaders}<th title="Points">Pts</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
