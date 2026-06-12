@@ -47,6 +47,7 @@ If `index.lock` error: `rm ~/Documents/GitHub/wc26/.git/index.lock` first.
 | `test_e2e.js` | JS end-to-end: 10-user full-tournament + 105 invariant checks |
 | `test_bracket.py` | Bracket + standings end-to-end (all 495 3rd-place combos) |
 | `.github/workflows/ci.yml` | CI: runs all four test suites on every push/PR |
+| `live_scores_test_plan.md` | Manual test plan for live scores + pulsing feature (phases 1–4 + console sim) |
 
 ---
 
@@ -167,6 +168,19 @@ No `border-top` divider — row separation comes from `margin-top` only.
 **Standings:** Points, rank, and all aggregate numbers stay frozen during live. Only squares change color. (May extend to preview standings in future.)
 
 **Scope:** Group stage only for now. KO live scores to be added later — same architecture applies.
+
+**Diagnostics (DevTools console):**
+```js
+document.querySelectorAll('.sq-live-correct, .sq-live-wrong').length  // should be > 0 while game is live
+_liveData[matchNum]       // { homeScore, awayScore, state, minute }
+_lastResults?.[matchNum]  // undefined = CSV not updated yet
+_bridgeScores[matchNum]   // { homeScore, awayScore } — persists after ESPN drops event
+_pendingResults.size      // > 0 = waiting for CSV confirmation
+_livePoller               // null = stopped; number = interval ID (running)
+renderStandings(_lastStandings, _liveData);  // force re-render if squares look wrong
+```
+
+**Known behavior:** On the `in → post` transition, there is a brief window where squares may flash solid before the bridge re-injects the last known score. This resolves within one poll cycle (≤60s). See `live_scores_test_plan.md` for the full manual test checklist.
 
 **KO bracket live treatment (planned):** During a live KO match, both team rows in the bracket card pulse (1→0.3→1, 1.8s). Currently winning team: pulsing solid blue (same as final winner style). Currently losing team: pulsing muted/transparent (same as final loser style). Minute shown pulsing in `.bk-mnum` alongside the match number. On FT, both rows snap to solid winner/loser state.
 
