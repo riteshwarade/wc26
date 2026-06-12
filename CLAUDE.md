@@ -154,7 +154,7 @@ No `border-top` divider — row separation comes from `margin-top` only.
 
 ## Live scores (leaderboard — group stage)
 
-> **Not yet built.** Planned feature — spec below.
+> **Built.** Group stage only; KO live scores planned for later.
 
 **Toggle:** `const LIVE_SCORES_ENABLED = true/false` at the top of the leaderboard JS. Off = no ESPN fetch, no live UI. This is an internal dev toggle, not a URL param.
 
