@@ -160,7 +160,7 @@ No `border-top` divider — row separation comes from `margin-top` only.
 
 **Data:** Client-side ESPN fetch (`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=YYYYMMDD`). Polls every ~60s while any match is in-progress (`status.type.state === 'in'`). Stops polling when all today's matches are `post`. Uses existing ESPN name mapping (`ESPN_TEAM_MAP`).
 
-**Pick statuses (new):** `live-correct` and `live-wrong` — evaluated against current live score, same logic as `correct`/`wrong` but applied only while game is in progress. No `live-draw` — the current score implies exactly one of W1/Draw/W2; the pick either matches or doesn't. Squares render at ~35% opacity.
+**Pick statuses (new):** `live-correct` and `live-wrong` — evaluated against current live score, same logic as `correct`/`wrong` but applied only while game is in progress. No `live-draw` — the current score implies exactly one of W1/Draw/W2; the pick either matches or doesn't. Squares pulse (opacity 1→0.3→1, 1.8s) in their full colors (blue for live-correct, red for live-wrong) — same animation as the results table time/score cells. Once final, squares snap to solid.
 
 **Results table:** For in-progress matches, the time cell shows the current minute (e.g. `67′`) and the score cell shows the live score — both pulsing (opacity 1→0.3→1, 1.8s) in default text color. No red. Scheduled rows unchanged. Final rows show `FT` in time cell + solid score.
 

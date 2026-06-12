@@ -743,7 +743,7 @@ All 4 pages are mobile-friendly. Two breakpoints:
 
 - **Toggle:** `const LIVE_SCORES_ENABLED` in leaderboard JS (internal flag, not URL param)
 - **Data:** Client-side ESPN fetch, polling every ~60s while games are in-progress
-- **Squares:** New `live-correct` / `live-wrong` statuses at ~35% opacity while game is live; solid once final
+- **Squares:** New `live-correct` / `live-wrong` statuses — pulse in full color (blue/red) while game is live; snap to solid once final
 - **Results table:** In-progress rows show current minute in time cell + live score — both pulse in default text color; `FT` shown once final
 - **Standings:** Frozen during live — only squares change
 - **Scope:** Group stage only; KO live scores planned for later (same architecture)
