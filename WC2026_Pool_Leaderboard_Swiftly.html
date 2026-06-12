@@ -947,9 +947,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
         data-match="M${m}" data-teams="${_esc(teamsStr)}"
         data-pick="${_esc(pickStr)}" data-result="${_esc(resultStr)}" data-status="${pr.status}"></span>`;
       koSquareParts.push(koSqHtml);
-      if (koMobMatchNums.has(m)) koMobSquareParts.push(`<span class="sq sq-sm sq-${pr.status}"
-        data-match="M${m}" data-teams="${_esc(teamsStr)}"
-        data-pick="${_esc(pickStr)}" data-result="${_esc(resultStr)}" data-status="${pr.status}"></span>`);
+      if (koMobMatchNums.has(m)) koMobSquareParts.push(koSqHtml.replace('class="sq sq-', 'class="sq sq-sm sq-'));
       if (KO_ROUND_BREAKS.has(m)) koSquareParts.push('<span class="sq-divider"></span>');
     }
     const koSquares = koSquareParts.join('');
