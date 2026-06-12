@@ -389,6 +389,8 @@ Each piece of shared data has exactly one canonical source. All other copies mus
 
 Group `pickResults[num].status`: `correct` · `correct-upset` · `wrong` · `pending` (result not yet in) · `empty` (no pick made)
 
+**`empty` behavior:** `.sq-empty` renders as a faint outlined square (transparent fill, `1px solid var(--neutral-light)`). Tooltip hides the "Your pick" line and shows "— No pick". `pickResults[num].result` is populated even for empty picks (so the tooltip shows the actual score if the game was played). To make a participant a late joiner, blank their pick in the CSV for already-played matches — `aggregate_picks.py` skips empty pick fields, leaving the key absent from the JSON, which `computeStandings` treats as `empty`.
+
 KO `koPickResults[num].status`: same five + `cascaded` (team already eliminated, pick voids)
 
 ### Upset detection (`correct-upset`)
