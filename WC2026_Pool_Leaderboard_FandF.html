@@ -862,6 +862,7 @@ let _lastStandings  = null;
 let _lastResults    = null;
 let _inInit         = false; // guard: prevents fetchLiveScores from re-entering init()
 let _pendingResults = new Set(); // matches where ESPN said game ended but CSV not yet confirmed
+let _bridgeScores  = {};         // last known score per match — keeps squares pulsing after ESPN drops the event
 let _lastGrpCounts  = null;
 let _livePoller     = null;
 // ──────────────────────────────────────────────────────────
@@ -2388,6 +2389,16 @@ async function fetchLiveScores() {
       if (state === 'in') anyIn = true;
       // Track games ESPN says are finished but CSV hasn't confirmed yet
       if (state === 'post' && (!_lastResults || !_lastResults[num])) _pendingResults.add(num);
+      // Always persist latest score so we can keep squares pulsing after ESPN drops the event
+      _bridgeScores[num] = { homeScore: h, awayScore: a };
+    }
+
+    // For pending matches ESPN has already dropped, re-inject last known score into newLive
+    // so _liveData stays populated and squares keep pulsing through the bridge period.
+    for (const num of _pendingResults) {
+      if (!newLive[num] && _bridgeScores[num] && (!_lastResults || !_lastResults[num])) {
+        newLive[num] = { ..._bridgeScores[num], state: 'post', minute: '' };
+      }
     }
 
     // Drop post-game entries already confirmed by CSV — no need to bridge anymore
@@ -2397,7 +2408,7 @@ async function fetchLiveScores() {
       }
       // Also clear any pending matches that CSV has now confirmed
       for (const num of _pendingResults) {
-        if (_lastResults[num]) _pendingResults.delete(num);
+        if (_lastResults[num]) { _pendingResults.delete(num); delete _bridgeScores[num]; }
       }
     }
 
