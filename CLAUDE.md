@@ -158,7 +158,7 @@ No `border-top` divider — row separation comes from `margin-top` only.
 
 **Toggle:** `const LIVE_SCORES_ENABLED = true/false` at the top of the leaderboard JS. Off = no ESPN fetch, no live UI. This is an internal dev toggle, not a URL param.
 
-**Data:** Client-side ESPN fetch (`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=YYYYMMDD`). Polls every ~60s while any match is in-progress (`status.type.state === 'in'`). Stops polling when all today's matches are `post`. Uses existing ESPN name mapping (`ESPN_TEAM_MAP`).
+**Data:** Client-side ESPN fetch (`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=YYYYMMDD`). Polls every ~60s while any match is in-progress (`status.type.state === 'in'`). Stops polling when all today's matches are `post`. Uses existing ESPN name mapping (`ESPN_TEAM_MAP`). **ESPN indexes matches by ET date, not UTC** — fetches yesterday + today UTC to catch late ET games (e.g. 10 PM ET = 2 AM UTC next day).
 
 **Pick statuses (new):** `live-correct` and `live-wrong` — evaluated against current live score, same logic as `correct`/`wrong` but applied only while game is in progress. No `live-draw` — the current score implies exactly one of W1/Draw/W2; the pick either matches or doesn't. Squares pulse (opacity 1→0.3→1, 1.8s) in their full colors (blue for live-correct, red for live-wrong) — same animation as the results table time/score cells. Once final, squares snap to solid.
 
