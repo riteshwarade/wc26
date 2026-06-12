@@ -2368,8 +2368,9 @@ async function fetchLiveScores() {
       const clock = event.status?.displayClock || '';
       const minute = clock === 'HT' ? 'HT' : (clock.split(':')[0] || '');
 
-      // Detect in→post transition: trigger init() immediately to pick up CSV result
-      if (state === 'post' && _liveData[num]?.state === 'in') setTimeout(init, 0);
+      // Detect in→post transition: if we're inside init() we can't call it directly,
+      // so queue via setTimeout. Otherwise the bridge code below handles it.
+      if (state === 'post' && _liveData[num]?.state === 'in' && _inInit) setTimeout(init, 0);
 
       newLive[num] = { minute, homeScore: h, awayScore: a, state };
       if (state === 'in') anyIn = true;
