@@ -2337,7 +2337,13 @@ document.addEventListener('mouseover', e => {
     <div class="tt-status ${ttStatusCls}"></div>
   `;
   tooltip.querySelector('.tt-match').textContent   = `Match ${match} · ${teams}`;
-  tooltip.querySelector('.tt-pick strong').textContent = pick;
+  const pickEl = tooltip.querySelector('.tt-pick');
+  if (status === 'empty') {
+    pickEl.style.display = 'none';
+  } else {
+    pickEl.style.display = '';
+    pickEl.querySelector('strong').textContent = pick;
+  }
   tooltip.querySelector('.tt-result').textContent  = `Result: ${result}`;
   tooltip.querySelector('.tt-status').textContent  = statusText;
   tooltip.style.display = 'block';
