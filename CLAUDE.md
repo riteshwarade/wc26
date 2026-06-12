@@ -200,7 +200,7 @@ _livePoller               // null = stopped; number = interval ID (running)
 renderStandings(_lastStandings, _liveData);  // force re-render if squares look wrong
 ```
 
-**Known behavior:** On the `in → post` transition, there is a brief window where squares may flash solid before the bridge re-injects the last known score. This resolves within one poll cycle (≤60s). See `live_scores_test_plan.md` for the full manual test checklist.
+**Known behavior (fixed):** Previously, `stopLivePolling()` was called immediately when a game ended, creating a gap before the bridge restarted polling. Fixed: during the bridge period (`_pendingResults.size > 0`), the polling interval is never stopped — it keeps running and `init()` is called each cycle to re-check the CSV. Polling only stops when `_pendingResults` is empty (all results CSV-confirmed). See `live_scores_test_plan.md` for the full manual test checklist.
 
 **KO bracket live treatment (planned):** During a live KO match, both team rows in the bracket card pulse (1→0.3→1, 1.8s). Currently winning team: pulsing solid blue (same as final winner style). Currently losing team: pulsing muted/transparent (same as final loser style). Minute shown pulsing in `.bk-mnum` alongside the match number. On FT, both rows snap to solid winner/loser state.
 
