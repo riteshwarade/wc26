@@ -13,6 +13,12 @@ Full design doc: `WC2026_Pool_Plan.md`
 
 ## Hard rules
 
+**After every design or technical change, update docs:**
+- `CLAUDE.md` — update the relevant section (architecture, behavior, CSS rules, known gotchas, etc.)
+- `WC2026_Pool_Plan.md` — prepend a row to the Changelog table with today's date and a concise summary of what changed and why
+
+Do this at the end of every session where code, behavior, or architecture changed. Don't wait to be asked.
+
 **Never edit `WC2026_Pool_Leaderboard_FandF.html` directly.**
 Always edit `WC2026_Pool_Leaderboard_Swiftly.html`, then run:
 ```
