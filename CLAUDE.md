@@ -324,14 +324,15 @@ git pull --rebase && git push
 ```
 Set once to avoid the prompt: `git config --global pull.rebase true`
 
-**GitHub Actions schedule reliability** — GitHub throttles high-frequency cron jobs on low-traffic repos. The 5-min schedule may silently skip runs. Workaround: use **cron-job.org** to externally trigger the workflow via `workflow_dispatch`. TODO (planned):
-1. Create a GitHub PAT with `Actions: write` scope
-2. On cron-job.org, create a job that POSTs every 5 min to:
-   ```
-   https://api.github.com/repos/riteshwarade/wc26/actions/workflows/update.yml/dispatches
-   ```
-   with header `Authorization: Bearer <PAT>` and body `{"ref":"main"}`
-Until this is set up: manually trigger the `update` workflow from GitHub Actions after big games end.
+**GitHub Actions schedule reliability** — GitHub throttles high-frequency cron jobs on low-traffic repos. The 5-min schedule may silently skip runs. Fix: **cron-job.org** externally triggers the workflow via `workflow_dispatch` every 5 min — this is live and running. The GitHub native cron is set to 10 min as a fallback only.
+
+Setup (already done):
+- GitHub PAT `wc26-cron-trigger` with `Actions: write` on `wc26` repo — **expires 2026-08-11**, regenerate before then
+- cron-job.org job `wc26-update` POSTs every 5 min to:
+  ```
+  https://api.github.com/repos/riteshwarade/wc26/actions/workflows/update.yml/dispatches
+  ```
+  with headers `Authorization: Bearer <PAT>`, `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28` and body `{"ref":"main"}`
 
 ---
 
