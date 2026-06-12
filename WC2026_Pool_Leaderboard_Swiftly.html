@@ -2323,6 +2323,7 @@ document.addEventListener('mouseover', e => {
                    : status === 'pending'        ? '⏳ Pending'
                    : status === 'live-correct'   ? '🔴 Live · correct so far'
                    : status === 'live-wrong'     ? '🔴 Live · wrong so far'
+                   : status === 'empty'         ? '— No pick'
                    : '—';
 
   const ttStatusCls = status === 'correct-upset' ? 'correct'
