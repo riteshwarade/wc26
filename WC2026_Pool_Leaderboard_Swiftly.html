@@ -861,6 +861,7 @@ let _liveData       = {};   // { matchNum: { minute, homeScore, awayScore, state
 let _lastStandings  = null;
 let _lastResults    = null;
 let _inInit         = false; // guard: prevents fetchLiveScores from re-entering init()
+let _pendingResults = new Set(); // matches where ESPN said game ended but CSV not yet confirmed
 let _lastGrpCounts  = null;
 let _livePoller     = null;
 // ──────────────────────────────────────────────────────────
@@ -2368,18 +2369,20 @@ async function fetchLiveScores() {
       const clock = event.status?.displayClock || '';
       const minute = clock === 'HT' ? 'HT' : (clock.split(':')[0] || '');
 
-      // Detect in→post transition: if we're inside init() we can't call it directly,
-      // so queue via setTimeout. Otherwise the bridge code below handles it.
-      if (state === 'post' && _liveData[num]?.state === 'in' && _inInit) setTimeout(init, 0);
-
       newLive[num] = { minute, homeScore: h, awayScore: a, state };
       if (state === 'in') anyIn = true;
+      // Track games ESPN says are finished but CSV hasn't confirmed yet
+      if (state === 'post' && (!_lastResults || !_lastResults[num])) _pendingResults.add(num);
     }
 
     // Drop post-game entries already confirmed by CSV — no need to bridge anymore
     if (_lastResults) {
       for (const num of Object.keys(newLive)) {
         if (_lastResults[Number(num)]) delete newLive[Number(num)];
+      }
+      // Also clear any pending matches that CSV has now confirmed
+      for (const num of _pendingResults) {
+        if (_lastResults[num]) _pendingResults.delete(num);
       }
     }
 
@@ -2391,14 +2394,13 @@ async function fetchLiveScores() {
       renderResults(_lastResults, _lastGrpCounts, _liveData);
     }
 
-    // Stop polling (or switch to bridge polling) once no in-progress matches remain
+    // Stop polling once nothing is live.
+    // If games have ended but CSV not confirmed yet (_pendingResults), keep bridge polling
+    // via init() — which re-fetches CSV each cycle. This persists even if ESPN stops
+    // returning the post-game event (which it does within minutes of FT).
     if (!anyIn) {
       stopLivePolling();
-      // Bridge state: game ended but CSV not confirmed yet.
-      // Call init() to re-fetch CSV so standings + points update when results land.
-      // Guard _inInit so we don't recurse when fetchLiveScores is called from inside init().
-      const hasBridge = Object.values(newLive).some(lm => lm.state === 'post');
-      if (hasBridge && !_inInit) init();
+      if (_pendingResults.size > 0 && !_inInit) init();
     }
 
   } catch (e) { /* silent — live scores are best-effort */ }
@@ -2488,7 +2490,7 @@ async function init() {
       // Kick off live polling (fetches ESPN, starts interval if games are live)
       if (LIVE_SCORES_ENABLED) {
         fetchLiveScores().then(() => {
-          if (Object.keys(_liveData).length > 0) startLivePolling();
+          if (Object.keys(_liveData).length > 0 || _pendingResults.size > 0) startLivePolling();
         });
       }
     }
