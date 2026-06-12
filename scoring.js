@@ -240,7 +240,7 @@ function computeStandings(picksData, results) {
       } else if (pick) {
         pickResults[num] = { status: 'pending', pick, result: null };
       } else {
-        pickResults[num] = { status: 'empty', pick: null, result: null };
+        pickResults[num] = { status: 'empty', pick: null, result: result || null };
       }
     });
     return { name, points, pickResults };
