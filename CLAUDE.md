@@ -163,6 +163,16 @@ No `border-top` divider — row separation comes from `margin-top` only.
 
 ---
 
+## Mobile recent-squares column (leaderboard)
+
+A `.td-mob-sq` / `.th-mob-sq` column is hidden on desktop and revealed at `max-width: 640px`. Shows the **last 5 squares** for the current stage only — no carryover between group and KO.
+
+- **Group mode** (`renderStandings`): last 5 of `MATCHES` (M1–M72). `mobMatchNums = new Set(MATCHES.slice(-5).map(([num]) => num))`. Squares reuse the same `sq-sm` + live-correct/live-wrong pulsing logic as the full squares column. `MOB_LAST = 5`.
+- **KO mode** (`renderKoStandings`): last 5 of `KO_MATCH_ORDER` (M100–M104 = QF4/SF1/SF2/3rd/Final). Uses `sq-sm` size. No live override yet (KO live scores not built). `KO_MOB_LAST = 5`.
+- Column header: `Recent`. Tooltip data attributes are present on every mob square — existing tooltip handler works automatically.
+
+---
+
 ## Live scores (leaderboard — group stage)
 
 > **Built.** Group stage only; KO live scores planned for later.
@@ -200,7 +210,7 @@ renderStandings(_lastStandings, _liveData);  // force re-render if squares look 
 
 Two media queries govern mobile layout:
 
-- **Portrait** — `@media (max-width: 640px)`: stacks group tables/results, hides squares + max-pts columns, hides date/time/# in results table, shows mobile bracket tabs.
+- **Portrait** — `@media (max-width: 640px)`: stacks group tables/results, hides squares + max-pts columns, hides date/time/# in results table, shows mobile bracket tabs. Also reveals `.th-mob-sq` / `.td-mob-sq` — the last-5 recent squares column (see below).
 - **Landscape** — `@media (max-width: 896px) and (orientation: landscape)`: stacks group tables/results (same order as portrait); standings card is `overflow-x: auto` (horizontally scrollable). Landscape phones (~667–896px wide) miss the 640px portrait breakpoint entirely, hence the separate query.
 
 ---

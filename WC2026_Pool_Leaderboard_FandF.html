@@ -283,6 +283,10 @@
   .sq-live-wrong   { background: var(--swiftly-red);  animation: sq-pulse 1.8s ease-in-out infinite; }
   .live-pulse      { animation: sq-pulse 1.8s ease-in-out infinite; font-weight: 500; }
 
+  /* ── Mobile recent-squares column (last 5, current stage only) ── */
+  .th-mob-sq, .td-mob-sq { display: none; }
+  .sq-row-mob { display: flex; gap: 2px; align-items: center; justify-content: center; }
+
   /* ── Tooltip ── */
   #sq-tooltip {
     position: fixed;
@@ -746,6 +750,8 @@
     .th-grp-pts, .td-grp-pts   { display: none; }
     .th-ko-pts,  .td-ko-pts    { display: none; }
     .td-name                   { white-space: normal; }
+    /* Show recent-squares column on mobile */
+    .th-mob-sq, .td-mob-sq     { display: table-cell; }
 
     /* Results table: hide # date & time columns; score stays pinned */
     .th-date, .td-date, .th-time, .td-time { display: none; }
@@ -920,6 +926,8 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
 
   const KO_MATCH_ORDER = [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,
                            89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104];
+  const KO_MOB_LAST = 5;
+  const koMobMatchNums = new Set(KO_MATCH_ORDER.slice(-KO_MOB_LAST));
 
   let rank = 1, prevPts = null, rows = '';
   combinedStandings.forEach((p, i) => {
@@ -928,19 +936,24 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
 
     // KO squares (32 matches) with round dividers after R32/R16/QF/SF
     const KO_ROUND_BREAKS = new Set([88, 96, 100, 102, 103]);
-    const koSquareParts = [];
+    const koSquareParts = [], koMobSquareParts = [];
     for (const m of KO_MATCH_ORDER) {
       const pr = p.koPickResults[m] || { status: 'empty', pick: null, winner: null };
       const [t1, t2] = bracketData ? getKoTeams(m, bracketData, koResults) : ['TBD','TBD'];
       const teamsStr = `${t1} v ${t2}`;
       const pickStr = pr.pick || '—';
       const resultStr = pr.winner || 'Not played yet';
-      koSquareParts.push(`<span class="sq sq-${pr.status}"
+      const koSqHtml = `<span class="sq sq-${pr.status}"
+        data-match="M${m}" data-teams="${_esc(teamsStr)}"
+        data-pick="${_esc(pickStr)}" data-result="${_esc(resultStr)}" data-status="${pr.status}"></span>`;
+      koSquareParts.push(koSqHtml);
+      if (koMobMatchNums.has(m)) koMobSquareParts.push(`<span class="sq sq-sm sq-${pr.status}"
         data-match="M${m}" data-teams="${_esc(teamsStr)}"
         data-pick="${_esc(pickStr)}" data-result="${_esc(resultStr)}" data-status="${pr.status}"></span>`);
       if (KO_ROUND_BREAKS.has(m)) koSquareParts.push('<span class="sq-divider"></span>');
     }
     const koSquares = koSquareParts.join('');
+    const koMobSquares = koMobSquareParts.join('');
 
     const champPr = p.koPickResults[104] || { status: 'empty', pick: null };
     const champName = champPr.pick || '—';
@@ -959,6 +972,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
       <td class="td-total-pts">${p.totalPts}</td>
       <td class="td-max-pts">${p.maxPts}</td>
       <td class="td-squares"><div class="squares-wrap">${koSquares}${champLabel}</div></td>
+      <td class="td-mob-sq"><div class="sq-row-mob">${koMobSquares}</div></td>
     </tr>`;
   });
 
@@ -976,6 +990,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
               <th class="th-total-pts">Total</th>
               <th class="th-max-pts">Max</th>
               <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · red italic = cascaded void · empty = pending)</span></th>
+              <th class="th-mob-sq">Recent</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -1150,11 +1165,13 @@ function renderStandings(standings, liveData = {}) {
   if (lbl) lbl.innerHTML = `Standings <span class="standings-count">${standings.length} players</span>`;
 
   const GRP_ROUND_BREAKS = new Set([24, 48]);
+  const MOB_LAST = 5;
+  const mobMatchNums = new Set(MATCHES.slice(-MOB_LAST).map(([num]) => num));
   let rank = 1, prevPts = null, rows = '';
   standings.forEach((p, i) => {
     if (p.points !== prevPts) { rank = i + 1; prevPts = p.points; }
     const topClass = rank <= 3 ? ' top3' : '';
-    const squareParts = [];
+    const squareParts = [], mobSquareParts = [];
     for (const [num, , , , t1, t2] of MATCHES) {
       const pr = p.pickResults[num] || { status: 'empty', pick: null, result: null };
       const myPick = pr.pick ? pickLabel(pr.pick, t1, t2) : '—';
@@ -1169,17 +1186,21 @@ function renderStandings(standings, liveData = {}) {
         const cur = lm.homeScore > lm.awayScore ? 'W1' : lm.awayScore > lm.homeScore ? 'W2' : 'Draw';
         sqStatus = pr.pick === cur ? 'live-correct' : 'live-wrong';
       }
-      squareParts.push(`<span class="sq sq-sm sq-${sqStatus}"
+      const sqHtml = `<span class="sq sq-sm sq-${sqStatus}"
         data-match="${num}" data-teams="${_esc(`${t1} v ${t2}`)}"
-        data-pick="${_esc(myPick)}" data-result="${_esc(res)}" data-status="${sqStatus}"></span>`);
+        data-pick="${_esc(myPick)}" data-result="${_esc(res)}" data-status="${sqStatus}"></span>`;
+      squareParts.push(sqHtml);
+      if (mobMatchNums.has(num)) mobSquareParts.push(sqHtml);
       if (GRP_ROUND_BREAKS.has(num)) squareParts.push('<span class="sq-divider-sm"></span>');
     }
     const squares = squareParts.join('');
+    const mobSquares = mobSquareParts.join('');
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
       <td class="td-name">${_esc(_abbrevName(p.name))}</td>
       <td class="td-points">${p.points}</td>
       <td class="td-squares"><div class="squares-wrap nowrap">${squares}</div></td>
+      <td class="td-mob-sq"><div class="sq-row-mob">${mobSquares}</div></td>
     </tr>`;
   });
 
@@ -1191,6 +1212,7 @@ function renderStandings(standings, liveData = {}) {
           <th>Name</th>
           <th>Pts</th>
           <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · empty = pending)</span></th>
+          <th class="th-mob-sq">Recent</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
