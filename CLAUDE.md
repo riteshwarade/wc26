@@ -162,7 +162,7 @@ No `border-top` divider — row separation comes from `margin-top` only.
 
 **Pick statuses (new):** `live-correct` and `live-wrong` — evaluated against current live score, same logic as `correct`/`wrong` but applied only while game is in progress. No `live-draw` — the current score implies exactly one of W1/Draw/W2; the pick either matches or doesn't. Squares pulse (opacity 1→0.3→1, 1.8s) in their full colors (blue for live-correct, red for live-wrong) — same animation as the results table time/score cells. Once final, squares snap to solid.
 
-**Results table:** For in-progress matches, the time cell shows the current minute (e.g. `67′`) and the score cell shows the live score — both pulsing (opacity 1→0.3→1, 1.8s) in default text color. No red. Scheduled rows unchanged. Final rows show `FT` in time cell + solid score.
+**Results table:** For in-progress matches, the time cell shows the current minute (e.g. `67′`) and the score cell shows the live score — both pulsing (opacity 1→0.3→1, 1.8s) in default text color. No red. Scheduled rows unchanged. Final rows show `FT` in time cell + solid score. The Correct column also pulses during live matches; its count is computed on the fly from `_lastStandings` + current live score (not from `grpCounts`, which only tracks finalized `correct`/`wrong` statuses).
 
 **Standings:** Points, rank, and all aggregate numbers stay frozen during live. Only squares change color. (May extend to preview standings in future.)
 
