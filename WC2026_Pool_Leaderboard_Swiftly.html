@@ -358,7 +358,8 @@
   .res-loser    { color: var(--neutral-dark); white-space: nowrap; }
   .res-verb     { font-size: 0.75rem; font-style: italic; color: var(--neutral-dark); margin: 0 5px; }
   .res-row-upcoming { opacity: 0.45; }
-  .td-score     { font-weight: 700; color: var(--neutral-dark); white-space: nowrap; width: 1%; }
+  .td-score     { font-weight: 700; color: var(--neutral-dark); white-space: nowrap; width: 1%; text-align: center; }
+  .td-correct   { width: 1%; white-space: nowrap; text-align: center; }
 
   /* ── Side-by-side layout ── */
   .side-by-side-layout {
@@ -523,7 +524,6 @@
   .cp-hi   { background: #d4f0fb; color: #00628a; }
   .cp-mid  { background: #fff0d0; color: #a05800; }
   .cp-lo   { background: #fce0e7; color: #b3003d; }
-  .td-score .cp-pill { margin-left: 8px; }
   .bk-team {
     display: flex;
     align-items: center;
@@ -1253,7 +1253,7 @@ function renderResults(results, grpCounts, liveData = {}) {
   const rows = MATCHES.map(([num, grp, date, time, t1, t2]) => {
     const r = results[num];
     const lm = liveData[num];
-    let resultCell, scoreCell, timeCell;
+    let resultCell, scoreCell, timeCell, correctCell = '';
     if (lm) {
       // In-progress: show live score + pulsing minute, no winner/loser styling yet
       resultCell = `${teamHtml(t1)} v ${teamHtml(t2)}`;
@@ -1268,8 +1268,9 @@ function renderResults(results, grpCounts, liveData = {}) {
                  + `<span class="res-verb">drew</span>`
                  + `<span class="res-loser">${teamHtml(t2)}</span>`;
       const c = grpCounts && grpCounts[num];
-      scoreCell  = `${r.home} – ${r.away}${c ? ' ' + correctnessPill(c.correct, c.total) : ''}`;
-      timeCell   = 'FT';
+      scoreCell   = `${r.home} – ${r.away}`;
+      correctCell = c ? correctnessPill(c.correct, c.total) : '';
+      timeCell    = 'FT';
     } else {
       const [winner, loser] = r.outcome === 'W1' ? [t1, t2] : [t2, t1];
       resultCell = `<span class="res-winner">${teamHtml(winner)}</span>`
@@ -1277,8 +1278,9 @@ function renderResults(results, grpCounts, liveData = {}) {
                  + `<span class="res-loser">${teamHtml(loser)}</span>`;
       const score = r.outcome === 'W2' ? `${r.away} – ${r.home}` : `${r.home} – ${r.away}`;
       const c = grpCounts && grpCounts[num];
-      scoreCell  = `${score}${c ? ' ' + correctnessPill(c.correct, c.total) : ''}`;
-      timeCell   = 'FT';
+      scoreCell   = score;
+      correctCell = c ? correctnessPill(c.correct, c.total) : '';
+      timeCell    = 'FT';
     }
     return `<tr class="${r || lm ? '' : 'res-row-upcoming'}">
       <td class="td-match-num">${num}</td>
@@ -1287,6 +1289,7 @@ function renderResults(results, grpCounts, liveData = {}) {
       <td class="td-time">${timeCell}</td>
       <td class="td-result-cell">${resultCell}</td>
       <td class="td-score">${scoreCell}</td>
+      <td class="td-correct">${correctCell}</td>
     </tr>`;
   }).join('');
 
@@ -1299,7 +1302,8 @@ function renderResults(results, grpCounts, liveData = {}) {
           <th class="th-date">Date</th>
           <th class="th-time">Time (${_tzAbbr})</th>
           <th>Result</th>
-          <th>Score</th>
+          <th style="text-align:center">Score</th>
+          <th style="text-align:center">Correct</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
