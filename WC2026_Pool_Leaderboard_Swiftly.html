@@ -930,13 +930,13 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
   const KO_MOB_LAST = 5;
   const koMobMatchNums = new Set(KO_MATCH_ORDER.slice(-KO_MOB_LAST));
 
+  const KO_ROUND_BREAKS = new Set([88, 96, 100, 102]); // dividers after R32/R16/QF/SF; 103 removed (trailing divider after 3rd-place)
   let rank = 1, prevPts = null, rows = '';
   combinedStandings.forEach((p, i) => {
     if (p.totalPts !== prevPts) { rank = i + 1; prevPts = p.totalPts; }
     const topClass = rank <= 3 ? ' top3' : '';
 
     // KO squares (32 matches) with round dividers after R32/R16/QF/SF
-    const KO_ROUND_BREAKS = new Set([88, 96, 100, 102, 103]);
     const koSquareParts = [], koMobSquareParts = [];
     for (const m of KO_MATCH_ORDER) {
       const pr = p.koPickResults[m] || { status: 'empty', pick: null, winner: null };
@@ -1295,7 +1295,10 @@ function renderResults(results, grpCounts, liveData = {}) {
       const isLive  = lm.state === 'in';
       const pulse   = s => isLive ? `<span class="live-pulse">${s}</span>` : s;
       resultCell  = `${teamHtml(t1)} v ${teamHtml(t2)}`;
-      scoreCell   = pulse(`${lm.homeScore} – ${lm.awayScore}`);
+      const liveScore = cur === 'W2'
+        ? `${lm.awayScore} – ${lm.homeScore}`
+        : `${lm.homeScore} – ${lm.awayScore}`;
+      scoreCell   = pulse(liveScore);
       timeCell    = isLive ? `<span class="live-pulse">${lm.minute}′</span>` : 'FT';
       correctCell = liveTotal ? pulse(correctnessPill(liveCorrect, liveTotal)) : '';
     } else if (!r) {
@@ -2568,12 +2571,16 @@ async function init() {
     _revealSections();
 
   } catch (err) {
-    const msg = `<div class="state-msg"><span class="emoji">⚠️</span>${err.message}</div>`;
+    const errDiv = document.createElement('div');
+    errDiv.className = 'state-msg';
+    errDiv.innerHTML = '<span class="emoji">⚠️</span>';
+    errDiv.appendChild(document.createTextNode(err.message));
+    const msgHtml = errDiv.outerHTML;
     ['standingsCard','resultsCard','groupTablesCard','bracketCard','koBracketCard'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.innerHTML = msg;
+      if (el) el.innerHTML = msgHtml;
     });
-    document.getElementById('koStandingsSection').innerHTML = msg;
+    document.getElementById('koStandingsSection').innerHTML = msgHtml;
     document.getElementById('matchesPlayed').textContent = 'Could not load data';
     _revealSections();
   } finally {
