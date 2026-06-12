@@ -1258,7 +1258,7 @@ function renderResults(results, grpCounts, liveData = {}) {
       // In-progress: show live score + pulsing minute, no winner/loser styling yet
       const c = grpCounts && grpCounts[num];
       resultCell  = `${teamHtml(t1)} v ${teamHtml(t2)}`;
-      scoreCell   = `<span class="live-pulse">${lm.homeScore}–${lm.awayScore}</span>`;
+      scoreCell   = `<span class="live-pulse">${lm.homeScore} – ${lm.awayScore}</span>`;
       timeCell    = `<span class="live-pulse">${lm.minute}′</span>`;
       correctCell = c ? `<span class="live-pulse">${correctnessPill(c.correct, c.total)}</span>` : '';
     } else if (!r) {
