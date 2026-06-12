@@ -2314,11 +2314,13 @@ const ESPN_SCOREBOARD = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fi
 async function fetchLiveScores() {
   if (!LIVE_SCORES_ENABLED || knockoutMode) return;
   try {
-    // Fetch today AND tomorrow UTC — late-evening ET matches spill into the next UTC day
-    const now = new Date();
-    const tom = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const d1  = now.toISOString().slice(0, 10).replace(/-/g, '');
-    const d2  = tom.toISOString().slice(0, 10).replace(/-/g, '');
+    // ESPN indexes matches by local ET date, not UTC.
+    // A 10 PM ET match = 2 AM UTC next day, so at live time the UTC date is already "tomorrow".
+    // Fetch yesterday + today UTC to catch any match that is currently live.
+    const now  = new Date();
+    const yest = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const d1   = yest.toISOString().slice(0, 10).replace(/-/g, '');
+    const d2   = now.toISOString().slice(0, 10).replace(/-/g, '');
     const [r1, r2] = await Promise.all([
       fetch(`${ESPN_SCOREBOARD}?dates=${d1}`),
       fetch(`${ESPN_SCOREBOARD}?dates=${d2}`),
