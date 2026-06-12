@@ -735,6 +735,21 @@ All 4 pages are mobile-friendly. Two breakpoints:
 
 **FandF rule:** `make_fandf.py` regenerates FandF from Swiftly — all mobile CSS propagates automatically. Never edit FandF directly.
 
+---
+
+### Planned: live scores (group stage)
+
+> Not yet built. Full spec in CLAUDE.md.
+
+- **Toggle:** `const LIVE_SCORES_ENABLED` in leaderboard JS (internal flag, not URL param)
+- **Data:** Client-side ESPN fetch, polling every ~60s while games are in-progress
+- **Squares:** New `live-correct` / `live-wrong` statuses at ~35% opacity while game is live; solid once final
+- **Results table:** In-progress rows show current minute in time cell + live score — both pulse in default text color; `FT` shown once final
+- **Standings:** Frozen during live — only squares change
+- **Scope:** Group stage only; KO live scores planned for later (same architecture)
+
+---
+
 ### Layout
 
 All pages: `<header>` → `<div.sticky-bar>` → `<div.container>` (max-width 1200px, padding 24px 16px 64px). Picks form uses a two-column layout inside container: sidebar 380px fixed + main `flex: 1`.
