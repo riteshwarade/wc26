@@ -2179,7 +2179,7 @@ function computeGroupStandings(results) {
   GRP_MATCHES.forEach(([num,grp,t1,t2]) => {
     [t1,t2].forEach(t => { if (!stats[t]) stats[t] = {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0}; });
     if (!grpMatches[grp]) grpMatches[grp] = [];
-    grpMatches[grp].push([num,grp,t1,t2]);
+    grpMatches[grp].push([num,grp,null,null,t1,t2]); // positions 4&5 = t1,t2 to match h2hStats destructuring
     const r = results[num]; if (!r) return;
     stats[t1].P++; stats[t2].P++;
     stats[t1].GF += r.home; stats[t1].GA += r.away;
