@@ -2395,6 +2395,9 @@ function _showSqTooltip(sq) {
 }
 
 function _positionTooltipAtEl() {
+  tooltip.style.maxWidth = (window.innerWidth - 32) + 'px';
+  const colsEl = tooltip.querySelector('.tt-cols');
+  if (colsEl) colsEl.style.columnCount = Math.min(parseInt(colsEl.style.columnCount) || 1, 2);
   requestAnimationFrame(() => {
     const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
     tooltip.style.left = Math.round((window.innerWidth  - tw) / 2) + 'px';
