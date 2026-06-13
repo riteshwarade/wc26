@@ -526,7 +526,7 @@
     min-width: 0;
   }
   /* ── Correctness pill ── */
-  .cp-pill { display: inline-block; font-size: 0.62rem; font-weight: 600; padding: 1px 6px; border-radius: 20px; white-space: nowrap; line-height: 1.6; flex-shrink: 0; }
+  .cp-pill { display: inline-block; font-size: 0.62rem; font-weight: 600; padding: 1px 6px; border-radius: 20px; white-space: nowrap; line-height: 1.6; flex-shrink: 0; cursor: help; }
   .cp-hi   { background: #d4f0fb; color: #00628a; }
   .cp-mid  { background: #fff0d0; color: #a05800; }
   .cp-lo   { background: #fce0e7; color: #b3003d; }
@@ -1031,7 +1031,7 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts) {
     // Inject correctness pill into .bk-mnum as a flex row
     if (winner) {
       const c = koCounts && koCounts[m];
-      const pill = c ? correctnessPill(c.correct, c.total) : '';
+      const pill = c ? correctnessPill(c.correct, c.total, c.names) : '';
       cardHtml = cardHtml.replace(
         /(<div class="bk-mnum">)([\s\S]*?)(<\/div>)/,
         `$1<span class="bk-mnum-label">$2</span>${pill}$3`
@@ -1079,7 +1079,7 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts) {
     const aCls   = winner ? (winner === a ? ' bk-mob-win' : ' bk-mob-los') : '';
     const date   = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
     const c      = koCounts && koCounts[m];
-    const pill   = (winner && c) ? ' ' + correctnessPill(c.correct, c.total) : '';
+    const pill   = (winner && c) ? ' ' + correctnessPill(c.correct, c.total, c.names) : '';
     // Per-team score strings (shown on each row, not in meta)
     let hScTxt = '', aScTxt = '';
     if (sc) {
@@ -1250,11 +1250,12 @@ function localMatchTime(utcStr) {
 
 // ── Render match results ──────────────────────────────────
 // ── Correctness pill helpers ──────────────────────────────
-function correctnessPill(correct, total) {
+function correctnessPill(correct, total, names = []) {
   if (!total) return '';
   const pct = correct / total;
   const cls = pct >= 0.67 ? 'cp-hi' : pct >= 0.33 ? 'cp-mid' : 'cp-lo';
-  return `<span class="cp-pill ${cls}">${correct}/${total}</span>`;
+  const nameAttr = names.length ? ` data-cp-names="${_esc(names.join('|'))}"` : '';
+  return `<span class="cp-pill ${cls}"${nameAttr}>${correct}/${total}</span>`;
 }
 
 // Count correct/wrong per group match across all participants.
@@ -1265,9 +1266,9 @@ function buildGrpCounts(standings) {
     for (const [numStr, pr] of Object.entries(p.pickResults || {})) {
       const num = Number(numStr);
       if (pr.status === 'correct' || pr.status === 'wrong') {
-        if (!counts[num]) counts[num] = { correct: 0, total: 0 };
+        if (!counts[num]) counts[num] = { correct: 0, total: 0, names: [] };
         counts[num].total++;
-        if (pr.status === 'correct') counts[num].correct++;
+        if (pr.status === 'correct') { counts[num].correct++; counts[num].names.push(_abbrevName(p.name)); }
       }
     }
   }
@@ -1282,9 +1283,9 @@ function buildKoCounts(combined) {
     for (const [numStr, pr] of Object.entries(p.koPickResults || {})) {
       const num = Number(numStr);
       if (pr.status === 'correct' || pr.status === 'wrong') {
-        if (!counts[num]) counts[num] = { correct: 0, total: 0 };
+        if (!counts[num]) counts[num] = { correct: 0, total: 0, names: [] };
         counts[num].total++;
-        if (pr.status === 'correct') counts[num].correct++;
+        if (pr.status === 'correct') { counts[num].correct++; counts[num].names.push(_abbrevName(p.name)); }
       }
     }
   }
@@ -1299,11 +1300,11 @@ function renderResults(results, grpCounts, liveData = {}) {
     if (lm) {
       // Live or post-bridge: compute correct count from standings + current score
       const cur = lm.homeScore > lm.awayScore ? 'W1' : lm.awayScore > lm.homeScore ? 'W2' : 'Draw';
-      let liveCorrect = 0, liveTotal = 0;
+      let liveCorrect = 0, liveTotal = 0, liveNames = [];
       if (_lastStandings) {
         for (const p of _lastStandings) {
           const pr = p.pickResults && p.pickResults[num];
-          if (pr && pr.pick) { liveTotal++; if (pr.pick === cur) liveCorrect++; }
+          if (pr && pr.pick) { liveTotal++; if (pr.pick === cur) { liveCorrect++; liveNames.push(_abbrevName(p.name)); } }
         }
       }
       const isLive   = lm.state === 'in';
@@ -1324,7 +1325,7 @@ function renderResults(results, grpCounts, liveData = {}) {
         : `${lm.homeScore} – ${lm.awayScore}`;
       scoreCell   = pulse(liveScore);
       timeCell    = isLive ? `<span class="live-pulse">${lm.minute}′</span>` : pulse('FT');
-      correctCell = liveTotal ? pulse(correctnessPill(liveCorrect, liveTotal)) : '';
+      correctCell = liveTotal ? pulse(correctnessPill(liveCorrect, liveTotal, liveNames)) : '';
     } else if (!r) {
       resultCell = `${teamHtml(t1)} v ${teamHtml(t2)}`;
       scoreCell  = `–`;
@@ -1335,7 +1336,7 @@ function renderResults(results, grpCounts, liveData = {}) {
                  + `<span class="res-loser">${teamHtml(t2)}</span>`;
       const c = grpCounts && grpCounts[num];
       scoreCell   = `${r.home} – ${r.away}`;
-      correctCell = c ? correctnessPill(c.correct, c.total) : '';
+      correctCell = c ? correctnessPill(c.correct, c.total, c.names) : '';
       timeCell    = 'FT';
     } else {
       const [winner, loser] = r.outcome === 'W1' ? [t1, t2] : [t2, t1];
@@ -1345,7 +1346,7 @@ function renderResults(results, grpCounts, liveData = {}) {
       const score = r.outcome === 'W2' ? `${r.away} – ${r.home}` : `${r.home} – ${r.away}`;
       const c = grpCounts && grpCounts[num];
       scoreCell   = score;
-      correctCell = c ? correctnessPill(c.correct, c.total) : '';
+      correctCell = c ? correctnessPill(c.correct, c.total, c.names) : '';
       timeCell    = 'FT';
     }
     return `<tr class="${r || lm ? '' : 'res-row-upcoming'}">
@@ -2340,6 +2341,18 @@ function switchBracketTab(roundId) {
 const tooltip = document.getElementById('sq-tooltip');
 
 document.addEventListener('mouseover', e => {
+  const pill = e.target.closest('.cp-pill');
+  if (pill) {
+    const raw   = pill.dataset.cpNames || '';
+    const names = raw ? raw.split('|') : [];
+    const nameRows = names.length
+      ? names.map(n => `<div class="tt-result">✓ ${_esc(n)}</div>`).join('')
+      : `<div class="tt-result">— nobody</div>`;
+    tooltip.innerHTML = `<div class="tt-match">Picked correctly:</div>${nameRows}`;
+    tooltip.style.display = 'block';
+    return;
+  }
+
   const sq = e.target.closest('.sq');
   if (!sq) { tooltip.style.display = 'none'; return; }
 
@@ -2392,7 +2405,7 @@ document.addEventListener('mousemove', e => {
 });
 
 document.addEventListener('mouseout', e => {
-  if (!e.target.closest('.sq')) tooltip.style.display = 'none';
+  if (!e.target.closest('.sq') && !e.target.closest('.cp-pill')) tooltip.style.display = 'none';
 });
 
 // ── Live scores fetch + polling ───────────────────────────

@@ -278,6 +278,8 @@ Shows `N/total` for completed matches. Locations: in its own `td-correct` column
 - 33–66%: `.cp-mid` — `#fff0d0` bg / `#a05800` text
 - < 33%: `.cp-lo` — `#fce0e7` bg / `#b3003d` text
 
+**Pill tooltip:** Hovering a `.cp-pill` shows the shared `#sq-tooltip` with "Picked correctly:" header and a `✓ Name` line per correct picker (or "— nobody" if zero). Pill carries `data-cp-names` (pipe-delimited abbreviated names). `buildGrpCounts` and `buildKoCounts` both store `names: []` alongside `correct`/`total`. The live correctness block in `renderResults` also collects `liveNames`. `.cp-pill` has `cursor: help`.
+
 ---
 
 ## ESPN API
