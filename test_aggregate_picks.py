@@ -172,6 +172,18 @@ class TestLoadPicksCsv(unittest.TestCase):
             picks = load_picks_csv(path, MATCH_TEAMS)
         self.assertNotIn(1, picks)
 
+    def test_empty_pick_field_skipped(self):
+        # 4-column row with blank pick cell (late joiner / missed game) — must not store the match
+        with tempfile.TemporaryDirectory() as d:
+            path = _write_group_csv([
+                ['match', 'group', 'matchup', 'pick'],
+                [1, 'A', 'Mexico v South Africa', ''],   # blank pick
+                [2, 'A', 'South Korea v Czech Republic', 'Draw'],
+            ], d)
+            picks = load_picks_csv(path, MATCH_TEAMS)
+        self.assertNotIn(1, picks)       # blank pick → absent from output
+        self.assertEqual(picks[2], 'Draw')  # other picks unaffected
+
     def test_short_rows_skipped(self):
         # Rows with fewer than 4 columns are ignored
         with tempfile.TemporaryDirectory() as d:

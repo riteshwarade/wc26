@@ -209,6 +209,37 @@ section('Phase 1 — no picks submitted yet (late entrant)');
   assert('Dave: 2 pts',             dave.points === 2);
 }
 
+section('Phase 1 — empty pick on played game has result populated');
+
+{
+  // Participant submitted no picks at all (late joiner with blank CSV fields).
+  // For played games, pickResults[n].result must contain the actual result so
+  // the leaderboard tooltip can show the score even for a no-pick participant.
+  const partialResults = {
+    1: { home: 2, away: 0, outcome: 'W1' },
+    2: { home: 1, away: 1, outcome: 'Draw' },
+  };
+  const standings = computeStandings({ Eve: {} }, partialResults);
+  const eve = standings[0];
+
+  assert('Eve M1: status empty',  eve.pickResults[1].status === 'empty');
+  assert('Eve M2: status empty',  eve.pickResults[2].status === 'empty');
+  assert('Eve M3: status empty',  eve.pickResults[3].status === 'empty');
+  assert('Eve: 0 pts',            eve.points === 0);
+
+  // Played games: result must be populated so tooltip can show the actual score
+  assert('Eve M1: result non-null (played game)',
+    eve.pickResults[1].result !== null &&
+    eve.pickResults[1].result.outcome === 'W1' &&
+    eve.pickResults[1].result.home === 2);
+  assert('Eve M2: result non-null (played game)',
+    eve.pickResults[2].result !== null &&
+    eve.pickResults[2].result.outcome === 'Draw' &&
+    eve.pickResults[2].result.home === 1);
+  // Unplayed game: result must stay null
+  assert('Eve M3: result null (not played)', eve.pickResults[3].result === null);
+}
+
 // ─────────────────────────────────────────────────────────────
 // § 5  Phase 2 — Group complete, KO not started
 // ─────────────────────────────────────────────────────────────
