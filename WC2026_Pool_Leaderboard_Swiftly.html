@@ -305,6 +305,7 @@
   }
 
   #sq-tooltip .tt-cols   { column-gap: 10px; }
+  #sq-tooltip .tt-cols .tt-result { white-space: nowrap; }
   #sq-tooltip .tt-match  { font-weight: 700; margin-bottom: 4px; color: var(--blue-light); }
   #sq-tooltip .tt-pick   { margin-bottom: 2px; }
   #sq-tooltip .tt-result { margin-bottom: 4px; color: var(--neutral-medium); }
@@ -2347,8 +2348,7 @@ document.addEventListener('mouseover', e => {
     const raw   = pill.dataset.cpNames || '';
     const names = raw ? raw.split('|') : [];
     const cols  = names.length ? Math.ceil(names.length / 20) : 1;
-    const maxWs = [0, 200, 300, 390, 480];
-    tooltip.style.maxWidth = (maxWs[cols] || 480) + 'px';
+    tooltip.style.maxWidth = 'none';
     const nameRows = names.length
       ? `<div class="tt-cols" style="column-count:${cols}">${names.map(n => `<div class="tt-result">✓ ${_esc(n)}</div>`).join('')}</div>`
       : `<div class="tt-result">— nobody</div>`;
