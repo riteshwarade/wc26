@@ -949,7 +949,8 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
       const resultStr = pr.winner || 'Not played yet';
       const koSqHtml = `<span class="sq sq-${pr.status}"
         data-match="${m}" data-teams="${_esc(teamsStr)}"
-        data-pick="${_esc(pickStr)}" data-result="${_esc(resultStr)}" data-status="${pr.status}"></span>`;
+        data-pick="${_esc(pickStr)}" data-result="${_esc(resultStr)}" data-status="${pr.status}"
+        data-name="${_esc(_abbrevName(p.name))}"></span>`;
       koSquareParts.push(koSqHtml);
       if (koMobMatchNums.has(m)) koMobSquareParts.push(koSqHtml.replace('class="sq sq-', 'class="sq sq-sm sq-'));
       if (KO_ROUND_BREAKS.has(m)) koSquareParts.push('<span class="sq-divider"></span>');
@@ -1203,7 +1204,8 @@ function renderStandings(standings, liveData = {}) {
       }
       const sqHtml = `<span class="sq sq-sm sq-${sqStatus}"
         data-match="${num}" data-teams="${_esc(`${t1} v ${t2}`)}"
-        data-pick="${_esc(myPick)}" data-result="${_esc(res)}" data-status="${sqStatus}"></span>`;
+        data-pick="${_esc(myPick)}" data-result="${_esc(res)}" data-status="${sqStatus}"
+        data-name="${_esc(_abbrevName(p.name))}"></span>`;
       squareParts.push(sqHtml);
       if (mobMatchNums.has(num)) mobSquareParts.push(sqHtml);
       if (GRP_ROUND_BREAKS.has(num)) squareParts.push('<span class="sq-divider-sm"></span>');
@@ -2346,6 +2348,7 @@ document.addEventListener('mouseover', e => {
   const pick   = sq.dataset.pick;
   const result = sq.dataset.result;
   const status = sq.dataset.status;
+  const name   = sq.dataset.name || 'Their';
 
   const statusText = status === 'correct'        ? '✓ Correct'
                    : status === 'correct-upset'  ? '✓ Correct ✦ Upset'
@@ -2363,7 +2366,7 @@ document.addEventListener('mouseover', e => {
                     : status;
   tooltip.innerHTML = `
     <div class="tt-match"></div>
-    <div class="tt-pick">Your pick: <strong></strong></div>
+    <div class="tt-pick">${_esc(name)}'s pick: <strong></strong></div>
     <div class="tt-result"></div>
     <div class="tt-status ${ttStatusCls}"></div>
   `;
