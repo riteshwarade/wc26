@@ -2345,10 +2345,9 @@ const tooltip = document.getElementById('sq-tooltip');
 function _showPillTooltip(pill) {
   const raw   = pill.dataset.cpNames || '';
   const names = raw ? raw.split('|') : [];
-  const cols  = names.length ? Math.ceil(names.length / 20) : 1;
   tooltip.style.maxWidth = 'none';
   const nameRows = names.length
-    ? `<div class="tt-cols" style="column-count:${cols}">${names.map(n => `<div class="tt-result">✓ ${_esc(n)}</div>`).join('')}</div>`
+    ? `<div class="tt-cols" style="column-count:2">${names.map(n => `<div class="tt-result">✓ ${_esc(n)}</div>`).join('')}</div>`
     : `<div class="tt-result">— nobody</div>`;
   tooltip.innerHTML = `<div class="tt-match">Picked correctly:</div>${nameRows}`;
   tooltip.style.display = 'block';
