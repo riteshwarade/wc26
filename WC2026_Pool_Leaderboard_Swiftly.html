@@ -1304,8 +1304,9 @@ function renderResults(results, grpCounts, liveData = {}) {
           if (pr && pr.pick) { liveTotal++; if (pr.pick === cur) liveCorrect++; }
         }
       }
-      const isLive  = lm.state === 'in';
-      const pulse   = s => isLive ? `<span class="live-pulse">${s}</span>` : s;
+      const isLive   = lm.state === 'in';
+      const isBridge = lm.state === 'post'; // game ended, CSV not yet confirmed
+      const pulse    = s => (isLive || isBridge) ? `<span class="live-pulse">${s}</span>` : s;
       if (cur === 'Draw') {
         resultCell = `<span class="res-loser">${teamHtml(t1)}</span>`
                    + `<span class="res-verb">${isLive ? 'drawing' : 'drew'}</span>`
@@ -1320,7 +1321,7 @@ function renderResults(results, grpCounts, liveData = {}) {
         ? `${lm.awayScore} – ${lm.homeScore}`
         : `${lm.homeScore} – ${lm.awayScore}`;
       scoreCell   = pulse(liveScore);
-      timeCell    = isLive ? `<span class="live-pulse">${lm.minute}′</span>` : 'FT';
+      timeCell    = isLive ? `<span class="live-pulse">${lm.minute}′</span>` : pulse('FT');
       correctCell = liveTotal ? pulse(correctnessPill(liveCorrect, liveTotal)) : '';
     } else if (!r) {
       resultCell = `${teamHtml(t1)} v ${teamHtml(t2)}`;
