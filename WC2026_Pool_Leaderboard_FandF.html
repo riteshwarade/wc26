@@ -304,6 +304,7 @@
     line-height: 1.5;
   }
 
+  #sq-tooltip .tt-cols   { column-gap: 10px; }
   #sq-tooltip .tt-match  { font-weight: 700; margin-bottom: 4px; color: var(--blue-light); }
   #sq-tooltip .tt-pick   { margin-bottom: 2px; }
   #sq-tooltip .tt-result { margin-bottom: 4px; color: var(--neutral-medium); }
@@ -2345,8 +2346,11 @@ document.addEventListener('mouseover', e => {
   if (pill) {
     const raw   = pill.dataset.cpNames || '';
     const names = raw ? raw.split('|') : [];
+    const cols  = names.length ? Math.ceil(names.length / 20) : 1;
+    const maxWs = [0, 200, 300, 390, 480];
+    tooltip.style.maxWidth = (maxWs[cols] || 480) + 'px';
     const nameRows = names.length
-      ? names.map(n => `<div class="tt-result">✓ ${_esc(n)}</div>`).join('')
+      ? `<div class="tt-cols" style="column-count:${cols}">${names.map(n => `<div class="tt-result">✓ ${_esc(n)}</div>`).join('')}</div>`
       : `<div class="tt-result">— nobody</div>`;
     tooltip.innerHTML = `<div class="tt-match">Picked correctly:</div>${nameRows}`;
     tooltip.style.display = 'block';
@@ -2393,6 +2397,7 @@ document.addEventListener('mouseover', e => {
   }
   tooltip.querySelector('.tt-result').textContent  = `Result: ${result}`;
   tooltip.querySelector('.tt-status').textContent  = statusText;
+  tooltip.style.maxWidth = '320px';
   tooltip.style.display = 'block';
 });
 
