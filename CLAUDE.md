@@ -206,6 +206,17 @@ renderStandings(_lastStandings, _liveData);  // force re-render if squares look 
 
 **Known behavior (fixed):** Previously, `stopLivePolling()` was called immediately when a game ended, creating a gap before the bridge restarted polling. Fixed: during the bridge period (`_pendingResults.size > 0`), the polling interval is never stopped — it keeps running and `init()` is called each cycle to re-check the CSV. Polling only stops when `_pendingResults` is empty (all results CSV-confirmed). See `live_scores_test_plan.md` for the full manual test checklist.
 
+**Stale-CSV regression fix:** After the bridge resolves, the 5-minute `setInterval` can call `init()` and Fastly CDN (up to 5-min cache on raw.githubusercontent.com) may serve a stale CSV that does NOT contain the just-confirmed result. Before this fix, `_lastResults` and `_lastStandings` would be overwritten with the stale data — squares stay solid (correct) but points revert to old values. Fix (in `init()`): guard the `_lastResults`/`_lastStandings`/`_lastGrpCounts` update with a regression check:
+```js
+const _newMatchCount = Object.keys(results).length;
+const _oldMatchCount = _lastResults ? Object.keys(_lastResults).length : -1;
+if (_newMatchCount >= _oldMatchCount) {
+  _lastStandings = standings; _lastResults = results; _lastGrpCounts = grpCounts;
+}
+renderStandings(_lastStandings, _liveData);
+```
+All downstream renders (`renderResults`, `renderGroupTables`, `renderBracket`) use `_lastResults`/`_lastGrpCounts` instead of local `results`/`grpCounts`.
+
 **KO bracket live treatment (planned):** During a live KO match, both team rows in the bracket card pulse (1→0.3→1, 1.8s). Currently winning team: pulsing solid blue (same as final winner style). Currently losing team: pulsing muted/transparent (same as final loser style). Minute shown pulsing in `.bk-mnum` alongside the match number. On FT, both rows snap to solid winner/loser state.
 
 ---

@@ -2618,7 +2618,6 @@ async function init() {
     _updateTimestamp();
 
     const GRP_SAMPLE = {A:1,B:3,C:7,D:4,E:10,F:11,G:16,H:14,I:17,J:19,K:23,L:22};
-    const allGrpsStarted = Object.values(GRP_SAMPLE).every(m => results[m]);
     const bracketConfirmed = bracketData ? bracketData.confirmed === true : false;
 
     if (knockoutMode) {
@@ -2629,17 +2628,26 @@ async function init() {
       renderKoBracket(bracketData, koResults, koScores, koCounts);
     } else {
       _buildAbbrevMap(standings.map(p => p.name));
-      // Store for live polling re-renders
-      _lastStandings = standings;
-      _lastResults   = results;
-      _lastGrpCounts = grpCounts;
-      renderStandings(standings, _liveData);
+      // Guard against Fastly CDN stale CSV regressing confirmed results.
+      // Fastly caches raw.githubusercontent.com for up to 5 min; if init() runs
+      // just after the bridge resolves, a stale CSV could overwrite _lastResults
+      // with a version missing the just-confirmed result, reverting points to old.
+      const _newMatchCount = Object.keys(results).length;
+      const _oldMatchCount = _lastResults ? Object.keys(_lastResults).length : -1;
+      if (_newMatchCount >= _oldMatchCount) {
+        // Store for live polling re-renders
+        _lastStandings = standings;
+        _lastResults   = results;
+        _lastGrpCounts = grpCounts;
+      }
+      renderStandings(_lastStandings, _liveData);
     }
 
     if (!knockoutMode) {
-      renderResults(results, grpCounts, _liveData);
-      renderGroupTables(results);
-      renderBracket(results, allGrpsStarted, bracketConfirmed);
+      renderResults(_lastResults, _lastGrpCounts, _liveData);
+      renderGroupTables(_lastResults);
+      const allGrpsStarted2 = Object.values(GRP_SAMPLE).every(m => _lastResults[m]);
+      renderBracket(_lastResults, allGrpsStarted2, bracketConfirmed);
       // Kick off live polling (fetches ESPN, starts interval if games are live)
       if (LIVE_SCORES_ENABLED) {
         fetchLiveScores().then(() => {
