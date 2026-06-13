@@ -312,6 +312,7 @@
   #sq-tooltip .tt-status.wrong     { color: var(--swiftly-red); }
   #sq-tooltip .tt-status.cascaded  { color: var(--swiftly-red); }
   #sq-tooltip .tt-status.pending   { color: var(--neutral-medium); }
+  #sq-tooltip .tt-status.empty     { color: var(--neutral-medium); }
 
   /* ── Results table ── */
   .results-table {
@@ -872,6 +873,7 @@ let _pendingResults = new Set(); // matches where ESPN said game ended but CSV n
 let _bridgeScores  = {};         // last known score per match — keeps squares pulsing after ESPN drops the event
 let _lastGrpCounts  = null;
 let _livePoller     = null;
+let _lastUpdated    = null;
 // ──────────────────────────────────────────────────────────
 
 
@@ -928,7 +930,10 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
   const KO_MATCH_ORDER = [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,
                            89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104];
   const KO_MOB_LAST = 5;
-  const koMobMatchNums = new Set(KO_MATCH_ORDER.slice(-KO_MOB_LAST));
+  const koPlayedNums = KO_MATCH_ORDER.filter(m => koResults[m]);
+  const koMobMatchNums = new Set(
+    koPlayedNums.length ? koPlayedNums.slice(-KO_MOB_LAST) : KO_MATCH_ORDER.slice(-KO_MOB_LAST)
+  );
 
   const KO_ROUND_BREAKS = new Set([88, 96, 100, 102]); // dividers after R32/R16/QF/SF; 103 removed (trailing divider after 3rd-place)
   let rank = 1, prevPts = null, rows = '';
@@ -1299,10 +1304,10 @@ function renderResults(results, grpCounts, liveData = {}) {
                    + `<span class="res-verb">${isLive ? 'drawing' : 'drew'}</span>`
                    + `<span class="res-loser">${teamHtml(t2)}</span>`;
       } else {
-        const [liveWinner, liveLoseer] = cur === 'W1' ? [t1, t2] : [t2, t1];
+        const [liveWinner, liveLoser] = cur === 'W1' ? [t1, t2] : [t2, t1];
         resultCell = `<span class="res-winner">${teamHtml(liveWinner)}</span>`
                    + `<span class="res-verb">${isLive ? 'leading' : 'beat'}</span>`
-                   + `<span class="res-loser">${teamHtml(liveLoseer)}</span>`;
+                   + `<span class="res-loser">${teamHtml(liveLoser)}</span>`;
       }
       const liveScore = cur === 'W2'
         ? `${lm.awayScore} – ${lm.homeScore}`
@@ -2614,7 +2619,6 @@ setupLayout();
 
 // ── Auto-refresh every 5 minutes ────────────────────────
 const REFRESH_MS = 5 * 60 * 1000;
-let _lastUpdated = null;
 
 function _updateTimestamp() {
   const el = document.getElementById('updatedAt');
