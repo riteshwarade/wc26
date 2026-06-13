@@ -2342,31 +2342,25 @@ function switchBracketTab(roundId) {
 // ── Tooltip ───────────────────────────────────────────────
 const tooltip = document.getElementById('sq-tooltip');
 
-document.addEventListener('mouseover', e => {
-  const pill = e.target.closest('.cp-pill');
-  if (pill) {
-    const raw   = pill.dataset.cpNames || '';
-    const names = raw ? raw.split('|') : [];
-    const cols  = names.length ? Math.ceil(names.length / 20) : 1;
-    tooltip.style.maxWidth = 'none';
-    const nameRows = names.length
-      ? `<div class="tt-cols" style="column-count:${cols}">${names.map(n => `<div class="tt-result">✓ ${_esc(n)}</div>`).join('')}</div>`
-      : `<div class="tt-result">— nobody</div>`;
-    tooltip.innerHTML = `<div class="tt-match">Picked correctly:</div>${nameRows}`;
-    tooltip.style.display = 'block';
-    return;
-  }
+function _showPillTooltip(pill) {
+  const raw   = pill.dataset.cpNames || '';
+  const names = raw ? raw.split('|') : [];
+  const cols  = names.length ? Math.ceil(names.length / 20) : 1;
+  tooltip.style.maxWidth = 'none';
+  const nameRows = names.length
+    ? `<div class="tt-cols" style="column-count:${cols}">${names.map(n => `<div class="tt-result">✓ ${_esc(n)}</div>`).join('')}</div>`
+    : `<div class="tt-result">— nobody</div>`;
+  tooltip.innerHTML = `<div class="tt-match">Picked correctly:</div>${nameRows}`;
+  tooltip.style.display = 'block';
+}
 
-  const sq = e.target.closest('.sq');
-  if (!sq) { tooltip.style.display = 'none'; return; }
-
+function _showSqTooltip(sq) {
   const match  = sq.dataset.match;
   const teams  = sq.dataset.teams;
   const pick   = sq.dataset.pick;
   const result = sq.dataset.result;
   const status = sq.dataset.status;
   const name   = sq.dataset.name || 'Their';
-
   const statusText = status === 'correct'        ? '✓ Correct'
                    : status === 'correct-upset'  ? '✓ Correct ✦ Upset'
                    : status === 'wrong'          ? '✗ Wrong'
@@ -2376,7 +2370,6 @@ document.addEventListener('mouseover', e => {
                    : status === 'live-wrong'     ? '🔴 Live · wrong so far'
                    : status === 'empty'         ? '— No pick'
                    : '—';
-
   const ttStatusCls = status === 'correct-upset' ? 'correct'
                     : status === 'live-correct'   ? 'correct'
                     : status === 'live-wrong'     ? 'wrong'
@@ -2387,7 +2380,7 @@ document.addEventListener('mouseover', e => {
     <div class="tt-result"></div>
     <div class="tt-status ${ttStatusCls}"></div>
   `;
-  tooltip.querySelector('.tt-match').textContent   = `Match ${match} · ${teams}`;
+  tooltip.querySelector('.tt-match').textContent  = `Match ${match} · ${teams}`;
   const pickEl = tooltip.querySelector('.tt-pick');
   if (status === 'empty') {
     pickEl.style.display = 'none';
@@ -2395,14 +2388,50 @@ document.addEventListener('mouseover', e => {
     pickEl.style.display = '';
     pickEl.querySelector('strong').textContent = pick;
   }
-  tooltip.querySelector('.tt-result').textContent  = `Result: ${result}`;
-  tooltip.querySelector('.tt-status').textContent  = statusText;
+  tooltip.querySelector('.tt-result').textContent = `Result: ${result}`;
+  tooltip.querySelector('.tt-status').textContent = statusText;
   tooltip.style.maxWidth = '320px';
   tooltip.style.display = 'block';
+}
+
+function _positionTooltipAtEl(el) {
+  requestAnimationFrame(() => {
+    const rect = el.getBoundingClientRect();
+    const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+    let x = rect.left + rect.width / 2 - tw / 2;
+    let y = rect.top - th - 8;
+    x = Math.max(8, Math.min(x, window.innerWidth - tw - 8));
+    if (y < 8) y = rect.bottom + 8;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top  = y + 'px';
+  });
+}
+
+// Suppress synthesized mouse events that fire after touchstart
+let _isTouchInteraction = false, _touchTimer = null;
+document.addEventListener('touchstart', e => {
+  _isTouchInteraction = true;
+  clearTimeout(_touchTimer);
+  _touchTimer = setTimeout(() => { _isTouchInteraction = false; }, 600);
+
+  const pill = e.target.closest('.cp-pill');
+  const sq   = e.target.closest('.sq');
+  if (pill) { _showPillTooltip(pill); _positionTooltipAtEl(pill); }
+  else if (sq) { _showSqTooltip(sq); _positionTooltipAtEl(sq); }
+  else { tooltip.style.display = 'none'; }
+}, { passive: true });
+
+document.addEventListener('mouseover', e => {
+  if (_isTouchInteraction) return;
+  const pill = e.target.closest('.cp-pill');
+  if (pill) { _showPillTooltip(pill); return; }
+  const sq = e.target.closest('.sq');
+  if (!sq) { tooltip.style.display = 'none'; return; }
+  _showSqTooltip(sq);
 });
 
 document.addEventListener('mousemove', e => {
-  if (tooltip.style.display === 'none') return;
+  if (_isTouchInteraction || tooltip.style.display === 'none') return;
   const x = e.clientX + 14, y = e.clientY + 14;
   const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
   tooltip.style.left = (x + tw > window.innerWidth  ? x - tw - 28 : x) + 'px';
@@ -2410,6 +2439,7 @@ document.addEventListener('mousemove', e => {
 });
 
 document.addEventListener('mouseout', e => {
+  if (_isTouchInteraction) return;
   if (!e.target.closest('.sq') && !e.target.closest('.cp-pill')) tooltip.style.display = 'none';
 });
 
