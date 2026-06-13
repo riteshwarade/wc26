@@ -2227,8 +2227,10 @@ function computeGroupStandings(results) {
       // Overall: criteria d, e
       if ((sb.GF-sb.GA)!==(sa.GF-sa.GA)) return (sb.GF-sb.GA)-(sa.GF-sa.GA);
       if (sb.GF!==sa.GF) return sb.GF-sa.GF;
-      // FIFA ranking: criterion g
-      return (RANKINGS[a]??999)-(RANKINGS[b]??999);
+      // FIFA ranking: criterion g; group-order position as final tiebreaker (matches sortedStandings)
+      const ra = RANKINGS[a]??999, rb = RANKINGS[b]??999;
+      if (ra!==rb) return ra-rb;
+      return grpOrder[grp].indexOf(a) - grpOrder[grp].indexOf(b);
     }).map(t => [t, stats[t]||{P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0}]);
   });
   // Best 8 thirds

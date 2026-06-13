@@ -76,7 +76,7 @@ function localMatchTime(utcStr) {
 }
 ```
 - Column header: `Time (${_tzAbbr})`
-- `.cell-tz { display: none }` on desktop; `display: inline` on mobile (`max-width: 640px`)
+- `.cell-tz { display: none }` always — the entire `.td-time` column is already hidden on mobile (`max-width: 640px`), so `.cell-tz` is never visible at any screen size
 
 **KO games** — in `bracket.js`:
 ```js
