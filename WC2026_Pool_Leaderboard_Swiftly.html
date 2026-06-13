@@ -931,9 +931,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
                            89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104];
   const KO_MOB_LAST = 5;
   const koPlayedNums = KO_MATCH_ORDER.filter(m => koResults[m]);
-  const koMobMatchNums = new Set(
-    koPlayedNums.length ? koPlayedNums.slice(-KO_MOB_LAST) : KO_MATCH_ORDER.slice(-KO_MOB_LAST)
-  );
+  const koMobMatchNums = new Set(koPlayedNums.slice(-KO_MOB_LAST));
 
   const KO_ROUND_BREAKS = new Set([88, 96, 100, 102]); // dividers after R32/R16/QF/SF; 103 removed (trailing divider after 3rd-place)
   let rank = 1, prevPts = null, rows = '';
@@ -1183,13 +1181,22 @@ function renderStandings(standings, liveData = {}) {
     for (const [num, , , , t1, t2] of MATCHES) {
       const pr = p.pickResults[num] || { status: 'empty', pick: null, result: null };
       const myPick = pr.pick ? pickLabel(pr.pick, t1, t2) : '—';
-      const res = pr.result
-        ? `${pr.result.home}–${pr.result.away} (${pickLabel(pr.result.outcome, t1, t2)})`
-        : 'Not played yet';
+      // lm must be set before res so bridge/live score can populate the tooltip
+      const lm = liveData && liveData[num];
+      let res;
+      if (pr.result) {
+        res = `${pr.result.home}–${pr.result.away} (${pickLabel(pr.result.outcome, t1, t2)})`;
+      } else if (lm) {
+        // Bridge or live: ESPN has a score but CSV not yet confirmed
+        const cur = lm.homeScore > lm.awayScore ? 'W1' : lm.awayScore > lm.homeScore ? 'W2' : 'Draw';
+        const s = cur === 'W2' ? `${lm.awayScore}–${lm.homeScore}` : `${lm.homeScore}–${lm.awayScore}`;
+        res = `${s} (${pickLabel(cur, t1, t2)}) · live`;
+      } else {
+        res = 'Not played yet';
+      }
       let sqStatus = pr.status === 'correct' && _isUpsetResult(t1, t2, pr.result?.outcome)
         ? 'correct-upset' : pr.status;
       // Override with live status if match is in-progress and pick is still pending
-      const lm = liveData && liveData[num];
       if (lm && pr.status === 'pending' && pr.pick) {
         const cur = lm.homeScore > lm.awayScore ? 'W1' : lm.awayScore > lm.homeScore ? 'W2' : 'Draw';
         sqStatus = pr.pick === cur ? 'live-correct' : 'live-wrong';
