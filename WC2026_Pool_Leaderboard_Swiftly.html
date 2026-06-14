@@ -854,6 +854,12 @@ const POOL_ID   = 'swiftly';
 
 // ── Live scores toggle (internal — not a URL param) ───────
 const LIVE_SCORES_ENABLED = true;
+
+// ── MATCHES sorted by UTC kickoff time (tiebreak: match #) ─
+// Used for mobile recent-squares selection — match numbers are not chronological.
+const _MATCHES_CHRONO = [...MATCHES].sort((a, b) =>
+  a[3] < b[3] ? -1 : a[3] > b[3] ? 1 : a[0] - b[0]
+);
 // ──────────────────────────────────────────────────────────
 
 // ── ESPN team name map (5 names differ from internal) ─────
@@ -932,7 +938,11 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
   const KO_MATCH_ORDER = [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,
                            89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104];
   const KO_MOB_LAST = 5;
-  const koPlayedNums = KO_MATCH_ORDER.filter(m => koResults[m]);
+  const koChronoOrder = [...KO_MATCH_ORDER].sort((a, b) =>
+    (KO_SCHEDULE[a] || '9999') < (KO_SCHEDULE[b] || '9999') ? -1 :
+    (KO_SCHEDULE[a] || '9999') > (KO_SCHEDULE[b] || '9999') ? 1 : a - b
+  );
+  const koPlayedNums = koChronoOrder.filter(m => koResults[m]);
   const koMobMatchNums = new Set(koPlayedNums.slice(-KO_MOB_LAST));
 
   const KO_ROUND_BREAKS = new Set([88, 96, 100, 102]); // dividers after R32/R16/QF/SF; 103 removed (trailing divider after 3rd-place)
@@ -1172,7 +1182,7 @@ function renderStandings(standings, liveData = {}) {
   const GRP_ROUND_BREAKS = new Set([24, 48]);
   const MOB_LAST = 5;
   const mobMatchNums = new Set(
-    MATCHES.map(([num]) => num)
+    _MATCHES_CHRONO.map(([num]) => num)
       .filter(num => (_lastResults && _lastResults[num]) || (liveData && liveData[num]))
       .slice(-MOB_LAST)
   );
