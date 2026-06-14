@@ -215,7 +215,7 @@ if (_newMatchCount >= _oldMatchCount) {
 }
 renderStandings(_lastStandings, _liveData);
 ```
-All downstream renders (`renderResults`, `renderGroupTables`, `renderBracket`) use `_lastResults`/`_lastGrpCounts` instead of local `results`/`grpCounts`.
+All downstream renders (`renderResults`, `renderGroupTables`, `renderBracket`) and the sticky bar `played` count use `_lastResults`/`_lastGrpCounts` instead of local `results`/`grpCounts`, so match count and points always move in lockstep.
 
 **KO bracket live treatment (planned):** During a live KO match, both team rows in the bracket card pulse (1→0.3→1, 1.8s). Currently winning team: pulsing solid blue (same as final winner style). Currently losing team: pulsing muted/transparent (same as final loser style). Minute shown pulsing in `.bk-mnum` alongside the match number. On FT, both rows snap to solid winner/loser state.
 
