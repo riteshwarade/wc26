@@ -435,3 +435,27 @@ const sqStatus = pr.status === 'correct' && _isUpsetResult(t1, t2, pr.result?.ou
 **Visual:** `.sq-correct-upset` — same Swiftly Blue background as `.sq-correct`, with a white ✦ (U+2726, 4-pointed star) via `::after` pseudo-element at 6px font-size (5px for `.sq-sm`).
 
 **Tooltip:** `'✓ Correct ✦ Upset'` — uses `.correct` CSS class for the status line color (same green as a normal correct pick).
+
+---
+
+## Post-tournament / WC2030 cleanup
+
+Once WC2026 ends, do these before reusing the codebase for 2030:
+
+**Before building anything: plan first, then recheck the plan.** Each item below touches more files than it appears to — grep for all consumers before writing a line of code.
+
+- **Extract `data/group_matches.json`** — move the hardcoded match arrays out of `scoring.js`, `WC2026_Pool_Group_Picks.html` (inline), and `parse_results.py` (`GROUP_MATCHES`) into a single `data/group_matches.json`. Schema: `[{ "num", "group", "dateStr", "utcKickoff", "home", "away" }, ...]`. Not done in 2026 because group matches are static mid-tournament and the async-fetch complexity wasn't worth it. In 2030 it's the right starting point.
+  - `scoring.js`: Node loads via `fs.readFileSync`; browser gets `initMatches(data)` called from each page's async init
+  - `WC2026_Pool_Group_Picks.html`: remove inline MATCHES, add `<script src="scoring.js">`, make `buildForm()` async
+  - `parse_results.py`: derive `GROUP_MATCHES` from the JSON — `aggregate_picks.py`, `simulate.py`, `test_bracket.py`, `test_parse_results.py` import from `parse_results` and need no changes
+
+- **Convert results files from CSV to JSON, with match info included** — `results/group_results.csv` and `results/knockout_results.csv` should become `results/group_results.json` and `results/knockout_results.json`. Current CSVs are opaque (match number + scores only); JSON should be self-documenting like the picks CSVs. Schemas:
+  - Group: `{ "1": { "group": "A", "home": "Mexico", "away": "South Africa", "home_score": 2, "away_score": 0, "outcome": "W1" }, ... }`
+  - KO: `{ "73": { "home": "Mexico", "away": "Canada", "home_score": 2, "away_score": 1, "winner": "Mexico", "decided_by": "FT" }, ... }` — `decided_by` is `"FT"`, `"ET"`, or `"Pens"`
+  - `parse_results.py`: replace `write_csv()` + `write_ko_results_csv()` with JSON equivalents; team names + group looked up from `GROUP_MATCHES`/`MATCH_LOOKUP` (already available)
+  - `simulate.py`: same — write JSON instead of CSV
+  - `scoring.js`: delete `parseResults()` + `parseKoResults()` (exist solely due to CSV format); leaderboard uses `JSON.parse()` directly — consumers ignore the extra fields
+  - `test_parse_results.py`: rewrite `write_csv` / `write_ko_results_csv` tests
+  - `test_bracket.py`: update `load_results()` to parse JSON
+  - `test_leaderboard.js`: remove/update §7 (`parseKoResults` CSV tests)
+  - `clear_simulation.yml` + `auto_clear_simulation.yml`: replace `printf "match,...\n"` with `printf '{}'`
