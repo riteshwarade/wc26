@@ -217,6 +217,10 @@ renderStandings(_lastStandings, _liveData);
 ```
 All downstream renders (`renderResults`, `renderGroupTables`, `renderBracket`) and the sticky bar `played` count use `_lastResults`/`_lastGrpCounts` instead of local `results`/`grpCounts`, so match count and points always move in lockstep.
 
+**TODO before KO stage (Jun 28):**
+- **KO upset detection** — wire `_isUpsetResult` into `renderKoStandings` the same way group stage does it in `renderStandings`. CSS + tooltip already exist. ~5 lines.
+- **KO live scores** — extend group stage ESPN polling to KO matches. Architecture is identical. See KO bracket live treatment spec below.
+
 **KO bracket live treatment (planned):** During a live KO match, both team rows in the bracket card pulse (1→0.3→1, 1.8s). Currently winning team: pulsing solid blue (same as final winner style). Currently losing team: pulsing muted/transparent (same as final loser style). Minute shown pulsing in `.bk-mnum` alongside the match number. On FT, both rows snap to solid winner/loser state.
 
 ---
@@ -451,7 +455,9 @@ Once WC2026 ends, do these before reusing the codebase for 2030:
 
 - **Convert results files from CSV to JSON, with match info included** — `results/group_results.csv` and `results/knockout_results.csv` should become `results/group_results.json` and `results/knockout_results.json`. Current CSVs are opaque (match number + scores only); JSON should be self-documenting like the picks CSVs. Schemas:
   - Group: `{ "1": { "group": "A", "home": "Mexico", "away": "South Africa", "home_score": 2, "away_score": 0, "outcome": "W1" }, ... }`
-  - KO: `{ "73": { "home": "Mexico", "away": "Canada", "home_score": 2, "away_score": 1, "winner": "Mexico", "decided_by": "FT" }, ... }` — `decided_by` is `"FT"`, `"ET"`, or `"Pens"`
+  - KO: `{ "73": { "home": "Mexico", "away": "Canada", "home_score": 2, "away_score": 1, "winner": "Mexico", "decided_by": "FT" }, ... }` — `decided_by` is `"FT"`, `"ET"`, or `"Pens"`; penalty games also include `"home_pen"` and `"away_pen"` (e.g. `"home_score": 1, "away_score": 1, "home_pen": 5, "away_pen": 4, "decided_by": "Pens"`)
+  - Current KO CSV is fragile: `write_ko_results_csv` writes 2, 4, or 6 columns depending on whether scores/penalties exist, forcing two separate parse functions (`parseKoResults` + `parseKoScores`) reading the same file. JSON collapses these to one `JSON.parse()` call.
+  - `decided_by` is currently tracked nowhere — `parse_results.py` correctly parses penalty scores but never records how the game was decided. A regular 2–1 and a 2–1 AET are indistinguishable in the current data. The `decided_by` field fixes this.
   - `parse_results.py`: replace `write_csv()` + `write_ko_results_csv()` with JSON equivalents; team names + group looked up from `GROUP_MATCHES`/`MATCH_LOOKUP` (already available)
   - `simulate.py`: same — write JSON instead of CSV
   - `scoring.js`: delete `parseResults()` + `parseKoResults()` (exist solely due to CSV format); leaderboard uses `JSON.parse()` directly — consumers ignore the extra fields
