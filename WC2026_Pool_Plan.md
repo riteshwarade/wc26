@@ -3,6 +3,7 @@
 ## Changelog
 
 | Date | Change |
+| Jun 14, 2026 | **Mobile recent-squares: fix chronological display order.** Squares were selected chronologically but still rendered in match-number order (accumulated inside the MATCHES loop). Fix: store sqHtml in `sqByNum` map during the loop; assemble mobile squares afterwards via `_MATCHES_CHRONO.filter/map` so display order matches kickoff order. Same fix applied to KO (`koSqByNum` + `koChronoOrder`). |
 | Jun 13, 2026 | **Mobile recent-squares: fix chronological selection.** Match numbers are not chronological (39/72 group matches out of order; KO same issue). `_MATCHES_CHRONO` module-level constant sorts `MATCHES` by `utcKickoff`. `renderStandings` uses it for `mobMatchNums`; `renderKoStandings` sorts `KO_MATCH_ORDER` by `KO_SCHEDULE` for `koChronoOrder`. Desktop squares column unaffected. |
 | Jun 13, 2026 | **Pre-KO TODO items noted.** Two improvements to build before KO stage (Jun 28): (1) KO upset detection — wire `_isUpsetResult` into `renderKoStandings`, ~5 lines, CSS already exists; (2) KO live scores — extend group stage ESPN polling to KO matches, same architecture. Documented in `CLAUDE.md`. |
 | Jun 13, 2026 | **Post-tournament architectural notes (2).** Results files (`group_results.csv`, `knockout_results.csv`) should become JSON with match info included (group, home, away team names alongside scores) so files are self-documenting like the picks CSVs. Full migration plan (9 files) documented in `CLAUDE.md` WC2030 cleanup section. |

@@ -952,7 +952,8 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
     const topClass = rank <= 3 ? ' top3' : '';
 
     // KO squares (32 matches) with round dividers after R32/R16/QF/SF
-    const koSquareParts = [], koMobSquareParts = [];
+    const koSquareParts = [];
+    const koSqByNum = {};
     for (const m of KO_MATCH_ORDER) {
       const pr = p.koPickResults[m] || { status: 'empty', pick: null, winner: null };
       const [t1, t2] = bracketData ? getKoTeams(m, bracketData, koResults) : ['TBD','TBD'];
@@ -964,11 +965,15 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
         data-pick="${_esc(pickStr)}" data-result="${_esc(resultStr)}" data-status="${pr.status}"
         data-name="${_esc(_abbrevName(p.name))}"></span>`;
       koSquareParts.push(koSqHtml);
-      if (koMobMatchNums.has(m)) koMobSquareParts.push(koSqHtml.replace('class="sq sq-', 'class="sq sq-sm sq-'));
+      koSqByNum[m] = koSqHtml;
       if (KO_ROUND_BREAKS.has(m)) koSquareParts.push('<span class="sq-divider"></span>');
     }
     const koSquares = koSquareParts.join('');
-    const koMobSquares = koMobSquareParts.join('');
+    // Mobile: render the 5 selected squares in chronological kickoff order
+    const koMobSquares = koChronoOrder
+      .filter(m => koMobMatchNums.has(m))
+      .map(m => koSqByNum[m].replace('class="sq sq-', 'class="sq sq-sm sq-'))
+      .join('');
 
     const champPr = p.koPickResults[104] || { status: 'empty', pick: null };
     const champName = champPr.pick || '—';
@@ -1190,7 +1195,8 @@ function renderStandings(standings, liveData = {}) {
   standings.forEach((p, i) => {
     if (p.points !== prevPts) { rank = i + 1; prevPts = p.points; }
     const topClass = rank <= 3 ? ' top3' : '';
-    const squareParts = [], mobSquareParts = [];
+    const squareParts = [];
+    const sqByNum = {};
     for (const [num, , , , t1, t2] of MATCHES) {
       const pr = p.pickResults[num] || { status: 'empty', pick: null, result: null };
       const myPick = pr.pick ? pickLabel(pr.pick, t1, t2) : '—';
@@ -1219,11 +1225,16 @@ function renderStandings(standings, liveData = {}) {
         data-pick="${_esc(myPick)}" data-result="${_esc(res)}" data-status="${sqStatus}"
         data-name="${_esc(_abbrevName(p.name))}"></span>`;
       squareParts.push(sqHtml);
-      if (mobMatchNums.has(num)) mobSquareParts.push(sqHtml);
+      sqByNum[num] = sqHtml;
       if (GRP_ROUND_BREAKS.has(num)) squareParts.push('<span class="sq-divider-sm"></span>');
     }
     const squares = squareParts.join('');
-    const mobSquares = mobSquareParts.join('');
+    // Mobile: render the 5 selected squares in chronological kickoff order
+    const mobSquares = _MATCHES_CHRONO
+      .map(([num]) => num)
+      .filter(num => mobMatchNums.has(num))
+      .map(num => sqByNum[num])
+      .join('');
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
       <td class="td-name">${_esc(_abbrevName(p.name))}</td>
