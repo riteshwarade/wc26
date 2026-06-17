@@ -1,1 +1,281 @@
-{}
+{
+  "generated_at": "2026-06-17T22:05:21.219032Z",
+  "confirmed": false,
+  "status": "provisional",
+  "matches_played": 22,
+  "source": "Wikipedia (canonical)",
+  "combination_key": "ABCFGHKL",
+  "combination_found": true,
+  "groups": {
+    "A": {
+      "first": "Mexico",
+      "second": "South Korea",
+      "third": "Czech Republic",
+      "fourth": "South Africa"
+    },
+    "B": {
+      "first": "Switzerland",
+      "second": "Canada",
+      "third": "Qatar",
+      "fourth": "Bosnia and Herzegovina"
+    },
+    "C": {
+      "first": "Scotland",
+      "second": "Brazil",
+      "third": "Morocco",
+      "fourth": "Haiti"
+    },
+    "D": {
+      "first": "United States",
+      "second": "Australia",
+      "third": "Turkey",
+      "fourth": "Paraguay"
+    },
+    "E": {
+      "first": "Germany",
+      "second": "Ivory Coast",
+      "third": "Ecuador",
+      "fourth": "Cura\u00e7ao"
+    },
+    "F": {
+      "first": "Sweden",
+      "second": "Netherlands",
+      "third": "Japan",
+      "fourth": "Tunisia"
+    },
+    "G": {
+      "first": "Iran",
+      "second": "New Zealand",
+      "third": "Belgium",
+      "fourth": "Egypt"
+    },
+    "H": {
+      "first": "Uruguay",
+      "second": "Saudi Arabia",
+      "third": "Spain",
+      "fourth": "Cape Verde"
+    },
+    "I": {
+      "first": "Norway",
+      "second": "France",
+      "third": "Senegal",
+      "fourth": "Iraq"
+    },
+    "J": {
+      "first": "Argentina",
+      "second": "Austria",
+      "third": "Jordan",
+      "fourth": "Algeria"
+    },
+    "K": {
+      "first": "Portugal",
+      "second": "DR Congo",
+      "third": "Colombia",
+      "fourth": "Uzbekistan"
+    },
+    "L": {
+      "first": "England",
+      "second": "Panama",
+      "third": "Ghana",
+      "fourth": "Croatia"
+    }
+  },
+  "qualified_thirds": [
+    {
+      "group": "F",
+      "team": "Japan",
+      "pts": 1,
+      "gd": 0,
+      "gf": 2
+    },
+    {
+      "group": "C",
+      "team": "Morocco",
+      "pts": 1,
+      "gd": 0,
+      "gf": 1
+    },
+    {
+      "group": "G",
+      "team": "Belgium",
+      "pts": 1,
+      "gd": 0,
+      "gf": 1
+    },
+    {
+      "group": "B",
+      "team": "Qatar",
+      "pts": 1,
+      "gd": 0,
+      "gf": 1
+    },
+    {
+      "group": "H",
+      "team": "Spain",
+      "pts": 1,
+      "gd": 0,
+      "gf": 0
+    },
+    {
+      "group": "K",
+      "team": "Colombia",
+      "pts": 0,
+      "gd": 0,
+      "gf": 0
+    },
+    {
+      "group": "L",
+      "team": "Ghana",
+      "pts": 0,
+      "gd": 0,
+      "gf": 0
+    },
+    {
+      "group": "A",
+      "team": "Czech Republic",
+      "pts": 0,
+      "gd": -1,
+      "gf": 1
+    }
+  ],
+  "round_of_32": {
+    "73": {
+      "home": "South Korea",
+      "away": "Canada"
+    },
+    "74": {
+      "home": "Germany",
+      "away": "Morocco"
+    },
+    "75": {
+      "home": "Sweden",
+      "away": "Brazil"
+    },
+    "76": {
+      "home": "Scotland",
+      "away": "Netherlands"
+    },
+    "77": {
+      "home": "Norway",
+      "away": "Japan"
+    },
+    "78": {
+      "home": "Ivory Coast",
+      "away": "France"
+    },
+    "79": {
+      "home": "Mexico",
+      "away": "Spain"
+    },
+    "80": {
+      "home": "England",
+      "away": "Colombia"
+    },
+    "81": {
+      "home": "United States",
+      "away": "Qatar"
+    },
+    "82": {
+      "home": "Iran",
+      "away": "Czech Republic"
+    },
+    "83": {
+      "home": "DR Congo",
+      "away": "Panama"
+    },
+    "84": {
+      "home": "Uruguay",
+      "away": "Austria"
+    },
+    "85": {
+      "home": "Switzerland",
+      "away": "Belgium"
+    },
+    "86": {
+      "home": "Argentina",
+      "away": "Saudi Arabia"
+    },
+    "87": {
+      "home": "Portugal",
+      "away": "Ghana"
+    },
+    "88": {
+      "home": "Australia",
+      "away": "New Zealand"
+    }
+  },
+  "round_of_16": {
+    "89": {
+      "home": "W74",
+      "away": "W77"
+    },
+    "90": {
+      "home": "W73",
+      "away": "W75"
+    },
+    "91": {
+      "home": "W76",
+      "away": "W78"
+    },
+    "92": {
+      "home": "W79",
+      "away": "W80"
+    },
+    "93": {
+      "home": "W83",
+      "away": "W84"
+    },
+    "94": {
+      "home": "W81",
+      "away": "W82"
+    },
+    "95": {
+      "home": "W86",
+      "away": "W88"
+    },
+    "96": {
+      "home": "W85",
+      "away": "W87"
+    }
+  },
+  "quarterfinals": {
+    "97": {
+      "home": "W89",
+      "away": "W90"
+    },
+    "98": {
+      "home": "W93",
+      "away": "W94"
+    },
+    "99": {
+      "home": "W91",
+      "away": "W92"
+    },
+    "100": {
+      "home": "W95",
+      "away": "W96"
+    }
+  },
+  "semifinals": {
+    "101": {
+      "home": "W97",
+      "away": "W98"
+    },
+    "102": {
+      "home": "W99",
+      "away": "W100"
+    }
+  },
+  "third_place": {
+    "103": {
+      "home": "L101",
+      "away": "L102"
+    }
+  },
+  "final": {
+    "104": {
+      "home": "W101",
+      "away": "W102"
+    }
+  }
+}
