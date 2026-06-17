@@ -3,6 +3,7 @@
 ## Changelog
 
 | Date | Change |
+| Jun 17, 2026 | **Provisional bracket gate: require all teams to have played.** `GRP_SAMPLE` (one match per group, 12 checks) replaced with `allTeamsPlayed` — checks all 24 matchday-1 results (M1–M24, 2 per group × 12 groups). Bracket now unlocks after M24 (Uzbekistan vs Colombia, Jun 18 02:00 UTC), once every team has played at least once. Message updated: "Bracket appears once every team has played." |
 | Jun 14, 2026 | **Mobile recent-squares: fix chronological display order.** Squares were selected chronologically but still rendered in match-number order (accumulated inside the MATCHES loop). Fix: store sqHtml in `sqByNum` map during the loop; assemble mobile squares afterwards via `_MATCHES_CHRONO.filter/map` so display order matches kickoff order. Same fix applied to KO (`koSqByNum` + `koChronoOrder`). |
 | Jun 13, 2026 | **Mobile recent-squares: fix chronological selection.** Match numbers are not chronological (39/72 group matches out of order; KO same issue). `_MATCHES_CHRONO` module-level constant sorts `MATCHES` by `utcKickoff`. `renderStandings` uses it for `mobMatchNums`; `renderKoStandings` sorts `KO_MATCH_ORDER` by `KO_SCHEDULE` for `koChronoOrder`. Desktop squares column unaffected. |
 | Jun 13, 2026 | **Pre-KO TODO items noted.** Two improvements to build before KO stage (Jun 28): (1) KO upset detection — wire `_isUpsetResult` into `renderKoStandings`, ~5 lines, CSS already exists; (2) KO live scores — extend group stage ESPN polling to KO matches, same architecture. Documented in `CLAUDE.md`. |

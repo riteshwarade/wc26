@@ -98,6 +98,17 @@ function localMatchTime(utcStr) {
 - R16/QF/SF/Final cards are `position: absolute` inside `.bk-float` — absolutely positioned cards have no intrinsic width, so column sizing is driven by R32 content only
 - `roundLabel(103)` returns `'3rd'` (not `'3rd Place'`)
 
+### Bracket display condition (leaderboard)
+
+The bracket section shows "Bracket appears once every team has played." until `allTeamsPlayed` is true. This requires all 24 matchday-1 results to be in the CSV (M1–M24 = 2 matches per group × 12 groups). The check:
+```js
+const allTeamsPlayed = Array.from({length: 24}, (_, i) => i + 1).every(m => _lastResults[m]);
+renderBracket(_lastResults, allTeamsPlayed, bracketConfirmed);
+```
+M24 (Uzbekistan vs Colombia, Group K) is the last matchday-1 game chronologically — Jun 18 02:00 UTC. Once it completes and the pipeline picks it up, the bracket unlocks.
+
+`bracketConfirmed` is set by `parse_results.py` after all 72 group matches complete and it cross-checks the R32 against Wikipedia. Until then the badge reads "Provisional".
+
 ### Desktop card styling
 
 Applies to both `WC2026_Pool_Knockout_Picks.html` and `WC2026_Pool_Leaderboard_Swiftly.html`.

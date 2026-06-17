@@ -2274,7 +2274,7 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed) {
   const el = document.getElementById('bracketCard');
 
   if (!allGroupsStarted) {
-    el.innerHTML = '<div class="bracket-pending">Bracket appears once all groups have kicked off.</div>';
+    el.innerHTML = '<div class="bracket-pending">Bracket appears once every team has played.</div>';
     return;
   }
 
@@ -2626,7 +2626,7 @@ async function init() {
     const grpCounts = buildGrpCounts(standings);
     const koPlayed  = Object.keys(koResults).length;
 
-    const GRP_SAMPLE = {A:1,B:3,C:7,D:4,E:10,F:11,G:16,H:14,I:17,J:19,K:23,L:22};
+    // All 24 matchday-1 games (M1–M24 = 2 per group × 12 groups). Bracket shows once every team has played.
     const bracketConfirmed = bracketData ? bracketData.confirmed === true : false;
 
     if (knockoutMode) {
@@ -2666,8 +2666,8 @@ async function init() {
     if (!knockoutMode) {
       renderResults(_lastResults, _lastGrpCounts, _liveData);
       renderGroupTables(_lastResults);
-      const allGrpsStarted2 = Object.values(GRP_SAMPLE).every(m => _lastResults[m]);
-      renderBracket(_lastResults, allGrpsStarted2, bracketConfirmed);
+      const allTeamsPlayed = Array.from({length: 24}, (_, i) => i + 1).every(m => _lastResults[m]);
+      renderBracket(_lastResults, allTeamsPlayed, bracketConfirmed);
       // Kick off live polling (fetches ESPN, starts interval if games are live)
       if (LIVE_SCORES_ENABLED) {
         fetchLiveScores().then(() => {
