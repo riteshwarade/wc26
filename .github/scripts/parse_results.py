@@ -146,7 +146,7 @@ def _fair_play_score_py(team, grp, cards):
     for num, g, t1, t2 in GROUP_MATCHES:
         if g != grp:
             continue
-        mc = cards.get(num, {}).get(team)
+        mc = cards.get(str(num), {}).get(team)
         if not mc:
             continue
         score -= mc.get('Y', 0) * 1
@@ -1220,8 +1220,16 @@ for _line in _RAW.strip().split('\n'):
 # GROUP_MATCHES is defined near the top of this file (before MATCH_LOOKUP).
 
 
-def compute_group_standings(results):
-    """Compute group standings from results dict."""
+def compute_group_standings(results, cards=None):
+    """Compute group standings from results dict.
+
+    Note: this is a simplified sort (Pts → GD → GF → fair play → FIFA ranking).
+    H2H criteria (a–c) are omitted because this function is only used to generate
+    the provisional bracket JSON, which is cross-checked against Wikipedia before
+    being marked confirmed. Fair play (criterion f) is included so that cases like
+    Netherlands vs Japan (same record, Netherlands 3 yellows) resolve correctly.
+    cards: output of parse_card_data(), or None (fair play = 0 if unavailable).
+    """
     stats = {}
     all_matches = GROUP_MATCHES
 
@@ -1250,7 +1258,8 @@ def compute_group_standings(results):
             -stats.get(t, {}).get('Pts', 0),
             -(stats.get(t, {}).get('GF', 0) - stats.get(t, {}).get('GA', 0)),
             -stats.get(t, {}).get('GF', 0),
-            RANKINGS.get(t, 999)
+            -_fair_play_score_py(t, grp, cards),   # criterion f: fair play
+            RANKINGS.get(t, 999)                    # criterion g: FIFA ranking
         ))
         grp_standings[grp] = [(t, stats.get(t, {})) for t in sorted_teams]
 
@@ -1357,7 +1366,7 @@ def write_bracket_json(results, cards=None):
     if all_played:
         print('All 72 group matches played — cross-checking R32 against Wikipedia...')
 
-    grp_standings, _ = compute_group_standings(results)
+    grp_standings, _ = compute_group_standings(results, cards)
 
     # Build position lookup
     pos = {}

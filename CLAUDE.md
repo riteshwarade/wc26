@@ -292,6 +292,8 @@ Applied when two or more teams are level on points. Criteria in order:
 
 `parse_card_data` runs **before** `write_bracket_json` in `__main__` so the provisional bracket also applies fair play to the thirds ranking. `write_bracket_json(results, cards)` receives the card dict and passes it to `_fair_play_score_py(team, grp, cards)` in the thirds sort key. `cards=None` is accepted gracefully (fair play = 0).
 
+`compute_group_standings(results, cards=None)` also accepts cards and applies `_fair_play_score_py` in the within-group sort key (between GF and FIFA ranking). This corrects cases where teams are tied through overall GD/GF but differ on cards — e.g. Netherlands 3 yellows vs Japan 0 cards in Group F, making Japan 2nd. H2H (criteria a–c) is still omitted from Python; Wikipedia cross-check is the final arbiter for confirmed status.
+
 **ESPN card classification per athlete per match:** yellow only → Y (−1); red with prior yellow → IR (−3, second yellow); red with no prior yellow → DR (−4). True YDR (yellow + direct red, −5) is indistinguishable from second yellow in ESPN data — classified as IR (−3), which underestimates the deduction. Coaches/officials without `athletesInvolved` are counted at team level; coach reds are DR.
 
 **Sorting implementation:** All group-ranking sort logic is centralized in module-scope `groupSort(teams, stats, grpMatches, results, cardData)`. It replaces the old pairwise comparator in both places:
