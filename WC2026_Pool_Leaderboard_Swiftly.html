@@ -1682,11 +1682,11 @@ function renderGroupTables(results) {
     return renderGroupTableCard(grp, teams, stats, { rowClassFn, showGD: true });
   }).join('');
 
-  const legend = `<div style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 0 4px;font-size:0.72rem;color:var(--neutral-dark)">
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:var(--blue-lightest);border:1px solid var(--swiftly-blue);display:inline-block"></span>Qualified (top 2)</span>
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#e6f9ef;border:1px solid #22863a;display:inline-block"></span>3rd — qualified</span>
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#fff8e6;border:1px solid #ff9e16;display:inline-block"></span>3rd — pending</span>
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#fdf0f0;border:1px solid #e24b4a;display:inline-block"></span>Eliminated</span>
+  const legend = `<div style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 12px 10px;font-size:0.72rem;color:var(--neutral-dark)">
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:2px;background:var(--swiftly-blue);display:inline-block;flex-shrink:0"></span>Qualified (top 2)</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:2px;background:#22863a;display:inline-block;flex-shrink:0"></span>3rd — qualified</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:2px;background:#ff9e16;display:inline-block;flex-shrink:0"></span>3rd — pending</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:2px;background:#e24b4a;display:inline-block;flex-shrink:0"></span>Eliminated</span>
   </div>`;
 
   document.getElementById('groupTablesCard').innerHTML =
