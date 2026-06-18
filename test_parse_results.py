@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '.github', 'scripts')
 from parse_results import (
     espn_team_name,
     parse_group_results_espn,
+    parse_card_data,
     parse_ko_results_espn,
     write_csv,
     write_ko_results_csv,
@@ -830,6 +831,175 @@ class TestComputeGroupStandings(unittest.TestCase):
         pts = {t: s['Pts'] for t, s in group_g}
         self.assertEqual(pts['Belgium'], 1)
         self.assertEqual(pts['Egypt'], 1)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# parse_card_data
+# ─────────────────────────────────────────────────────────────────────────────
+
+def make_event_with_cards(home_name, away_name, details, completed=True,
+                          season_slug='group-stage'):
+    """Build an ESPN event dict that includes a details[] card array.
+
+    Each element of `details` is a dict with keys:
+      yellow (bool), red (bool), team ('home'|'away'), athlete_id (str|None)
+
+    Teams are given numeric IDs ('10' for home, '20' for away) so that
+    parse_card_data's team_id_map resolution works correctly.
+    """
+    def make_detail(d):
+        side = d.get('team', 'home')
+        team_id = '10' if side == 'home' else '20'
+        ai = [{'id': d['athlete_id']}] if d.get('athlete_id') else []
+        return {
+            'yellowCard': d.get('yellow', False),
+            'redCard':    d.get('red', False),
+            'team':       {'id': team_id},
+            'athletesInvolved': ai,
+        }
+
+    home_comp = {
+        'homeAway': 'home',
+        'team': {'id': '10', 'displayName': home_name},
+        'score': '0',
+        'winner': False,
+    }
+    away_comp = {
+        'homeAway': 'away',
+        'team': {'id': '20', 'displayName': away_name},
+        'score': '0',
+        'winner': False,
+    }
+    return {
+        'season': {'slug': season_slug},
+        'competitions': [{
+            'status': {'type': {'completed': completed}},
+            'competitors': [home_comp, away_comp],
+            'details': [make_detail(d) for d in details],
+        }],
+    }
+
+
+class TestParseCardData(unittest.TestCase):
+    """Tests for parse_card_data() — ESPN event details → group_cards.json data."""
+
+    # M1 = Mexico vs South Africa
+
+    def test_single_yellow_home(self):
+        evt = make_event_with_cards('Mexico', 'South Africa', [
+            {'yellow': True, 'team': 'home', 'athlete_id': 'p1'},
+        ])
+        cards = parse_card_data([evt])
+        self.assertIn(1, cards)
+        self.assertEqual(cards[1]['Mexico']['Y'], 1)
+        self.assertEqual(cards[1]['Mexico'].get('DR', 0), 0)
+        self.assertEqual(cards[1]['Mexico'].get('IR', 0), 0)
+
+    def test_single_yellow_away(self):
+        evt = make_event_with_cards('Mexico', 'South Africa', [
+            {'yellow': True, 'team': 'away', 'athlete_id': 'p1'},
+        ])
+        cards = parse_card_data([evt])
+        self.assertIn(1, cards)
+        self.assertEqual(cards[1]['South Africa']['Y'], 1)
+        self.assertNotIn('Mexico', cards[1])
+
+    def test_direct_red_no_prior_yellow(self):
+        evt = make_event_with_cards('Mexico', 'South Africa', [
+            {'red': True, 'team': 'home', 'athlete_id': 'p1'},
+        ])
+        cards = parse_card_data([evt])
+        self.assertEqual(cards[1]['Mexico']['DR'], 1)
+        self.assertEqual(cards[1]['Mexico'].get('IR', 0), 0)
+
+    def test_second_yellow_classified_as_ir(self):
+        # Yellow then red for same athlete → indirect red (second yellow)
+        evt = make_event_with_cards('Mexico', 'South Africa', [
+            {'yellow': True, 'team': 'home', 'athlete_id': 'p1'},
+            {'red':    True, 'team': 'home', 'athlete_id': 'p1'},
+        ])
+        cards = parse_card_data([evt])
+        self.assertEqual(cards[1]['Mexico']['IR'], 1)
+        self.assertEqual(cards[1]['Mexico'].get('DR', 0), 0)
+        # The yellow event should not also count separately
+        self.assertEqual(cards[1]['Mexico'].get('Y', 0), 0)
+
+    def test_two_different_players_yellow(self):
+        evt = make_event_with_cards('Mexico', 'South Africa', [
+            {'yellow': True, 'team': 'home', 'athlete_id': 'p1'},
+            {'yellow': True, 'team': 'home', 'athlete_id': 'p2'},
+        ])
+        cards = parse_card_data([evt])
+        self.assertEqual(cards[1]['Mexico']['Y'], 2)
+
+    def test_both_teams_get_cards(self):
+        evt = make_event_with_cards('Mexico', 'South Africa', [
+            {'yellow': True, 'team': 'home', 'athlete_id': 'p1'},
+            {'red':    True, 'team': 'away', 'athlete_id': 'p2'},
+        ])
+        cards = parse_card_data([evt])
+        self.assertEqual(cards[1]['Mexico']['Y'], 1)
+        self.assertEqual(cards[1]['South Africa']['DR'], 1)
+
+    def test_incomplete_match_skipped(self):
+        evt = make_event_with_cards('Mexico', 'South Africa', [
+            {'yellow': True, 'team': 'home', 'athlete_id': 'p1'},
+        ], completed=False)
+        cards = parse_card_data([evt])
+        self.assertEqual(len(cards), 0)
+
+    def test_non_group_stage_skipped(self):
+        evt = make_event_with_cards('Mexico', 'South Africa', [
+            {'yellow': True, 'team': 'home', 'athlete_id': 'p1'},
+        ], season_slug='round-of-32')
+        cards = parse_card_data([evt])
+        self.assertEqual(len(cards), 0)
+
+    def test_unknown_matchup_skipped(self):
+        evt = make_event_with_cards('Atlantis', 'Wakanda', [
+            {'yellow': True, 'team': 'home', 'athlete_id': 'p1'},
+        ])
+        cards = parse_card_data([evt])
+        self.assertEqual(len(cards), 0)
+
+    def test_no_cards_match_not_in_output(self):
+        # Completed group match with no card details → match not in output
+        evt = make_event_with_cards('Mexico', 'South Africa', [])
+        cards = parse_card_data([evt])
+        self.assertNotIn(1, cards)
+
+    def test_coach_card_no_athlete_counts_at_team_level(self):
+        # Official/coach card: athletesInvolved is empty → yellow counted as Y
+        evt = make_event_with_cards('Mexico', 'South Africa', [
+            {'yellow': True, 'team': 'home', 'athlete_id': None},
+        ])
+        cards = parse_card_data([evt])
+        self.assertEqual(cards[1]['Mexico']['Y'], 1)
+
+    def test_coach_red_with_no_athlete_is_dr(self):
+        # Coach/official direct red with no prior yellow → DR
+        evt = make_event_with_cards('Mexico', 'South Africa', [
+            {'red': True, 'team': 'home', 'athlete_id': None},
+        ])
+        cards = parse_card_data([evt])
+        self.assertEqual(cards[1]['Mexico']['DR'], 1)
+
+    def test_multiple_matches(self):
+        # M1 Mexico-South Africa + M2 South Korea-Czech Republic
+        evt1 = make_event_with_cards('Mexico', 'South Africa', [
+            {'yellow': True, 'team': 'home', 'athlete_id': 'p1'},
+        ])
+        evt2 = make_event_with_cards('South Korea', 'Czech Republic', [
+            {'red': True, 'team': 'away', 'athlete_id': 'p2'},
+        ])
+        cards = parse_card_data([evt1, evt2])
+        self.assertIn(1, cards)
+        self.assertIn(2, cards)
+        self.assertEqual(cards[1]['Mexico']['Y'], 1)
+        self.assertEqual(cards[2]['Czech Republic']['DR'], 1)
+
+    def test_empty_events(self):
+        self.assertEqual(parse_card_data([]), {})
 
 
 # ─────────────────────────────────────────────────────────────────────────────

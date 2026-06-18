@@ -143,6 +143,103 @@ def espn_team_name(team_dict):
     return name
 
 
+def parse_card_data(events):
+    """
+    Extract fair-play card data from ESPN group-stage event details.
+
+    Returns {match_num: {team_name: {'Y': int, 'IR': int, 'DR': int}}} where:
+      Y  = yellow cards (no subsequent red)              → -1 point each
+      IR = indirect reds (second yellow → dismissal)    → -3 points each
+      DR = direct red cards (no prior yellow)           → -4 points each
+
+    Note: "yellow + direct red" (-5) is indistinguishable from second yellow
+    in ESPN data (both appear as yellow event then red event for same athlete).
+    All red-after-yellow cases are classified as IR (-3). This is the correct
+    value for the far more common second-yellow scenario.
+
+    Only one deduction is counted per athlete per match (FIFA rule).
+    """
+    cards = {}
+
+    for evt in events:
+        if evt.get('season', {}).get('slug') != 'group-stage':
+            continue
+        comp = evt['competitions'][0]
+        if not comp['status']['type'].get('completed'):
+            continue
+
+        # Build team_id → team_name from competitors
+        team_id_map = {}
+        for c in comp.get('competitors', []):
+            t = c.get('team', {})
+            team_id_map[t.get('id')] = espn_team_name(t)
+
+        # Identify match number
+        competitors = comp.get('competitors', [])
+        home_c = next((c for c in competitors if c.get('homeAway') == 'home'), None)
+        away_c = next((c for c in competitors if c.get('homeAway') == 'away'), None)
+        if not (home_c and away_c):
+            continue
+        home_name = espn_team_name(home_c.get('team', {}))
+        away_name = espn_team_name(away_c.get('team', {}))
+        match_num = MATCH_LOOKUP.get((home_name, away_name)) or \
+                    MATCH_LOOKUP.get((away_name, home_name))
+        if not match_num:
+            continue
+
+        # Per-athlete card tracking: {team_name: {athlete_id: {yellows, red}}}
+        athlete_cards = {home_name: {}, away_name: {}}
+
+        for detail in comp.get('details', []):
+            if not (detail.get('yellowCard') or detail.get('redCard')):
+                continue
+            team_id   = detail.get('team', {}).get('id')
+            team_name = team_id_map.get(team_id)
+            if not team_name or team_name not in athlete_cards:
+                continue
+            athletes   = detail.get('athletesInvolved', [])
+            # Use athlete ID for cross-referencing; fall back to unique sentinel for
+            # coach/official cards where athletesInvolved is empty.
+            athlete_id = athletes[0].get('id') if athletes else f'_noathlete_{id(detail)}'
+            ac = athlete_cards[team_name]
+            if athlete_id not in ac:
+                ac[athlete_id] = {'yellows': 0, 'red': False}
+            if detail.get('yellowCard') and not detail.get('redCard'):
+                ac[athlete_id]['yellows'] += 1
+            elif detail.get('redCard'):
+                ac[athlete_id]['red'] = True
+
+        # Classify each athlete and aggregate per team
+        match_cards = {}
+        for team_name, athletes in athlete_cards.items():
+            Y = IR = DR = 0
+            for rec in athletes.values():
+                if rec['red']:
+                    if rec['yellows'] > 0:
+                        IR += 1   # second yellow (or yellow+direct-red; treated as IR)
+                    else:
+                        DR += 1   # direct red
+                else:
+                    Y += rec['yellows']
+            if Y or IR or DR:
+                match_cards[team_name] = {'Y': Y, 'IR': IR, 'DR': DR}
+
+        if match_cards:
+            cards[match_num] = match_cards
+
+    return cards
+
+
+def write_cards_json(cards):
+    """Write results/group_cards.json — per-match, per-team card counts."""
+    os.makedirs('results', exist_ok=True)
+    path = 'results/group_cards.json'
+    out = {str(num): data for num, data in sorted(cards.items())}
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(out, f, indent=2)
+    print(f'Wrote card data for {len(cards)} matches → {path}')
+
+
 def parse_group_results_espn(events):
     """
     Extract completed group-stage results from ESPN event list.
@@ -1370,6 +1467,10 @@ if __name__ == '__main__':
     print(f'Found {len(results)} completed group matches')
     write_csv(results)
     write_bracket_json(results)
+
+    print('Parsing card data...')
+    cards = parse_card_data(group_events)
+    write_cards_json(cards)
 
     # ── Knockout stage: results ────────────────────────────────────────────────
     bracket_path = 'data/knockout_bracket.json'

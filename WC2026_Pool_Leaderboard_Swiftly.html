@@ -882,6 +882,7 @@ let _bridgeScores  = {};         // last known score per match — keeps squares
 let _lastGrpCounts  = null;
 let _livePoller     = null;
 let _lastUpdated    = null;
+let _cardData       = null;  // { matchNum: { teamName: {Y, IR, DR} } } from group_cards.json
 // ──────────────────────────────────────────────────────────
 
 
@@ -892,6 +893,7 @@ const RESULTS_URL    = `${_RAW}/results/group_results.csv`;
 const BRACKET_URL    = `${_RAW}/data/knockout_bracket.json`;
 const KO_PICKS_URL   = `${_RAW}/data/knockout_${POOL_ID}_picks.json`;
 const KO_RESULTS_URL = `${_RAW}/results/knockout_results.csv`;
+const CARDS_URL      = `${_RAW}/results/group_cards.json`;
 
 // ── Mode detection ────────────────────────────────────────
 // ?games=N  simulates the leaderboard at match N (0–104):
@@ -1487,23 +1489,110 @@ function _abbrevName(name) {
   return _abbrevMap.get(name) || name;
 }
 
-// ── H2H stats helper (module-scope so both renderGroupTables and computeGroupStandings can use it) ──
-function h2hStats(teamA, teamB, grpMatches, results) {
+// ── Group standings utilities (module-scope — used by renderGroupTables + computeGroupStandings) ──
+
+// H2H stats for `team` from matches where BOTH participants are in `allTeams`
+function _h2hMiniStats(team, allTeams, grpMatches, results) {
   let Pts = 0, GF = 0, GA = 0;
   grpMatches.forEach(([num, , , , t1, t2]) => {
-    const r = results[num];
-    if (!r) return;
-    if (t1===teamA && t2===teamB) {
+    if (!allTeams.includes(t1) || !allTeams.includes(t2)) return;
+    const r = results[num]; if (!r) return;
+    if (t1 === team) {
       GF += r.home; GA += r.away;
-      if (r.outcome==='W1') Pts += 3;
-      else if (r.outcome==='Draw') Pts += 1;
-    } else if (t1===teamB && t2===teamA) {
+      if (r.outcome === 'W1') Pts += 3; else if (r.outcome === 'Draw') Pts += 1;
+    } else if (t2 === team) {
       GF += r.away; GA += r.home;
-      if (r.outcome==='W2') Pts += 3;
-      else if (r.outcome==='Draw') Pts += 1;
+      if (r.outcome === 'W2') Pts += 3; else if (r.outcome === 'Draw') Pts += 1;
     }
   });
-  return { Pts, GF, GA };
+  return { Pts, GD: GF - GA, GF };
+}
+
+// Fair-play deduction for `team` across `matchNums` from cardData.
+// Y=−1, IR=−3, DR=−4. Returns 0 if cardData is null/unavailable.
+function fairPlayScore(team, matchNums, cardData) {
+  if (!cardData) return 0;
+  let score = 0;
+  matchNums.forEach(num => {
+    const mc = cardData[num]?.[team]; if (!mc) return;
+    score -= (mc.Y || 0) * 1;
+    score -= (mc.IR || 0) * 3;
+    score -= (mc.DR || 0) * 4;
+  });
+  return score;
+}
+
+// Sort a pts-tied group by H2H (multi-pass) then fall through to overall + fair play + ranking.
+// Called once per same-pts partition; returns sorted array of team names.
+function _applyH2HTiebreak(group, stats, grpMatches, results, cardData) {
+  if (group.length <= 1) return group;
+  const matchNums = grpMatches.map(([n]) => n);
+
+  // First pass: H2H among the full group
+  const h1 = {};
+  group.forEach(t => { h1[t] = _h2hMiniStats(t, group, grpMatches, results); });
+  const pass1 = [...group].sort((a, b) => {
+    if (h1[b].Pts !== h1[a].Pts) return h1[b].Pts - h1[a].Pts;
+    if (h1[b].GD  !== h1[a].GD)  return h1[b].GD  - h1[a].GD;
+    return h1[b].GF - h1[a].GF;
+  });
+
+  // Identify segments still tied after first pass (same H2H Pts+GD+GF)
+  const final = [];
+  let seg = [pass1[0]];
+  const pushSeg = () => {
+    if (seg.length <= 1) { final.push(...seg); return; }
+    // Second pass: re-compute H2H exclusively within this smaller subset
+    const h2 = {};
+    seg.forEach(t => { h2[t] = _h2hMiniStats(t, seg, grpMatches, results); });
+    const pass2 = [...seg].sort((a, b) => {
+      if (h2[b].Pts !== h2[a].Pts) return h2[b].Pts - h2[a].Pts;
+      if (h2[b].GD  !== h2[a].GD)  return h2[b].GD  - h2[a].GD;
+      if (h2[b].GF  !== h2[a].GF)  return h2[b].GF  - h2[a].GF;
+      // Still level → criteria d (overall GD), e (overall GF), f (fair play), g (FIFA ranking)
+      const sa = stats[a] || {}, sb = stats[b] || {};
+      const gdA = (sa.GF||0)-(sa.GA||0), gdB = (sb.GF||0)-(sb.GA||0);
+      if (gdB !== gdA) return gdB - gdA;
+      if ((sb.GF||0) !== (sa.GF||0)) return (sb.GF||0) - (sa.GF||0);
+      const fpA = fairPlayScore(a, matchNums, cardData);
+      const fpB = fairPlayScore(b, matchNums, cardData);
+      if (fpB !== fpA) return fpB - fpA;  // higher (less negative) = better fair play
+      return (RANKINGS[a] ?? 999) - (RANKINGS[b] ?? 999);
+    });
+    final.push(...pass2);
+  };
+
+  for (let i = 1; i < pass1.length; i++) {
+    const prev = h1[pass1[i-1]], cur = h1[pass1[i]];
+    if (prev.Pts === cur.Pts && prev.GD === cur.GD && prev.GF === cur.GF) {
+      seg.push(pass1[i]);
+    } else {
+      pushSeg(); seg = [pass1[i]];
+    }
+  }
+  pushSeg();
+  return final;
+}
+
+// Full within-group sort implementing FIFA tiebreaker chain (criteria a–g).
+// teams: array of names; stats: {team: {P,W,D,L,GF,GA,Pts}}
+// grpMatches: array of [num, grp, *, *, t1, t2] (same format as MATCHES)
+// cardData: _cardData global (null = fair play skipped gracefully)
+function groupSort(teams, stats, grpMatches, results, cardData) {
+  if (teams.length <= 1) return [...teams];
+  // Partition by points (descending)
+  const byPts = new Map();
+  teams.forEach(t => {
+    const p = (stats[t] || {}).Pts || 0;
+    if (!byPts.has(p)) byPts.set(p, []);
+    byPts.get(p).push(t);
+  });
+  const sorted = [];
+  [...byPts.keys()].sort((a, b) => b - a).forEach(pts => {
+    const group = byPts.get(pts);
+    sorted.push(...(group.length === 1 ? group : _applyH2HTiebreak(group, stats, grpMatches, results, cardData)));
+  });
+  return sorted;
 }
 
 function renderGroupTables(results) {
@@ -1541,26 +1630,13 @@ function renderGroupTables(results) {
 
   const completedGroups = Object.keys(groups).sort();
 
-  // h2hStats is defined at module scope above
+  // groupSort, fairPlayScore, _applyH2HTiebreak, _h2hMiniStats defined at module scope above
 
   // ── Pass 1: compute sorted standings for all completed groups ──
   function sortedStandings(grp) {
     const order = GROUP_ORDER[grp] || groups[grp];
     const grpMatches = MATCHES.filter(([, g]) => g === grp);
-    return [...order].sort((a, b) => {
-      const sa = stats[a] || {Pts:0,GF:0,GA:0};
-      const sb = stats[b] || {Pts:0,GF:0,GA:0};
-      if (sb.Pts !== sa.Pts) return sb.Pts - sa.Pts;
-      const ha = h2hStats(a, b, grpMatches, results), hb = h2hStats(b, a, grpMatches, results);
-      if (hb.Pts !== ha.Pts) return hb.Pts - ha.Pts;
-      if ((hb.GF-hb.GA) !== (ha.GF-ha.GA)) return (hb.GF-hb.GA) - (ha.GF-ha.GA);
-      if (hb.GF !== ha.GF) return hb.GF - ha.GF;
-      if ((sb.GF-sb.GA) !== (sa.GF-sa.GA)) return (sb.GF-sb.GA) - (sa.GF-sa.GA);
-      if (sb.GF !== sa.GF) return sb.GF - sa.GF;
-      const ra = RANKINGS[a] ?? 999, rb = RANKINGS[b] ?? 999;
-      if (ra !== rb) return ra - rb;
-      return (GROUP_ORDER[grp]||groups[grp]).indexOf(a) - (GROUP_ORDER[grp]||groups[grp]).indexOf(b);
-    });
+    return groupSort(order, stats, grpMatches, results, _cardData);
   }
 
   // Is a group fully played? (all 6 matches have results)
@@ -1577,12 +1653,16 @@ function renderGroupTables(results) {
     return { team: t, grp, stats: st };
   }).filter(Boolean);
 
-  // Sort 3rd-place teams (cross-group: overall stats only)
+  // Sort 3rd-place teams (cross-group: overall stats only, then fair play, then FIFA ranking)
   const sortedThirds = [...thirdPlaceTeams].sort((a, b) => {
     const sa = a.stats, sb = b.stats;
     if (sb.Pts !== sa.Pts) return sb.Pts - sa.Pts;
     if ((sb.GF-sb.GA) !== (sa.GF-sa.GA)) return (sb.GF-sb.GA) - (sa.GF-sa.GA);
     if (sb.GF !== sa.GF) return sb.GF - sa.GF;
+    const mnA = MATCHES.filter(([,g]) => g===a.grp).map(([n]) => n);
+    const mnB = MATCHES.filter(([,g]) => g===b.grp).map(([n]) => n);
+    const fpDiff = fairPlayScore(b.team, mnB, _cardData) - fairPlayScore(a.team, mnA, _cardData);
+    if (fpDiff !== 0) return fpDiff;
     return (RANKINGS[a.team]??999) - (RANKINGS[b.team]??999);
   });
 
@@ -2174,7 +2254,7 @@ function computeBracket(grpStandings, qualifiedThirds) {
 // FLAGS, RANKINGS, KO_SCHEDULE, teamHtml, isTbd, bkTeamRow, matchCard → bracket.js
 
 // Compute group standings from results (self-contained — no external deps)
-function computeGroupStandings(results) {
+function computeGroupStandings(results, cardData) {
   const GRP_MATCHES = [
     [1,'A','Mexico','South Africa'],[2,'A','South Korea','Czech Republic'],
     [3,'B','Canada','Bosnia and Herzegovina'],[4,'D','United States','Paraguay'],
@@ -2231,7 +2311,7 @@ function computeGroupStandings(results) {
   GRP_MATCHES.forEach(([num,grp,t1,t2]) => {
     [t1,t2].forEach(t => { if (!stats[t]) stats[t] = {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0}; });
     if (!grpMatches[grp]) grpMatches[grp] = [];
-    grpMatches[grp].push([num,grp,null,null,t1,t2]); // positions 4&5 = t1,t2 to match h2hStats destructuring
+    grpMatches[grp].push([num,grp,null,null,t1,t2]); // positions 4&5 = t1,t2 for groupSort destructuring
     const r = results[num]; if (!r) return;
     stats[t1].P++; stats[t2].P++;
     stats[t1].GF += r.home; stats[t1].GA += r.away;
@@ -2243,28 +2323,24 @@ function computeGroupStandings(results) {
   const grpStandings = {};
   Object.keys(grpOrder).forEach(grp => {
     const gm = grpMatches[grp] || [];
-    grpStandings[grp] = [...grpOrder[grp]].sort((a,b) => {
-      const sa=stats[a]||{Pts:0,GF:0,GA:0}, sb=stats[b]||{Pts:0,GF:0,GA:0};
-      if (sb.Pts!==sa.Pts) return sb.Pts-sa.Pts;
-      // H2H: criteria a, b, c
-      const ha=h2hStats(a,b,gm,results), hb=h2hStats(b,a,gm,results);
-      if (hb.Pts!==ha.Pts) return hb.Pts-ha.Pts;
-      if ((hb.GF-hb.GA)!==(ha.GF-ha.GA)) return (hb.GF-hb.GA)-(ha.GF-ha.GA);
-      if (hb.GF!==ha.GF) return hb.GF-ha.GF;
-      // Overall: criteria d, e
-      if ((sb.GF-sb.GA)!==(sa.GF-sa.GA)) return (sb.GF-sb.GA)-(sa.GF-sa.GA);
-      if (sb.GF!==sa.GF) return sb.GF-sa.GF;
-      // FIFA ranking: criterion g; group-order position as final tiebreaker (matches sortedStandings)
-      const ra = RANKINGS[a]??999, rb = RANKINGS[b]??999;
-      if (ra!==rb) return ra-rb;
-      return grpOrder[grp].indexOf(a) - grpOrder[grp].indexOf(b);
-    }).map(t => [t, stats[t]||{P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0}]);
+    grpStandings[grp] = groupSort(grpOrder[grp], stats, gm, results, cardData)
+      .map(t => [t, stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0}]);
   });
-  // Best 8 thirds
+  // Best 8 thirds (cross-group: Pts → GD → GF → fair play → FIFA ranking)
   const thirds = Object.entries(grpStandings)
     .filter(([,ts]) => ts.length>=3 && ts[2][1].P>0)
     .map(([grp,ts]) => [grp, ts[2][0], ts[2][1]])
-    .sort((a,b) => (b[2].Pts-a[2].Pts)||((b[2].GF-b[2].GA)-(a[2].GF-a[2].GA))||(b[2].GF-a[2].GF)||((RANKINGS[a[1]]??999)-(RANKINGS[b[1]]??999)));
+    .sort((a,b) => {
+      if (b[2].Pts !== a[2].Pts) return b[2].Pts - a[2].Pts;
+      const gdA = a[2].GF-a[2].GA, gdB = b[2].GF-b[2].GA;
+      if (gdB !== gdA) return gdB - gdA;
+      if (b[2].GF !== a[2].GF) return b[2].GF - a[2].GF;
+      const mnA = (grpMatches[a[0]] || []).map(([n]) => n);
+      const mnB = (grpMatches[b[0]] || []).map(([n]) => n);
+      const fpDiff = fairPlayScore(b[1], mnB, cardData) - fairPlayScore(a[1], mnA, cardData);
+      if (fpDiff !== 0) return fpDiff;
+      return (RANKINGS[a[1]]??999) - (RANKINGS[b[1]]??999);
+    });
   return { grpStandings, thirds };
 }
 
@@ -2291,7 +2367,7 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed) {
     bracketLabel.appendChild(span);
   }
 
-  const { grpStandings, thirds } = computeGroupStandings(results);
+  const { grpStandings, thirds } = computeGroupStandings(results, _cardData);
   const { r32teams } = computeBracket(grpStandings, thirds);
 
   // Resolve teams for a match slot — returns [home, away]
@@ -2598,12 +2674,13 @@ async function init() {
 
     const _nc = { cache: 'no-store' };
     const _bust = `?t=${Date.now()}`;
-      const [picksResp, resultsResp, bracketResp, koPicksResp, koResultsResp] = await Promise.all([
+      const [picksResp, resultsResp, bracketResp, koPicksResp, koResultsResp, cardsResp] = await Promise.all([
         fetch(PICKS_URL    + _bust, _nc),
         fetch(RESULTS_URL  + _bust, _nc),
         fetch(BRACKET_URL  + _bust, _nc).catch(() => null),
         fetch(KO_PICKS_URL + _bust, _nc).catch(() => null),
         fetch(KO_RESULTS_URL + _bust, _nc).catch(() => null),
+        fetch(CARDS_URL    + _bust, _nc).catch(() => null),
       ]);
       if (!picksResp.ok) throw new Error('Could not load picks');
       if (!resultsResp.ok) throw new Error('Could not load results');
@@ -2612,6 +2689,7 @@ async function init() {
       if (bracketResp?.ok) bracketData = await bracketResp.json();
       if (koPicksResp?.ok) koPicksData = await koPicksResp.json();
       if (koResultsResp?.ok) koResultsCSV = await koResultsResp.text();
+      if (cardsResp?.ok) _cardData = await cardsResp.json();
 
     // Apply ?games=N slicing
     if (_gamesN !== null) {

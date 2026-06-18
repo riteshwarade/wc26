@@ -284,16 +284,29 @@ Applied when two or more teams are level on points. Criteria in order:
 - *(if still tied: re-apply a–c exclusively among the still-level subset)*
 - **d.** Overall goal difference
 - **e.** Overall goals scored
-- **f.** Fair play score — yellow: −1, indirect red: −3, direct red: −4, yellow+direct red: −5 *(not implemented — no card data)*
+- **f.** Fair play score — yellow: −1, indirect red: −3, direct red: −4, yellow+direct red: −5 *(implemented; YDR treated as IR since ESPN data can't distinguish — see below)*
 - **g.** FIFA ranking (most recent) *(implemented)*
 - **h.** Progressively older FIFA rankings *(not implemented — single ranking only)*
 
-Two sorting functions implement this chain:
+**Card data pipeline:** `parse_results.py` → `parse_card_data(events)` → `results/group_cards.json`. Format: `{"1": {"Mexico": {"Y":1,"IR":0,"DR":0}, ...}, ...}`. Fetched in `init()` as `CARDS_URL` → `_cardData` global. Graceful degradation: if fetch fails, `_cardData = null` and fair play returns 0 (falls through to FIFA ranking).
 
-- **`sortedStandings(grp)`** — used by group tables in `renderGroupTables`. Full chain a–e, g implemented via pairwise sort. `h2hStats(teamA, teamB, grpMatches, results)` is a module-scope helper used here.
-- **`computeGroupStandings(results)`** — used by the bracket display and 3rd-place ranking. Same chain. Uses the same `h2hStats` module-scope helper.
+**ESPN card classification per athlete per match:** yellow only → Y (−1); red with prior yellow → IR (−3, second yellow); red with no prior yellow → DR (−4). True YDR (yellow + direct red, −5) is indistinguishable from second yellow in ESPN data — classified as IR (−3), which underestimates the deduction. Coaches/officials without `athletesInvolved` are counted at team level; coach reds are DR.
 
-Both functions must stay in sync. The group picks page uses a simplified chain (no GD/GF since users don't pick scores) — this is intentional.
+**Sorting implementation:** All group-ranking sort logic is centralized in module-scope `groupSort(teams, stats, grpMatches, results, cardData)`. It replaces the old pairwise comparator in both places:
+
+- **`sortedStandings(grp)`** — inner function in `renderGroupTables`. Now one line: calls `groupSort(order, stats, grpMatches, results, _cardData)`.
+- **`computeGroupStandings(results, cardData)`** — bracket display and 3rd-place ranking. Calls `groupSort` per group; thirds sort adds `fairPlayScore` between GF and FIFA ranking.
+
+**`groupSort` algorithm:**
+1. Partition teams by points (descending)
+2. For each pts-tied group: `_applyH2HTiebreak(group, ...)`
+   - First pass: H2H Pts → H2H GD → H2H GF among the full tied group (`_h2hMiniStats`)
+   - Identify segments still tied after first pass
+   - Second pass (per segment): re-compute H2H among the smaller subset; if still tied, fall through to d (overall GD) → e (overall GF) → f (`fairPlayScore`) → g (FIFA ranking)
+
+**Removed:** `h2hStats(teamA, teamB, ...)` module-scope helper — replaced by `_h2hMiniStats(team, allTeams, ...)` which computes mini-tournament stats for one team among a set.
+
+Both `sortedStandings` and `computeGroupStandings` must stay in sync by always calling `groupSort`. The group picks page uses a simplified chain (no GD/GF since users don't pick scores) — this is intentional.
 
 ### Correctness pill
 
