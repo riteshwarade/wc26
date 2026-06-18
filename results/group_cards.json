@@ -205,5 +205,17 @@
       "IR": 0,
       "DR": 0
     }
+  },
+  "26": {
+    "Switzerland": {
+      "Y": 1,
+      "IR": 0,
+      "DR": 0
+    },
+    "Bosnia and Herzegovina": {
+      "Y": 2,
+      "IR": 0,
+      "DR": 1
+    }
   }
 }
