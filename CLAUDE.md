@@ -418,6 +418,8 @@ Set once to avoid the prompt: `git config --global pull.rebase true`
 
 **GitHub Actions schedule reliability** — GitHub throttles high-frequency cron jobs on low-traffic repos. The 5-min schedule may silently skip runs. Fix: **cron-job.org** externally triggers the workflow via `workflow_dispatch` every 5 min — this is live and running. The GitHub native cron is set to 10 min as a fallback only.
 
+**Bracket write guard** — `write_bracket_json` only writes `data/knockout_bracket.json` when the substantive content changes. It compares the new bracket against the existing file (ignoring `generated_at`); if identical, skips the write entirely. This prevents a spurious commit every 5 minutes when no results have changed.
+
 Setup (already done):
 - GitHub PAT `wc26-cron-trigger` with `Actions: write` on `wc26` repo — **expires 2026-08-11**, regenerate before then
 - cron-job.org job `wc26-update` POSTs every 5 min to:
