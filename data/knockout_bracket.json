@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-06-18T04:00:33.646548Z",
+  "generated_at": "2026-06-18T04:05:17.175736Z",
   "confirmed": false,
   "status": "provisional",
-  "matches_played": 23,
+  "matches_played": 24,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABCEFGHK",
   "combination_found": true,
@@ -68,9 +68,9 @@
       "fourth": "Algeria"
     },
     "K": {
-      "first": "Portugal",
-      "second": "DR Congo",
-      "third": "Colombia",
+      "first": "Colombia",
+      "second": "Portugal",
+      "third": "DR Congo",
       "fourth": "Uzbekistan"
     },
     "L": {
@@ -103,6 +103,13 @@
       "gf": 1
     },
     {
+      "group": "K",
+      "team": "DR Congo",
+      "pts": 1,
+      "gd": 0,
+      "gf": 1
+    },
+    {
       "group": "B",
       "team": "Qatar",
       "pts": 1,
@@ -113,13 +120,6 @@
       "group": "H",
       "team": "Spain",
       "pts": 1,
-      "gd": 0,
-      "gf": 0
-    },
-    {
-      "group": "K",
-      "team": "Colombia",
-      "pts": 0,
       "gd": 0,
       "gf": 0
     },
@@ -169,7 +169,7 @@
     },
     "80": {
       "home": "England",
-      "away": "Colombia"
+      "away": "DR Congo"
     },
     "81": {
       "home": "United States",
@@ -180,7 +180,7 @@
       "away": "Czech Republic"
     },
     "83": {
-      "home": "DR Congo",
+      "home": "Portugal",
       "away": "Ghana"
     },
     "84": {
@@ -196,7 +196,7 @@
       "away": "Saudi Arabia"
     },
     "87": {
-      "home": "Portugal",
+      "home": "Colombia",
       "away": "Ecuador"
     },
     "88": {
