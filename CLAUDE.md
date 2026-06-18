@@ -290,6 +290,8 @@ Applied when two or more teams are level on points. Criteria in order:
 
 **Card data pipeline:** `parse_results.py` → `parse_card_data(events)` → `results/group_cards.json`. Format: `{"1": {"Mexico": {"Y":1,"IR":0,"DR":0}, ...}, ...}`. Fetched in `init()` as `CARDS_URL` → `_cardData` global. Graceful degradation: if fetch fails, `_cardData = null` and fair play returns 0 (falls through to FIFA ranking).
 
+**Regression guard in `__main__`:** Before writing the CSV, the existing `group_results.csv` is loaded. If ESPN returns fewer matches than are already on disk (e.g. on days with no group-stage games), the new results are merged into the existing ones rather than overwriting. ESPN wins for any match it does return; existing data is preserved for all others. This prevents a day-between-matchdays ESPN gap from clearing confirmed results.
+
 `parse_card_data` runs **before** `write_bracket_json` in `__main__` so the provisional bracket also applies fair play to the thirds ranking. `write_bracket_json(results, cards)` receives the card dict and passes it to `_fair_play_score_py(team, grp, cards)` in the thirds sort key. `cards=None` is accepted gracefully (fair play = 0).
 
 `compute_group_standings(results, cards=None)` also accepts cards and applies `_fair_play_score_py` in the within-group sort key (between GF and FIFA ranking). This corrects cases where teams are tied through overall GD/GF but differ on cards — e.g. Netherlands 3 yellows vs Japan 0 cards in Group F, making Japan 2nd. H2H (criteria a–c) is still omitted from Python; Wikipedia cross-check is the final arbiter for confirmed status.

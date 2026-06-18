@@ -1496,6 +1496,24 @@ if __name__ == '__main__':
     print('Parsing group results...')
     results = parse_group_results_espn(group_events)
     print(f'Found {len(results)} completed group matches')
+
+    # Regression guard: merge with existing CSV so a day with no ESPN events
+    # never overwrites previously confirmed results.
+    existing_results = {}
+    csv_path = 'results/group_results.csv'
+    if os.path.exists(csv_path):
+        with open(csv_path, newline='', encoding='utf-8') as _f:
+            for row in csv.DictReader(_f):
+                try:
+                    existing_results[int(row['match'])] = (
+                        int(row['home_score']), int(row['away_score']), row['outcome'])
+                except (KeyError, ValueError):
+                    pass
+    if len(results) < len(existing_results):
+        print(f'ESPN returned {len(results)} results vs {len(existing_results)} on disk — '
+              f'merging to avoid regression')
+        merged = {**existing_results, **results}  # ESPN wins for any match it did return
+        results = merged
     write_csv(results)
 
     print('Parsing card data...')
