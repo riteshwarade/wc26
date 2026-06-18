@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-18T13:55:20.748966Z",
+  "generated_at": "2026-06-18T14:00:35.949382Z",
   "confirmed": false,
   "status": "provisional",
   "matches_played": 24,
@@ -96,15 +96,15 @@
       "gf": 1
     },
     {
-      "group": "G",
-      "team": "Belgium",
+      "group": "K",
+      "team": "DR Congo",
       "pts": 1,
       "gd": 0,
       "gf": 1
     },
     {
-      "group": "K",
-      "team": "DR Congo",
+      "group": "G",
+      "team": "Belgium",
       "pts": 1,
       "gd": 0,
       "gf": 1
