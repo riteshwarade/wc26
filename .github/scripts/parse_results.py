@@ -134,6 +134,27 @@ def fetch_espn_ko_events():
     return _fetch_events(ESPN_KO_DATES)
 
 
+def _fair_play_score_py(team, grp, cards):
+    """Fair-play deduction for `team` in `grp` from card data dict.
+
+    Returns a negative integer (lower = worse fair play).
+    Y=−1, IR=−3, DR=−4.  Returns 0 if cards is None.
+    """
+    if not cards:
+        return 0
+    score = 0
+    for num, g, t1, t2 in GROUP_MATCHES:
+        if g != grp:
+            continue
+        mc = cards.get(num, {}).get(team)
+        if not mc:
+            continue
+        score -= mc.get('Y', 0) * 1
+        score -= mc.get('IR', 0) * 3
+        score -= mc.get('DR', 0) * 4
+    return score
+
+
 def espn_team_name(team_dict):
     """Normalise an ESPN team object's displayName to our internal team name."""
     raw = team_dict.get('displayName', '')
@@ -1312,7 +1333,7 @@ def verify_r32_against_wikipedia(computed_r32):
     }
 
 
-def write_bracket_json(results):
+def write_bracket_json(results, cards=None):
     """
     Write knockout_bracket.json:
     - Provisional (confirmed=false): once all 12 groups have ≥1 result (after round 1)
@@ -1345,11 +1366,12 @@ def write_bracket_json(results):
         if len(teams) > 1: pos[f'2{grp}'] = teams[1][0]
         if len(teams) > 2: pos[f'3{grp}'] = teams[2][0]
 
-    # Best 8 third-place teams
+    # Best 8 third-place teams (Pts → GD → GF → fair play → FIFA ranking)
     thirds = sorted(
         [(grp, teams[2][0], teams[2][1]) for grp, teams in grp_standings.items() if len(teams) >= 3],
         key=lambda x: (-x[2].get('Pts',0), -(x[2].get('GF',0)-x[2].get('GA',0)),
-                       -x[2].get('GF',0), RANKINGS.get(x[1], 999))
+                       -x[2].get('GF',0), -_fair_play_score_py(x[1], x[0], cards),
+                       RANKINGS.get(x[1], 999))
     )[:8]
 
     qual_groups = ''.join(sorted(g for g,_,_ in thirds))
@@ -1466,11 +1488,12 @@ if __name__ == '__main__':
     results = parse_group_results_espn(group_events)
     print(f'Found {len(results)} completed group matches')
     write_csv(results)
-    write_bracket_json(results)
 
     print('Parsing card data...')
     cards = parse_card_data(group_events)
     write_cards_json(cards)
+
+    write_bracket_json(results, cards)
 
     # ── Knockout stage: results ────────────────────────────────────────────────
     bracket_path = 'data/knockout_bracket.json'
