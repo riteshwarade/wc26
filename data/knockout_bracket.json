@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-18T15:10:25.840969Z",
+  "generated_at": "2026-06-18T15:10:25.944501Z",
   "confirmed": false,
   "status": "provisional",
   "matches_played": 24,
@@ -21,8 +21,8 @@
     },
     "C": {
       "first": "Scotland",
-      "second": "Brazil",
-      "third": "Morocco",
+      "second": "Morocco",
+      "third": "Brazil",
       "fourth": "Haiti"
     },
     "D": {
@@ -39,13 +39,13 @@
     },
     "F": {
       "first": "Sweden",
-      "second": "Netherlands",
-      "third": "Japan",
+      "second": "Japan",
+      "third": "Netherlands",
       "fourth": "Tunisia"
     },
     "G": {
-      "first": "Iran",
-      "second": "New Zealand",
+      "first": "New Zealand",
+      "second": "Iran",
       "third": "Belgium",
       "fourth": "Egypt"
     },
@@ -69,8 +69,8 @@
     },
     "K": {
       "first": "Colombia",
-      "second": "Portugal",
-      "third": "DR Congo",
+      "second": "DR Congo",
+      "third": "Portugal",
       "fourth": "Uzbekistan"
     },
     "L": {
@@ -83,14 +83,14 @@
   "qualified_thirds": [
     {
       "group": "F",
-      "team": "Japan",
+      "team": "Netherlands",
       "pts": 1,
       "gd": 0,
       "gf": 2
     },
     {
       "group": "C",
-      "team": "Morocco",
+      "team": "Brazil",
       "pts": 1,
       "gd": 0,
       "gf": 1
@@ -103,15 +103,15 @@
       "gf": 1
     },
     {
-      "group": "K",
-      "team": "DR Congo",
+      "group": "B",
+      "team": "Qatar",
       "pts": 1,
       "gd": 0,
       "gf": 1
     },
     {
-      "group": "B",
-      "team": "Qatar",
+      "group": "K",
+      "team": "Portugal",
       "pts": 1,
       "gd": 0,
       "gf": 1
@@ -145,19 +145,19 @@
     },
     "74": {
       "home": "Germany",
-      "away": "Morocco"
+      "away": "Brazil"
     },
     "75": {
       "home": "Sweden",
-      "away": "Brazil"
+      "away": "Morocco"
     },
     "76": {
       "home": "Scotland",
-      "away": "Netherlands"
+      "away": "Japan"
     },
     "77": {
       "home": "Norway",
-      "away": "Japan"
+      "away": "Netherlands"
     },
     "78": {
       "home": "Ivory Coast",
@@ -169,18 +169,18 @@
     },
     "80": {
       "home": "England",
-      "away": "DR Congo"
+      "away": "Portugal"
     },
     "81": {
       "home": "United States",
       "away": "Qatar"
     },
     "82": {
-      "home": "Iran",
+      "home": "New Zealand",
       "away": "Czech Republic"
     },
     "83": {
-      "home": "Portugal",
+      "home": "DR Congo",
       "away": "Ghana"
     },
     "84": {
@@ -201,7 +201,7 @@
     },
     "88": {
       "home": "Australia",
-      "away": "New Zealand"
+      "away": "Iran"
     }
   },
   "round_of_16": {
