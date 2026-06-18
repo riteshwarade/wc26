@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-06-18T17:55:19.464450Z",
+  "generated_at": "2026-06-18T18:00:28.134566Z",
   "confirmed": false,
   "status": "provisional",
-  "matches_played": 24,
+  "matches_played": 25,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABCEFGHK",
   "combination_found": true,
@@ -126,9 +126,9 @@
     {
       "group": "A",
       "team": "Czech Republic",
-      "pts": 0,
+      "pts": 1,
       "gd": -1,
-      "gf": 1
+      "gf": 2
     },
     {
       "group": "E",
