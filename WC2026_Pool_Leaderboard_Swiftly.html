@@ -503,18 +503,12 @@
   /* R16/QF/SF/Final: cards absolutely positioned by JS to align with R32 anchors */
   .bk-float    { position: relative; }  /* wraps absolutely-positioned cards */
   .bk-float .bk-card { position: absolute; left: 0; right: 0; }
-  .bk-card {
-    background: #ffffff;
-    border: 0.5px solid var(--neutral-light);
-    border-radius: 8px;
-    overflow: hidden;
-  }
+  .bk-card { /* transparent container — visual chrome lives on .bk-team rows only */ }
   .bk-mnum {
     font-size: 0.70rem;
     color: var(--neutral-dark);
     text-align: left;
     padding: 2px 8px;
-    background: var(--neutral-lightest);
     letter-spacing: 0.2px;
     display: flex;
     align-items: center;
@@ -542,6 +536,7 @@
     margin: 0 4px;
     border-radius: 5px;
     border: 1.5px solid #cce8f4;
+    background: #ffffff;
   }
   .bk-mnum + .bk-team { margin-top: 4px; }
   .bk-team + .bk-team { margin-top: 4px; }

@@ -146,9 +146,9 @@
   .bk-pair    { display: flex; flex-direction: column; gap: 16px; }
   .bk-float   { position: relative; }
   .bk-float .bk-card { position: absolute; left: 0; right: 0; }
-  .bk-card { background: #ffffff; border: 0.5px solid var(--neutral-light); border-radius: 8px; overflow: hidden; }
-  .bk-mnum { font-size: 0.70rem; color: var(--neutral-dark); text-align: left; padding: 2px 8px; background: var(--neutral-lightest); letter-spacing: 0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bk-team { display: flex; align-items: center; gap: 6px; padding: 5px 9px; font-size: 0.92rem; font-weight: 400; margin: 0 4px; border-radius: 5px; border: 1.5px solid #cce8f4; }
+  .bk-card { /* transparent container — visual chrome lives on .bk-team rows only */ }
+  .bk-mnum { font-size: 0.70rem; color: var(--neutral-dark); text-align: left; padding: 2px 8px; letter-spacing: 0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk-team { display: flex; align-items: center; gap: 6px; padding: 5px 9px; font-size: 0.92rem; font-weight: 400; margin: 0 4px; border-radius: 5px; border: 1.5px solid #cce8f4; background: #ffffff; }
   .bk-mnum + .bk-team { margin-top: 4px; }
   .bk-team + .bk-team { margin-top: 4px; }
   .bk-team:last-child { margin-bottom: 4px; }

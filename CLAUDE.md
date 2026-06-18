@@ -118,6 +118,8 @@ Applies to both `WC2026_Pool_Knockout_Picks.html` and `WC2026_Pool_Leaderboard_S
 .bk-matches, .bk-half, .bk-quarter, .bk-pair { gap: 16px; }
 ```
 
+**Card container:** `.bk-card` is a transparent structural container — no background, border, or border-radius. All visual chrome lives on `.bk-team` rows only. `.bk-mnum` is also transparent (no background).
+
 **Team row (flush bordered pill):**
 ```css
 .bk-team {
@@ -127,6 +129,7 @@ Applies to both `WC2026_Pool_Knockout_Picks.html` and `WC2026_Pool_Leaderboard_S
   margin: 0 4px;
   border-radius: 5px;
   border: 1.5px solid #cce8f4;
+  background: #ffffff;  /* white bg on team rows only, not the card container */
 }
 .bk-mnum + .bk-team { margin-top: 4px; }
 .bk-team + .bk-team  { margin-top: 4px; }
