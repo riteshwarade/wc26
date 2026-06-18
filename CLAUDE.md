@@ -277,6 +277,8 @@ Once the first match in a group kicks off, `sortedStandings()` takes over and ro
 
 **Third-place qualification highlighting** only activates once ALL 12 groups are fully played (`isGroupDone` for every group). This gate uses `isGroupDone` (all 6 matches played), not `isGroupStarted`. `thirdPlaceTeams` also filters out groups where the 3rd-place team has `P === 0` to prevent ghost entries from corrupting the cross-group ranking.
 
+**Group table legend** (rendered below the grid in `renderGroupTables`): solid-color 11px squares, no border. Colors: Swiftly Blue (qualified top 2), `#22863a` green (3rd qualified), `#ff9e16` amber (3rd pending), `#e24b4a` red (eliminated). Padding: `8px 12px 10px` to keep squares off the card edge.
+
 ### Group stage tiebreaker chain (FIFA official, source: Wikipedia)
 
 Applied when two or more teams are level on points. Criteria in order:
