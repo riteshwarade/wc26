@@ -36,12 +36,14 @@ from parse_results import (
     extract_score,
     parse_results,
     compute_group_standings,
+    _fair_play_score_py,
     MATCH_LOOKUP,
     ESPN_TEAM_MAP,
     TEAM_CODES,
     KNOWN_TEAMS,
     GROUP_MATCHES,
     GROUP_ORDER,
+    RANKINGS,
 )
 
 
@@ -890,27 +892,27 @@ class TestParseCardData(unittest.TestCase):
             {'yellow': True, 'team': 'home', 'athlete_id': 'p1'},
         ])
         cards = parse_card_data([evt])
-        self.assertIn(1, cards)
-        self.assertEqual(cards[1]['Mexico']['Y'], 1)
-        self.assertEqual(cards[1]['Mexico'].get('DR', 0), 0)
-        self.assertEqual(cards[1]['Mexico'].get('IR', 0), 0)
+        self.assertIn('1', cards)
+        self.assertEqual(cards['1']['Mexico']['Y'], 1)
+        self.assertEqual(cards['1']['Mexico'].get('DR', 0), 0)
+        self.assertEqual(cards['1']['Mexico'].get('IR', 0), 0)
 
     def test_single_yellow_away(self):
         evt = make_event_with_cards('Mexico', 'South Africa', [
             {'yellow': True, 'team': 'away', 'athlete_id': 'p1'},
         ])
         cards = parse_card_data([evt])
-        self.assertIn(1, cards)
-        self.assertEqual(cards[1]['South Africa']['Y'], 1)
-        self.assertNotIn('Mexico', cards[1])
+        self.assertIn('1', cards)
+        self.assertEqual(cards['1']['South Africa']['Y'], 1)
+        self.assertNotIn('Mexico', cards['1'])
 
     def test_direct_red_no_prior_yellow(self):
         evt = make_event_with_cards('Mexico', 'South Africa', [
             {'red': True, 'team': 'home', 'athlete_id': 'p1'},
         ])
         cards = parse_card_data([evt])
-        self.assertEqual(cards[1]['Mexico']['DR'], 1)
-        self.assertEqual(cards[1]['Mexico'].get('IR', 0), 0)
+        self.assertEqual(cards['1']['Mexico']['DR'], 1)
+        self.assertEqual(cards['1']['Mexico'].get('IR', 0), 0)
 
     def test_second_yellow_classified_as_ir(self):
         # Yellow then red for same athlete → indirect red (second yellow)
@@ -919,10 +921,10 @@ class TestParseCardData(unittest.TestCase):
             {'red':    True, 'team': 'home', 'athlete_id': 'p1'},
         ])
         cards = parse_card_data([evt])
-        self.assertEqual(cards[1]['Mexico']['IR'], 1)
-        self.assertEqual(cards[1]['Mexico'].get('DR', 0), 0)
+        self.assertEqual(cards['1']['Mexico']['IR'], 1)
+        self.assertEqual(cards['1']['Mexico'].get('DR', 0), 0)
         # The yellow event should not also count separately
-        self.assertEqual(cards[1]['Mexico'].get('Y', 0), 0)
+        self.assertEqual(cards['1']['Mexico'].get('Y', 0), 0)
 
     def test_two_different_players_yellow(self):
         evt = make_event_with_cards('Mexico', 'South Africa', [
@@ -930,7 +932,7 @@ class TestParseCardData(unittest.TestCase):
             {'yellow': True, 'team': 'home', 'athlete_id': 'p2'},
         ])
         cards = parse_card_data([evt])
-        self.assertEqual(cards[1]['Mexico']['Y'], 2)
+        self.assertEqual(cards['1']['Mexico']['Y'], 2)
 
     def test_both_teams_get_cards(self):
         evt = make_event_with_cards('Mexico', 'South Africa', [
@@ -938,8 +940,8 @@ class TestParseCardData(unittest.TestCase):
             {'red':    True, 'team': 'away', 'athlete_id': 'p2'},
         ])
         cards = parse_card_data([evt])
-        self.assertEqual(cards[1]['Mexico']['Y'], 1)
-        self.assertEqual(cards[1]['South Africa']['DR'], 1)
+        self.assertEqual(cards['1']['Mexico']['Y'], 1)
+        self.assertEqual(cards['1']['South Africa']['DR'], 1)
 
     def test_incomplete_match_skipped(self):
         evt = make_event_with_cards('Mexico', 'South Africa', [
@@ -966,7 +968,7 @@ class TestParseCardData(unittest.TestCase):
         # Completed group match with no card details → match not in output
         evt = make_event_with_cards('Mexico', 'South Africa', [])
         cards = parse_card_data([evt])
-        self.assertNotIn(1, cards)
+        self.assertNotIn('1', cards)
 
     def test_coach_card_no_athlete_counts_at_team_level(self):
         # Official/coach card: athletesInvolved is empty → yellow counted as Y
@@ -974,7 +976,7 @@ class TestParseCardData(unittest.TestCase):
             {'yellow': True, 'team': 'home', 'athlete_id': None},
         ])
         cards = parse_card_data([evt])
-        self.assertEqual(cards[1]['Mexico']['Y'], 1)
+        self.assertEqual(cards['1']['Mexico']['Y'], 1)
 
     def test_coach_red_with_no_athlete_is_dr(self):
         # Coach/official direct red with no prior yellow → DR
@@ -982,7 +984,7 @@ class TestParseCardData(unittest.TestCase):
             {'red': True, 'team': 'home', 'athlete_id': None},
         ])
         cards = parse_card_data([evt])
-        self.assertEqual(cards[1]['Mexico']['DR'], 1)
+        self.assertEqual(cards['1']['Mexico']['DR'], 1)
 
     def test_multiple_matches(self):
         # M1 Mexico-South Africa + M2 South Korea-Czech Republic
@@ -993,13 +995,89 @@ class TestParseCardData(unittest.TestCase):
             {'red': True, 'team': 'away', 'athlete_id': 'p2'},
         ])
         cards = parse_card_data([evt1, evt2])
-        self.assertIn(1, cards)
-        self.assertIn(2, cards)
-        self.assertEqual(cards[1]['Mexico']['Y'], 1)
-        self.assertEqual(cards[2]['Czech Republic']['DR'], 1)
+        self.assertIn('1', cards)
+        self.assertIn('2', cards)
+        self.assertEqual(cards['1']['Mexico']['Y'], 1)
+        self.assertEqual(cards['2']['Czech Republic']['DR'], 1)
 
     def test_empty_events(self):
         self.assertEqual(parse_card_data([]), {})
+
+    def test_keys_are_strings(self):
+        # Regression: parse_card_data must use string keys so _fair_play_score_py
+        # (which does cards.get(str(num))) works with both live data and file-loaded data.
+        evt = make_event_with_cards('Mexico', 'South Africa', [
+            {'yellow': True, 'team': 'home', 'athlete_id': 'p1'},
+        ])
+        cards = parse_card_data([evt])
+        for key in cards:
+            self.assertIsInstance(key, str, f'Expected string key, got {type(key)}: {key!r}')
+
+    def test_fair_play_score_uses_string_keys(self):
+        # _fair_play_score_py must correctly look up cards from live parse_card_data output.
+        # M1 = Mexico vs South Africa, Group A. Mexico gets 1 yellow → FP = -1.
+        evt = make_event_with_cards('Mexico', 'South Africa', [
+            {'yellow': True, 'team': 'home', 'athlete_id': 'p1'},
+        ])
+        cards = parse_card_data([evt])
+        fp = _fair_play_score_py('Mexico', 'A', cards)
+        self.assertEqual(fp, -1, 'Mexico FP should be -1 (1 yellow) when cards come from parse_card_data')
+        fp_sa = _fair_play_score_py('South Africa', 'A', cards)
+        self.assertEqual(fp_sa, 0, 'South Africa FP should be 0 (no cards)')
+
+
+class TestComputeGroupStandingsFairPlay(unittest.TestCase):
+    """Tests for fair-play tiebreaker in compute_group_standings."""
+
+    def _make_group_f_draw_cards(self):
+        """Cards for M11 (Netherlands vs Japan): Netherlands 3 yellows, Japan 0."""
+        # M11 = Netherlands vs Japan, Group F
+        return {'11': {'Netherlands': {'Y': 3, 'IR': 0, 'DR': 0}}}
+
+    def _group_f_results_after_md1(self):
+        """Matchday-1 results for Group F: Sweden 5-1 Tunisia (M12), Netherlands 2-2 Japan (M11)."""
+        # M12 = Sweden vs Tunisia, M11 = Netherlands vs Japan
+        return {
+            12: (5, 1, 'W1'),   # Sweden beats Tunisia 5-1
+            11: (2, 2, 'Draw'), # Netherlands draws Japan 2-2
+        }
+
+    def test_japan_ranked_above_netherlands_by_fair_play(self):
+        # Japan (FP=0) should rank above Netherlands (FP=-3) when tied on Pts/GD/GF.
+        results = self._group_f_results_after_md1()
+        cards = self._make_group_f_draw_cards()
+        standings, _ = compute_group_standings(results, cards)
+        grp_f = [t for t, _ in standings['F']]
+        self.assertEqual(grp_f[0], 'Sweden', 'Sweden should be 1st (3 pts)')
+        self.assertEqual(grp_f[1], 'Japan', 'Japan should be 2nd (FP=0 beats Netherlands FP=-3)')
+        self.assertEqual(grp_f[2], 'Netherlands', 'Netherlands should be 3rd (FP=-3)')
+        self.assertEqual(grp_f[3], 'Tunisia', 'Tunisia should be 4th')
+
+    def test_without_cards_netherlands_ranked_higher_by_fifa(self):
+        # Without card data, Netherlands (FIFA=7) ranks above Japan (FIFA=18).
+        results = self._group_f_results_after_md1()
+        standings, _ = compute_group_standings(results, cards=None)
+        grp_f = [t for t, _ in standings['F']]
+        self.assertEqual(grp_f[1], 'Netherlands', 'Without cards, Netherlands 2nd by FIFA ranking')
+        self.assertEqual(grp_f[2], 'Japan', 'Without cards, Japan 3rd by FIFA ranking')
+
+    def test_fair_play_breaks_tie_between_thirds(self):
+        # Netherlands as Group F's third has GF=2; Brazil (Group C third) has GF=1.
+        # Netherlands ranks higher in thirds due to GF (before FP even applies).
+        # But if GF were equal, fair play would separate them.
+        # Here: verify that Morocco (FP=0) ranks above Brazil (FP=-2) in Group C.
+        # M5 = Haiti vs Scotland, M7 = Brazil vs Morocco
+        results = {
+            5:  (0, 1, 'W2'),   # Scotland beats Haiti 1-0
+            7:  (1, 1, 'Draw'), # Brazil draws Morocco 1-1
+        }
+        # Brazil gets 2 yellows in M7
+        cards = {'7': {'Brazil': {'Y': 2, 'IR': 0, 'DR': 0}}}
+        standings, _ = compute_group_standings(results, cards)
+        grp_c = [t for t, _ in standings['C']]
+        self.assertEqual(grp_c[0], 'Scotland', '1st')
+        self.assertEqual(grp_c[1], 'Morocco', 'Morocco 2nd: FP=0 beats Brazil FP=-2')
+        self.assertEqual(grp_c[2], 'Brazil', 'Brazil 3rd: FP=-2')
 
 
 # ─────────────────────────────────────────────────────────────────────────────
