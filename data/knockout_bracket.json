@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-06-18T01:00:32.783347Z",
+  "generated_at": "2026-06-18T01:05:23.457347Z",
   "confirmed": false,
   "status": "provisional",
-  "matches_played": 22,
+  "matches_played": 23,
   "source": "Wikipedia (canonical)",
-  "combination_key": "ABCFGHKL",
+  "combination_key": "ABCEFGHK",
   "combination_found": true,
   "groups": {
     "A": {
@@ -75,8 +75,8 @@
     },
     "L": {
       "first": "England",
-      "second": "Panama",
-      "third": "Ghana",
+      "second": "Ghana",
+      "third": "Panama",
       "fourth": "Croatia"
     }
   },
@@ -124,18 +124,18 @@
       "gf": 0
     },
     {
-      "group": "L",
-      "team": "Ghana",
-      "pts": 0,
-      "gd": 0,
-      "gf": 0
-    },
-    {
       "group": "A",
       "team": "Czech Republic",
       "pts": 0,
       "gd": -1,
       "gf": 1
+    },
+    {
+      "group": "E",
+      "team": "Ecuador",
+      "pts": 0,
+      "gd": -1,
+      "gf": 0
     }
   ],
   "round_of_32": {
@@ -181,7 +181,7 @@
     },
     "83": {
       "home": "DR Congo",
-      "away": "Panama"
+      "away": "Ghana"
     },
     "84": {
       "home": "Uruguay",
@@ -197,7 +197,7 @@
     },
     "87": {
       "home": "Portugal",
-      "away": "Ghana"
+      "away": "Ecuador"
     },
     "88": {
       "home": "Australia",
