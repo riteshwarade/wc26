@@ -1480,11 +1480,27 @@ def write_bracket_json(results, cards=None):
 
     os.makedirs('data', exist_ok=True)
     path = 'data/knockout_bracket.json'
-    with open(path, 'w', encoding='utf-8') as f:
-        json.dump(bracket, f, indent=2)
-    print(f'Knockout bracket written → {path}')
-    for m, (h, a) in r32.items():
-        print(f'  M{m}: {h} vs {a}')
+
+    # Only write if substantive content changed (ignore generated_at timestamp)
+    def _bracket_content(b):
+        return {k: v for k, v in b.items() if k != 'generated_at'}
+
+    existing_bracket = {}
+    if os.path.exists(path):
+        try:
+            with open(path, encoding='utf-8') as f:
+                existing_bracket = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    if _bracket_content(bracket) == _bracket_content(existing_bracket):
+        print(f'Knockout bracket unchanged — skipping write')
+    else:
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(bracket, f, indent=2)
+        print(f'Knockout bracket written → {path}')
+        for m, (h, a) in r32.items():
+            print(f'  M{m}: {h} vs {a}')
 
 
 if __name__ == '__main__':
