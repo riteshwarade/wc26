@@ -246,7 +246,7 @@ def parse_card_data(events):
                 match_cards[team_name] = {'Y': Y, 'IR': IR, 'DR': DR}
 
         if match_cards:
-            cards[match_num] = match_cards
+            cards[str(match_num)] = match_cards  # string key — consistent with JSON file format
 
     return cards
 
@@ -255,7 +255,7 @@ def write_cards_json(cards):
     """Write results/group_cards.json — per-match, per-team card counts."""
     os.makedirs('results', exist_ok=True)
     path = 'results/group_cards.json'
-    out = {str(num): data for num, data in sorted(cards.items())}
+    out = {str(num): data for num, data in sorted(cards.items(), key=lambda x: int(x[0]))}
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(out, f, indent=2)
     print(f'Wrote card data for {len(cards)} matches → {path}')
