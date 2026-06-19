@@ -315,6 +315,12 @@
     .bk-mobile-tabs { display: block; }
   }
 
+  @media (max-width: 896px) and (orientation: landscape) {
+    /* Hide desktop bracket, show tab view (same as portrait) */
+    .bk-outer { display: none; }
+    .bk-mobile-tabs { display: block; }
+  }
+
   /* ── Round-advance toast ── */
   .tab-advance-toast {
     position: fixed;

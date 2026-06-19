@@ -244,7 +244,7 @@ All downstream renders (`renderResults`, `renderGroupTables`, `renderBracket`) a
 Two media queries govern mobile layout:
 
 - **Portrait** — `@media (max-width: 640px)`: stacks group tables/results, hides squares + max-pts columns, hides date/time/# in results table, shows mobile bracket tabs. Also reveals `.th-mob-sq` / `.td-mob-sq` — the last-5 recent squares column (see below).
-- **Landscape** — `@media (max-width: 896px) and (orientation: landscape)`: stacks group tables/results (same order as portrait); standings card is `overflow-x: auto` (horizontally scrollable). Landscape phones (~667–896px wide) miss the 640px portrait breakpoint entirely, hence the separate query.
+- **Landscape** — `@media (max-width: 896px) and (orientation: landscape)`: stacks group tables/results (same order as portrait); standings card is `overflow-x: auto` (horizontally scrollable); bracket switches to tab view (`.bk-outer` hidden, `.bk-mobile-tabs` shown — same as portrait). Landscape phones (~667–896px wide) miss the 640px portrait breakpoint entirely, hence the separate query. The KO Picks page has its own landscape block with just the bracket rules (no layout stacking needed there).
 
 ---
 

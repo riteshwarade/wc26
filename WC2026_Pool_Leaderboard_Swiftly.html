@@ -771,6 +771,9 @@
     .side-right { order: 1; }
     /* Standings: allow horizontal scroll instead of clipping */
     #standings-body .card { overflow-x: auto; }
+    /* Bracket: hide 5-column desktop layout, show tab view (same as portrait) */
+    .bk-outer { display: none; }
+    .bk-mobile-tabs { display: block; }
   }
 </style>
 <script src="bracket.js"></script>
