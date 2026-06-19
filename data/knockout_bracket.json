@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-06-18T21:00:30.228378Z",
+  "generated_at": "2026-06-19T00:05:19.587611Z",
   "confirmed": false,
   "status": "provisional",
-  "matches_played": 26,
+  "matches_played": 27,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABCEFGHK",
   "combination_found": true,
@@ -14,10 +14,10 @@
       "fourth": "South Africa"
     },
     "B": {
-      "first": "Switzerland",
-      "second": "Canada",
-      "third": "Qatar",
-      "fourth": "Bosnia and Herzegovina"
+      "first": "Canada",
+      "second": "Switzerland",
+      "third": "Bosnia and Herzegovina",
+      "fourth": "Qatar"
     },
     "C": {
       "first": "Scotland",
@@ -103,13 +103,6 @@
       "gf": 1
     },
     {
-      "group": "B",
-      "team": "Qatar",
-      "pts": 1,
-      "gd": 0,
-      "gf": 1
-    },
-    {
       "group": "K",
       "team": "Portugal",
       "pts": 1,
@@ -131,6 +124,13 @@
       "gf": 2
     },
     {
+      "group": "B",
+      "team": "Bosnia and Herzegovina",
+      "pts": 1,
+      "gd": -3,
+      "gf": 2
+    },
+    {
       "group": "E",
       "team": "Ecuador",
       "pts": 0,
@@ -141,7 +141,7 @@
   "round_of_32": {
     "73": {
       "home": "South Korea",
-      "away": "Canada"
+      "away": "Switzerland"
     },
     "74": {
       "home": "Germany",
@@ -173,7 +173,7 @@
     },
     "81": {
       "home": "United States",
-      "away": "Qatar"
+      "away": "Bosnia and Herzegovina"
     },
     "82": {
       "home": "New Zealand",
@@ -188,7 +188,7 @@
       "away": "Austria"
     },
     "85": {
-      "home": "Switzerland",
+      "home": "Canada",
       "away": "Belgium"
     },
     "86": {
