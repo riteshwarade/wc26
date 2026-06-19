@@ -2773,6 +2773,9 @@ async function init() {
 
 function _revealSections() {
   document.querySelectorAll('.section-label, .section-body').forEach(el => el.style.visibility = 'visible');
+  if (window.location.hash === '#provisional_bracket') {
+    document.getElementById('bracketSectionLabel').scrollIntoView({ behavior: 'smooth' });
+  }
 }
 
 setupLayout();
