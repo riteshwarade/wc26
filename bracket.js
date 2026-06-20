@@ -128,6 +128,17 @@ const R32_SLOTS = {
 // Column index in the best-3rd combination array [M79,M85,M81,M74,M82,M77,M87,M80]
 const THIRD_MATCH_COL = { 79:0, 85:1, 81:2, 74:3, 82:4, 77:5, 87:6, 80:7 };
 
+// ── Mobile pair-next lookup (shared by all variants) ─────
+// Maps each mobile tab round to the next-round matches its winners feed into.
+// Used by buildMobTabHtml() to render "winners meet in R16 · M89" connector pills.
+// Order within each round matches the display order in MOB_ROUNDS / KO_MOB_ROUNDS.
+const MOB_PAIR_NEXT = {
+  r32: [['R16','M89'],['R16','M90'],['R16','M93'],['R16','M94'],['R16','M91'],['R16','M92'],['R16','M95'],['R16','M96']],
+  r16: [['QF','M97'],['QF','M98'],['QF','M99'],['QF','M100']],
+  qf:  [['SF','M101'],['SF','M102']],
+  sf:  [['Final','M104']],
+};
+
 // ── Reusable team display: flag + name + rank ─────────────
 // showRank=false when rank is shown separately (e.g. pick form rank column)
 // display=string overrides the visible name text (e.g. shortened names in group tables)
@@ -274,6 +285,40 @@ function buildBracketHtml(mkCard, opts={}) {
       ${floatCol('fin', [104], thirdPlaceHtml + podiumSection)}
     </div></div>
   </div>`;
+}
+
+// ── Mobile tab HTML (Variants 1 & 3) ─────────────────────
+// Shared renderer for read-only mobile bracket tabs (provisional + results).
+// Variant 2 (picks) has its own version with pick-specific click-handler rows.
+// rounds:      [{ id, label, matches }]
+// activeRound: string id of the tab to open on load
+// mkCard(m):   fn returning HTML string for a single match
+function buildMobTabHtml(rounds, activeRound, mkCard) {
+  const tabBarHtml = rounds.map(r =>
+    `<button class="bk-tab${r.id === activeRound ? ' active' : ''}" onclick="switchBracketTab('${r.id}')" data-round="${r.id}">${r.label}</button>`
+  ).join('');
+  const panelsHtml = rounds.map(r => {
+    const pairs = MOB_PAIR_NEXT[r.id] || [];
+    let html = '';
+    for (let j = 0; j < r.matches.length; j += 2) {
+      const m1 = r.matches[j];
+      const m2 = r.matches[j + 1];
+      const pair = pairs[j / 2];
+      if (m2 !== undefined && pair) {
+        const [rl, mn] = pair;
+        html += `<div class="bk-mob-pair-group">`;
+        html += mkCard(m1);
+        html += `<div class="bk-mob-pair-pill"><span>winners meet in ${rl} · ${mn}</span></div>`;
+        html += mkCard(m2);
+        html += `</div>`;
+      } else {
+        html += mkCard(m1);
+        if (m2 !== undefined) html += mkCard(m2);
+      }
+    }
+    return `<div class="bk-tab-panel${r.id === activeRound ? ' active' : ''}" id="bk-panel-${r.id}">${html}</div>`;
+  }).join('');
+  return `<div class="bk-mobile-tabs"><div class="bk-tab-bar">${tabBarHtml}</div>${panelsHtml}</div>`;
 }
 
 // ── Position float columns then draw connectors ───────────

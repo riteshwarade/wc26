@@ -41,7 +41,10 @@ If `index.lock` error: `rm ~/Documents/GitHub/wc26/.git/index.lock` first.
 | `bracket.js` | Shared bracket primitives — loaded by all pages |
 | `scoring.js` | MATCHES array (72 group games), KO topology, scoring functions |
 | `sim_core.js` | Seeded PRNG + KO generators for Node sim/test scripts |
-| `WC2026_Pool_Leaderboard_Swiftly.html` | Main leaderboard — edit this, never FandF |
+| `leaderboard.js` | Leaderboard logic (extracted from Swiftly HTML). Depends on bracket.js + scoring.js. Config (`POOL_ID`, `LIVE_SCORES_ENABLED`) stays inline in HTML. |
+| `ko_picks.js` | KO picks page logic (extracted from Knockout Picks HTML). Depends on bracket.js. |
+| `group_picks.js` | Group picks page logic (extracted from Group Picks HTML). Depends on scoring.js (MATCHES) + bracket.js (FLAGS, RANKINGS). |
+| `WC2026_Pool_Leaderboard_Swiftly.html` | Main leaderboard — edit this, never FandF. Inline config: `POOL_ID`, `LIVE_SCORES_ENABLED`. |
 | `WC2026_Pool_Leaderboard_FandF.html` | Auto-generated from Swiftly via `make_fandf.py` |
 | `WC2026_Pool_Knockout_Picks.html` | KO picks entry page |
 | `WC2026_Pool_Group_Picks.html` | Group stage picks entry page |
@@ -52,6 +55,7 @@ If `index.lock` error: `rm ~/Documents/GitHub/wc26/.git/index.lock` first.
 | `test_parse_results.py` | Python unit tests for parse_results.py (84 tests) |
 | `test_e2e.js` | JS end-to-end: 10-user full-tournament + 105 invariant checks |
 | `test_bracket.py` | Bracket + standings end-to-end (all 495 3rd-place combos) |
+| `test_ko_picks.js` | Node unit tests for ko_picks.js pure logic: feedsInto topology, getTeams resolution, clearInvalidDownstream cascades (58 tests) |
 | `.github/workflows/ci.yml` | CI: runs all four test suites on every push/PR |
 | `live_scores_test_plan.md` | Manual test plan for live scores + pulsing feature (phases 1–4 + console sim) |
 
@@ -512,9 +516,10 @@ Once WC2026 ends, do these before reusing the codebase for 2030:
   - `test_leaderboard.js`: remove/update §7 (`parseKoResults` CSV tests)
   - `clear_simulation.yml` + `auto_clear_simulation.yml`: replace `printf "match,...\n"` with `printf '{}'`
 
-- **Extract inline JS from HTML pages (Tier 1 refactor)** — the three HTML pages each contain hundreds of lines of logic in `<script>` tags. Extract into standalone `.js` files; no behavior changes. Do this before the Tier 3 items above, since it's a prerequisite for modularizing cleanly.
-  - Create `leaderboard.js` from Leaderboard Swiftly lines 848–2825 (~1,980 lines). Keep a 2-line config block inline: `const POOL_ID = 'swiftly'` and `const LIVE_SCORES_ENABLED = true`. `make_fandf.py` is unchanged — it still matches the exact `POOL_ID` string.
-  - Create `ko_picks.js` from KO Picks lines 392–813 (~422 lines). No page-specific config; moves verbatim.
-  - Create `group_picks.js` from Group Picks lines 624–1043 (~420 lines). Add `<script src="scoring.js">` and `<script src="bracket.js">` to Group Picks `<head>`, then remove the inline MATCHES copy (lines 627–700) and the inline RANKINGS/FLAGS copies (same values as bracket.js — diff to confirm before deleting).
-  - Verify: `python3 make_fandf.py` still works; run all 4 test suites; smoke-test all 3 pages at `?games=88`.
+- **Extract inline JS from HTML pages (Tier 1 refactor)** — **ALL STEPS DONE (Jun 20, 2026).**
+  - **Step 1 — Consolidate `PAIR_NEXT` into `bracket.js`. DONE.** `MOB_PAIR_NEXT` and `buildMobTabHtml(rounds, activeRound, mkCard)` added to `bracket.js`. Per-page copies removed from all three variants. V1 and V3 mobile rendering loops reduced from ~30 lines each to a single function call.
+  - **Step 2 — Extract JS files. DONE.** `leaderboard.js` (1,936 lines), `ko_picks.js` (422 lines), `group_picks.js` (315 lines) created. Inline MATCHES/FLAGS/RANKINGS removed from group_picks.js (already in scoring.js/bracket.js). Config block (`POOL_ID`, `LIVE_SCORES_ENABLED`) stays inline in the Swiftly HTML. `make_fandf.py` unchanged — still finds the `POOL_ID` string via substring search.
+  - **Step 3 — Add tests for `ko_picks.js`. DONE.** `test_ko_picks.js` — 58 Node unit tests covering feedsInto topology (all R32→R16→QF→SF→Final chains), getTeams resolution (R32/R16/QF/3rd-place), and clearInvalidDownstream cascade logic. Uses `require()` with bracket.js globals seeded via `global.*` before require. ko_picks.js exports pure functions via `module.exports`; DOM event wiring guarded by `typeof module === 'undefined'`. Mobile auto-advance (maybeAdvanceTab) not covered — requires DOM; manual test plan covers it.
+  - **Step 4 — Verify. DONE.** `make_fandf.py` works (3 substitutions); all 5 test suites pass (103 + 29 + 152 + bracket + 58 ko_picks); no `</script>` or inline globals leak into extracted files.
+  - **`switchBracketTab` note:** called via inline `onclick` attributes in generated HTML — must remain a global. Fine for Tier 1 (regular `<script>` tags). Becomes an issue in Tier 2 (ES modules) — switch to event delegation at that point.
   - **Tier 2 (post-Tier 1):** Convert to ES modules (`<script type="module">`), retire `make_fandf.py` by reading `POOL_ID` from a URL param, and split `leaderboard.js` into render / live / standings modules.
