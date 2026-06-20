@@ -231,6 +231,10 @@ renderStandings(_lastStandings, _liveData);
 ```
 All downstream renders (`renderResults`, `renderGroupTables`, `renderBracket`) and the sticky bar `played` count use `_lastResults`/`_lastGrpCounts` instead of local `results`/`grpCounts`, so match count and points always move in lockstep.
 
+**Bridge-period flash fix:** During the bridge, `fetchLiveScores` calls `init()` (to re-check the CSV), and `init()` was calling `fetchLiveScores()` again unconditionally — creating a rapid loop (~200–500ms per iteration) that re-rendered `renderBracket` on each pass, causing the bracket to flash between positioned and unpositioned states every ~1s. Two fixes: (1) `renderGroupTables` and `renderBracket` in `init()` are now gated on `freshData || bracketChanged` — `freshData = currentMatchCount > _lastRenderedMatchCount` (only true when the CSV gains a confirmed result); `bracketChanged = bracketConfirmed !== _lastBracketConfirmed` (only true when Provisional flips to Confirmed). Tracked by module-scope `_lastRenderedMatchCount` (init: -1) and `_lastBracketConfirmed` (init: `undefined`). (2) The inner `fetchLiveScores()` call in `init()` is guarded with `&& !_livePoller` — only fires on initial page load before the 60s interval is started.
+
+**`#provisional_bracket` deep link:** `_revealSections()` calls `bracketSectionLabel.scrollIntoView({ behavior: 'smooth' })` when `window.location.hash === '#provisional_bracket'`. Shareable URLs: `WC2026_Pool_Leaderboard_Swiftly.html#provisional_bracket` and `WC2026_Pool_Leaderboard_FandF.html#provisional_bracket`.
+
 **TODO before KO stage (Jun 28):**
 - **KO upset detection** — wire `_isUpsetResult` into `renderKoStandings` the same way group stage does it in `renderStandings`. CSS + tooltip already exist. ~5 lines.
 - **KO live scores** — extend group stage ESPN polling to KO matches. Architecture is identical. See KO bracket live treatment spec below.
@@ -254,7 +258,7 @@ Two media queries govern mobile layout:
 - **Group picks:** `visibility: hidden` on `.container`, revealed after sync JS build (see above)
 - **Knockout picks:** `bracketContainer` has a static "Loading bracket…" placeholder in HTML — shown while async fetch is in flight
 - **Leaderboard — header + sticky bar:** `visibility: hidden` in CSS; revealed by `document.fonts.ready.then(_revealChrome)`. A `setTimeout(_revealChrome, 3000)` fallback fires if fonts never load (e.g. offline).
-- **Leaderboard — section labels + card bodies:** `.section-label` and `.section-body` have `visibility: hidden` in CSS; revealed by `_revealSections()` called at the end of `init()` (both success and error paths).
+- **Leaderboard — section labels + card bodies:** `.section-label` and `.section-body` have `visibility: hidden` in CSS; revealed by `_revealSections()` called at the end of `init()` (both success and error paths). **Exception: `#bracket-body` is excluded from the generic `_revealSections` sweep** — it is revealed inside `positionAndConnectBracket`'s rAF callback (after absolute cards are positioned), preventing a 2-frame flash where R16/QF/SF/Final cards appear at `top:0` before being placed. The early-return path in `renderBracket` (pre-tournament) reveals it immediately since no positioning is needed.
 - **Leaderboard — static loading placeholders:** static `⏳ Loading…` text uses class `.state-msg--loading` which has `visibility: hidden`. When `init()` replaces card `innerHTML`, the new content renders normally. Error (`⚠️`) and empty (`📭`) states use plain `.state-msg` (visible).
 - **`_updateTimestamp()`** — called inside `init()` after `_lastUpdated = new Date()`. Populates `#updatedAt` with "Updated HH:MM".
 
