@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-06-20T05:10:23.972196Z",
+  "generated_at": "2026-06-20T19:00:32.262405Z",
   "confirmed": false,
   "status": "provisional",
-  "matches_played": 32,
+  "matches_played": 33,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABCDFGHK",
   "combination_found": true,
@@ -38,9 +38,9 @@
       "fourth": "Cura\u00e7ao"
     },
     "F": {
-      "first": "Sweden",
-      "second": "Japan",
-      "third": "Netherlands",
+      "first": "Netherlands",
+      "second": "Sweden",
+      "third": "Japan",
       "fourth": "Tunisia"
     },
     "G": {
@@ -97,7 +97,7 @@
     },
     {
       "group": "F",
-      "team": "Netherlands",
+      "team": "Japan",
       "pts": 1,
       "gd": 0,
       "gf": 2
@@ -148,16 +148,16 @@
       "away": "Scotland"
     },
     "75": {
-      "home": "Sweden",
+      "home": "Netherlands",
       "away": "Morocco"
     },
     "76": {
       "home": "Brazil",
-      "away": "Japan"
+      "away": "Sweden"
     },
     "77": {
       "home": "Norway",
-      "away": "Netherlands"
+      "away": "Japan"
     },
     "78": {
       "home": "Ivory Coast",
