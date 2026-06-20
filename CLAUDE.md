@@ -116,7 +116,12 @@ renderBracket(_lastResults, allTeamsPlayed, bracketConfirmed);
 ```
 M24 (Uzbekistan vs Colombia, Group K) is the last matchday-1 game chronologically — Jun 18 02:00 UTC. Once it completes and the pipeline picks it up, the bracket unlocks.
 
-`bracketConfirmed` is set by `parse_results.py` after all 72 group matches complete and it cross-checks the R32 against Wikipedia. Until then the badge reads "Provisional".
+`bracketConfirmed` is set by `parse_results.py` after three independent gates all pass:
+1. **ESPN double-confirmation** — the existing `group_results.csv` already had 72 results when this cron run started (i.e., the previous run also saw 72)
+2. **Wikipedia R32 cross-check passes**
+3. **Wikipedia confirmed twice** — `wikipedia_seen: true` is already in `knockout_bracket.json` from a prior run
+
+State is persisted via a `wikipedia_seen` boolean field in `knockout_bracket.json`. On a Wikipedia fetch failure (transient), `wikipedia_seen` is not reset — only a loss of double-confirmation resets it. `simulate.py` writes `confirmed: true, wikipedia_seen: true` directly so simulation confirms immediately. Until all three gates pass, the badge reads "Provisional".
 
 ### Desktop card styling
 
@@ -241,12 +246,13 @@ renderKoBracket(_lastKoBracketData, _lastKoResults, _lastKoScores, _lastKoCounts
 ```js
 const _newMatchCount = Object.keys(results).length;
 const _oldMatchCount = _lastResults ? Object.keys(_lastResults).length : -1;
-if (_newMatchCount >= _oldMatchCount) {
+if (!_groupFrozen && bracketConfirmed && _newMatchCount === 72) _groupFrozen = true;
+if (!_groupFrozen && _newMatchCount >= _oldMatchCount) {
   _lastStandings = standings; _lastResults = results; _lastGrpCounts = grpCounts;
 }
 renderStandings(_lastStandings, _liveData);
 ```
-All downstream renders (`renderResults`, `renderGroupTables`, `renderBracket`) and the sticky bar `played` count use `_lastResults`/`_lastGrpCounts` instead of local `results`/`grpCounts`, so match count and points always move in lockstep.
+`_groupFrozen` (module-scope, init: `false`) is set permanently the first time `bracketConfirmed && matchCount === 72`. Once frozen, `_lastResults`/`_lastStandings`/`_lastGrpCounts` are never overwritten — group points are locked even if ESPN later corrects a score. The stale-CSV match-count guard still runs for the non-frozen case (group stage in progress). All downstream renders (`renderResults`, `renderGroupTables`, `renderBracket`) and the sticky bar `played` count use `_lastResults`/`_lastGrpCounts` instead of local `results`/`grpCounts`, so match count and points always move in lockstep.
 
 **Bridge-period flash fix:** During the bridge, `fetchLiveScores` calls `init()` (to re-check the CSV), and `init()` was calling `fetchLiveScores()` again unconditionally — creating a rapid loop (~200–500ms per iteration) that re-rendered `renderBracket` on each pass, causing the bracket to flash between positioned and unpositioned states every ~1s. Two fixes: (1) `renderGroupTables` and `renderBracket` in `init()` are now gated on `freshData || bracketChanged` — `freshData = currentMatchCount > _lastRenderedMatchCount` (only true when the CSV gains a confirmed result); `bracketChanged = bracketConfirmed !== _lastBracketConfirmed` (only true when Provisional flips to Confirmed). Tracked by module-scope `_lastRenderedMatchCount` (init: -1) and `_lastBracketConfirmed` (init: `undefined`). (2) The inner `fetchLiveScores()` call in `init()` is guarded with `&& !_livePoller` — only fires on initial page load before the 60s interval is started.
 

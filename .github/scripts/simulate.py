@@ -118,6 +118,7 @@ def generate_knockout_bracket(r32_teams):
     os.makedirs('data', exist_ok=True)
     data = {
         'confirmed': True,
+        'wikipedia_seen': True,
         'round_of_32': {
             str(m): {'home': home, 'away': away}
             for m, (home, away) in r32_teams.items()

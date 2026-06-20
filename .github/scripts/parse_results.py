@@ -1342,13 +1342,27 @@ def verify_r32_against_wikipedia(computed_r32):
     }
 
 
-def write_bracket_json(results, cards=None):
+def write_bracket_json(results, cards=None, double_confirmed=False):
     """
     Write knockout_bracket.json:
     - Provisional (confirmed=false): once all 12 groups have ≥1 result (after round 1)
-    - Confirmed   (confirmed=true):  all 72 group results present AND
-                                     Wikipedia knockout bracket matches our computed R32
+    - Confirmed   (confirmed=true):  three gates must ALL pass:
+        1. double_confirmed: existing CSV had 72 results AND current fetch has 72
+        2. Wikipedia R32 cross-check passes
+        3. Wikipedia check passed on a prior run (wikipedia_seen already true in bracket JSON)
     """
+    # Load existing bracket early — need wikipedia_seen state
+    import datetime
+    _bracket_path = 'data/knockout_bracket.json'
+    existing_bracket = {}
+    if os.path.exists(_bracket_path):
+        try:
+            with open(_bracket_path, encoding='utf-8') as _f:
+                existing_bracket = json.load(_f)
+        except (json.JSONDecodeError, OSError):
+            pass
+    wikipedia_seen = existing_bracket.get('wikipedia_seen', False)
+
     # Check which groups have started
     groups_started = set()
     for num, grp, t1, t2 in GROUP_MATCHES:
@@ -1363,8 +1377,11 @@ def write_bracket_json(results, cards=None):
     status     = 'provisional'
     wiki_check = None
 
-    if all_played:
-        print('All 72 group matches played — cross-checking R32 against Wikipedia...')
+    if all_played and not double_confirmed:
+        print('All 72 group matches played — waiting for double-confirmation before Wikipedia check...')
+        wikipedia_seen = False  # reset if somehow we lost double-confirmation
+    elif all_played and double_confirmed:
+        print('All 72 group matches played (double-confirmed) — cross-checking R32 against Wikipedia...')
 
     grp_standings, _ = compute_group_standings(results, cards)
 
@@ -1416,27 +1433,32 @@ def write_bracket_json(results, cards=None):
         88: (pos.get('2D'), pos.get('2G')),
     }
 
-    # Cross-check R32 against Wikipedia once all 72 matches are played
-    if all_played:
+    # Cross-check R32 against Wikipedia — only when double_confirmed
+    if all_played and double_confirmed:
         wiki_check = verify_r32_against_wikipedia(r32)
         if wiki_check['error']:
             print(f'  Wikipedia check failed: {wiki_check["error"]}')
+            # Don't reset wikipedia_seen on transient error — keep prior state
         elif wiki_check['verified']:
-            status = 'confirmed'
-            print(f'  ✓ Wikipedia verified — all {wiki_check["wiki_parsed"]} R32 matches match')
+            if wikipedia_seen:
+                status = 'confirmed'
+                print(f'  ✓ Wikipedia verified (second pass) — bracket confirmed')
+            else:
+                wikipedia_seen = True
+                print(f'  ✓ Wikipedia verified (first pass) — will confirm on next successful check')
         else:
             print(f'  ✗ Wikipedia mismatch — {len(wiki_check["mismatches"])} discrepancies:')
             for mm in wiki_check['mismatches']:
                 print(f'    M{mm["match"]}: computed={mm["computed"]} | wikipedia={mm["wikipedia"]}')
-    else:
+    elif not all_played:
         print(f'Generating provisional bracket ({len(results)}/72 matches played)...')
 
     confirmed = (status == 'confirmed')
 
-    import datetime
     bracket = {
         'generated_at': datetime.datetime.utcnow().isoformat() + 'Z',
         'confirmed': confirmed,
+        'wikipedia_seen': wikipedia_seen,
         'status': status,
         'matches_played': len(results),
         'source': 'Wikipedia (canonical)',
@@ -1479,19 +1501,11 @@ def write_bracket_json(results, cards=None):
     }
 
     os.makedirs('data', exist_ok=True)
-    path = 'data/knockout_bracket.json'
+    path = _bracket_path
 
     # Only write if substantive content changed (ignore generated_at timestamp)
     def _bracket_content(b):
         return {k: v for k, v in b.items() if k != 'generated_at'}
-
-    existing_bracket = {}
-    if os.path.exists(path):
-        try:
-            with open(path, encoding='utf-8') as f:
-                existing_bracket = json.load(f)
-        except (json.JSONDecodeError, OSError):
-            pass
 
     if _bracket_content(bracket) == _bracket_content(existing_bracket):
         print(f'Knockout bracket unchanged — skipping write')
@@ -1532,11 +1546,16 @@ if __name__ == '__main__':
         results = merged
     write_csv(results)
 
+    # Double-confirmation: existing CSV had 72 AND current merged results have 72
+    double_confirmed = (len(existing_results) == 72 and len(results) == 72)
+    if len(results) == 72:
+        print(f'{"Double-confirmed" if double_confirmed else "First time"} seeing all 72 group results')
+
     print('Parsing card data...')
     cards = parse_card_data(group_events)
     write_cards_json(cards)
 
-    write_bracket_json(results, cards)
+    write_bracket_json(results, cards, double_confirmed=double_confirmed)
 
     # ── Knockout stage: results ────────────────────────────────────────────────
     bracket_path = 'data/knockout_bracket.json'

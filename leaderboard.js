@@ -27,6 +27,7 @@ let _pendingResults = new Set(); // matches where ESPN said game ended but CSV n
 let _bridgeScores  = {};         // last known score per match — keeps squares pulsing after ESPN drops the event
 let _lastGrpCounts  = null;
 let _livePoller     = null;
+let _groupFrozen    = false; // true once bracketConfirmed+72 results seen — group standings locked
 
 // ── Live scores state — KO stage ─────────────────────────
 let _koLiveData       = {};  // { matchNum: { minute, homeScore, awayScore, state } }
@@ -2060,7 +2061,10 @@ async function init() {
       // with a version missing the just-confirmed result, reverting points to old.
       const _newMatchCount = Object.keys(results).length;
       const _oldMatchCount = _lastResults ? Object.keys(_lastResults).length : -1;
-      if (_newMatchCount >= _oldMatchCount) {
+      // Freeze group standings once bracketConfirmed + all 72 results seen.
+      // After this point ESPN score corrections are ignored — group points are final.
+      if (!_groupFrozen && bracketConfirmed && _newMatchCount === 72) _groupFrozen = true;
+      if (!_groupFrozen && _newMatchCount >= _oldMatchCount) {
         // Store for live polling re-renders
         _lastStandings = standings;
         _lastResults   = results;
