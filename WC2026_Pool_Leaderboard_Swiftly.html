@@ -2349,6 +2349,8 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed) {
 
   if (!allGroupsStarted) {
     el.innerHTML = '<div class="bracket-pending">Bracket appears once every team has played.</div>';
+    const bb = document.getElementById('bracket-body');
+    if (bb) bb.style.visibility = 'visible'; // no positioning needed
     return;
   }
 
@@ -2423,7 +2425,11 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed) {
   const podiumHtml = buildPodiumHtml(null, null, null); // TODO: pass actual KO results (Variant 3)
 
   el.innerHTML = buildBracketHtml(mkCard, { podiumHtml }) + mobTabHtml;
-  requestAnimationFrame(() => requestAnimationFrame(positionAndConnectBracket));
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    positionAndConnectBracket();
+    const bb = document.getElementById('bracket-body');
+    if (bb) bb.style.visibility = 'visible';
+  }));
 }
 
 // ── Mobile bracket tab switcher ───────────────────────────
@@ -2772,7 +2778,11 @@ async function init() {
 }
 
 function _revealSections() {
-  document.querySelectorAll('.section-label, .section-body').forEach(el => el.style.visibility = 'visible');
+  // Reveal all section labels and bodies except #bracket-body — that is revealed
+  // inside positionAndConnectBracket's rAF callback to avoid a flash where the
+  // absolutely-positioned R16/QF/SF/Final cards are visible before being placed.
+  document.querySelectorAll('.section-label, .section-body:not(#bracket-body)').forEach(el => el.style.visibility = 'visible');
+  document.getElementById('bracketSectionLabel').style.visibility = 'visible';
   if (window.location.hash === '#provisional_bracket') {
     document.getElementById('bracketSectionLabel').scrollIntoView({ behavior: 'smooth' });
   }
