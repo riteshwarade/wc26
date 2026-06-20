@@ -161,10 +161,13 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
                      : '';
     const champIcon = champPr.pick ? '🥇 ' : '';
     const champLabel = `<span class="champ-pick ${champClass}">${champIcon}${_esc(champName)}</span>`;
+    const koOnlyWarn = p.koOnly
+      ? ` <span class="ko-only-warn" title="No group picks found — possible name mismatch">⚠</span>`
+      : '';
 
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
-      <td class="td-name">${_esc(_abbrevName(p.name))}</td>
+      <td class="td-name">${_esc(_abbrevName(p.name))}${koOnlyWarn}</td>
       <td class="td-grp-pts">${p.groupPts}</td>
       <td class="td-ko-pts">${p.koPts}</td>
       <td class="td-total-pts">${p.totalPts}</td>

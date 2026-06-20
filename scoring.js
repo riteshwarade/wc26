@@ -348,7 +348,8 @@ function computeCombinedStandings(groupStandings, koPicksData, koResults, bracke
       const { koPts, koPossiblePts, totalCorrect, correctChampion, koPickResults } =
         evalKoPicks(koPicksData[name]);
       combined.push({ name, points: 0, groupPts: 0, pickResults: {}, koPts,
-        totalPts: koPts, maxPts: koPossiblePts, correctChampion, totalCorrect, koPickResults });
+        totalPts: koPts, maxPts: koPossiblePts, correctChampion, totalCorrect, koPickResults,
+        koOnly: true });
     }
   });
 
