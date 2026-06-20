@@ -94,6 +94,28 @@ console.assert(goodCount >= Object.keys(_lastResults).length, 'Regression guard 
 
 ---
 
+### Phase 6 — Post-group-stage freeze (run after bracketConfirmed = true)
+
+Once all 72 group matches are confirmed and `bracketConfirmed` flips, `_groupFrozen` should be `true`
+and group standings should be permanently locked regardless of subsequent ESPN data.
+
+- [ ] `_groupFrozen === true`
+- [ ] `Object.keys(_lastResults).length === 72`
+- [ ] Reload page — group standings still show same points after `init()` completes
+- [ ] Simulate a stale/changed CSV (console): manually lower `Object.keys(results).length` or change a score — `_lastResults` must not update
+- [ ] `_livePoller === null` (all group matches done, no live polling running)
+
+```js
+// Verify freeze state
+_groupFrozen  // should be true
+Object.keys(_lastResults).length  // should be 72
+
+// Simulate ESPN "correcting" a score after confirmation — freeze should block it
+// (This only applies if you can intercept the init() fetch; otherwise just reload and check points are stable)
+```
+
+---
+
 ### Diagnostic commands
 
 ```js
@@ -109,6 +131,7 @@ _pendingResults.has(7)    // true = bridge period active
 // Poller + data health
 _pendingResults.size      // 0 = bridge resolved; > 0 = waiting for CSV
 _livePoller               // null = stopped; non-null = running
+_groupFrozen              // true = group standings locked (bracketConfirmed + 72 results seen)
 Object.keys(_lastResults || {}).length  // should never decrease after a confirmed result
 
 // Force re-render
