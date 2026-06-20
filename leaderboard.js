@@ -44,7 +44,7 @@ let _cardData       = null;  // { matchNum: { teamName: {Y, IR, DR} } } from gro
 let _lastRenderedMatchCount = -1;   // tracks last match count renderGroupTables/renderBracket ran with
 let _lastBracketConfirmed   = undefined; // tracks last bracketConfirmed value renderBracket ran with
 let _lastRenderedKoMatchCount = -1;   // tracks last KO match count renderKoBracket ran with (flash guard)
-let _lastKoLiveStr  = '';             // serialized _koLiveData — skip re-render when unchanged
+let _lastKoLiveStr  = '{}';           // serialized _koLiveData — skip re-render when unchanged; init to '{}' so first empty-live fetch doesn't trigger a redundant renderKoBracket
 // ──────────────────────────────────────────────────────────
 
 
@@ -93,7 +93,7 @@ function pickLabel(outcome, t1, t2) {
 
 // ── Render KO standings (KO mode) ────────────────────────
 function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData = {}) {
-  if (!combinedStandings.length) {
+  if (!combinedStandings || !combinedStandings.length) {
     document.getElementById('koStandingsSection').innerHTML =
       '<div class="state-msg"><span class="emoji">📭</span>No standings available yet.</div>';
     return;
