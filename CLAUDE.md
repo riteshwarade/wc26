@@ -535,7 +535,9 @@ A participant who submitted KO picks but has no matching group picks (by name) i
 
 **`leaderboard.js`:** When `p.groupPtsIsFloor`, the Grp cell renders as `<span class="grp-floor">N<span class="grp-floor-mark" title="...">*</span></span>` — amber number + small amber superscript asterisk.
 
-**CSS:** `.grp-floor { color: #b45309 }` · `.grp-floor-mark { font-size: 0.65rem; color: #ba7517; vertical-align: super }` — both in Swiftly HTML.
+**CSS:** `.grp-floor { color: #b45309 }` · `.grp-floor-mark { font-size: 0.65rem; color: #ba7517; vertical-align: super }` · `.ko-only-warn { color: #b45309; font-size: 0.78rem; cursor: help; margin-left: 3px; }` — all in Swiftly HTML.
+
+**⚠ icon:** All KO-only rows (both legitimate joiners and name mismatches) show a `⚠` icon in the Name cell via `.ko-only-warn` span with `title="No group picks found — possible name mismatch"`. This is the signal to check for a name mismatch.
 
 **Name mismatch:** Both the orphaned KO row (showing floor pts + ⚠) and the real group-only row (group pts + 0 KO) appear simultaneously. Fix by renaming the KO picks file to match the group picks name.
 
