@@ -492,6 +492,22 @@ const sqStatus = pr.status === 'correct' && _isUpsetResult(t1, t2, pr.result?.ou
 
 ---
 
+## KO standings layout
+
+**Columns:** `#` · Name · Grp · KO · **Total** · Max · Picks · Champ · Recent (mobile only)
+
+**Square sizing:** Group stage uses `sq-sm` (10px); KO stage uses `sq` (12px). Row height is driven by text cells (~0.78rem ≈ 15px line-height + 16px td padding = ~31px). Squares stay under this threshold only if `squares-wrap` has no extra padding — `.squares-wrap` has no `padding` (was `2px 0`; removing it keeps 12px squares from pushing td-squares above 31px).
+
+**Champion pick column (`.td-champ` / `.th-champ`):** Separate column to the right of the squares column. Contains the `champ-pick` span with `line-height: 1` and `white-space: nowrap`. Hidden on mobile alongside `.td-squares`. Previously the champ label was inside `.squares-wrap` without `nowrap`, causing it to wrap to a new flex row and double the row height.
+
+**`.squares-wrap` in KO mode:** Uses `nowrap` class (same as group stage). KO round breaks use `sq-divider` (12px, matching `sq` squares); group stage uses `sq-divider-sm` (10px, matching `sq-sm`).
+
+**Color:** `.td-total-pts` uses `var(--swiftly-blue)` + `font-weight: 700` — matches group stage `.td-points` style.
+
+**Mobile:** `.th-squares`, `.td-squares`, `.th-champ`, `.td-champ` all hidden at `max-width: 640px`. `.th-mob-sq` / `.td-mob-sq` revealed instead (last 5 KO squares, chronological order, `sq-sm` size).
+
+---
+
 ## Post-tournament / WC2030 cleanup
 
 Once WC2026 ends, do these before reusing the codebase for 2030:
