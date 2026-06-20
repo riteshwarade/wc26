@@ -506,3 +506,10 @@ Once WC2026 ends, do these before reusing the codebase for 2030:
   - `test_bracket.py`: update `load_results()` to parse JSON
   - `test_leaderboard.js`: remove/update §7 (`parseKoResults` CSV tests)
   - `clear_simulation.yml` + `auto_clear_simulation.yml`: replace `printf "match,...\n"` with `printf '{}'`
+
+- **Extract inline JS from HTML pages (Tier 1 refactor)** — the three HTML pages each contain hundreds of lines of logic in `<script>` tags. Extract into standalone `.js` files; no behavior changes. Do this before the Tier 3 items above, since it's a prerequisite for modularizing cleanly.
+  - Create `leaderboard.js` from Leaderboard Swiftly lines 848–2825 (~1,980 lines). Keep a 2-line config block inline: `const POOL_ID = 'swiftly'` and `const LIVE_SCORES_ENABLED = true`. `make_fandf.py` is unchanged — it still matches the exact `POOL_ID` string.
+  - Create `ko_picks.js` from KO Picks lines 392–813 (~422 lines). No page-specific config; moves verbatim.
+  - Create `group_picks.js` from Group Picks lines 624–1043 (~420 lines). Add `<script src="scoring.js">` and `<script src="bracket.js">` to Group Picks `<head>`, then remove the inline MATCHES copy (lines 627–700) and the inline RANKINGS/FLAGS copies (same values as bracket.js — diff to confirm before deleting).
+  - Verify: `python3 make_fandf.py` still works; run all 4 test suites; smoke-test all 3 pages at `?games=88`.
+  - **Tier 2 (post-Tier 1):** Convert to ES modules (`<script type="module">`), retire `make_fandf.py` by reading `POOL_ID` from a URL param, and split `leaderboard.js` into render / live / standings modules.
