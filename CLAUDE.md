@@ -191,14 +191,14 @@ No `border-top` divider — row separation comes from `margin-top` only.
 A `.td-mob-sq` / `.th-mob-sq` column is hidden on desktop and revealed at `max-width: 640px`. Shows the **last 5 squares** for the current stage only — no carryover between group and KO.
 
 - **Group mode** (`renderStandings`): last 5 of played/live group matches **by kickoff time** (not match number — match numbers are not chronological). `_MATCHES_CHRONO` is a module-level constant: `[...MATCHES].sort((a,b) => a[3] < b[3] ? -1 : a[3] > b[3] ? 1 : a[0]-b[0])`. `mobMatchNums` filters `_MATCHES_CHRONO` to entries in `_lastResults` or `liveData`, then takes the last 5. Tiebreaker for simultaneous kickoffs: match number. `MOB_LAST = 5`. Squares are also **displayed** in chronological order: built in a `sqByNum` map during the main loop, then assembled via `_MATCHES_CHRONO.filter(...mobMatchNums...)` after.
-- **KO mode** (`renderKoStandings`): last 5 of `KO_MATCH_ORDER` **by kickoff time** (same issue — KO match numbers are also not chronological). `koChronoOrder` sorts `KO_MATCH_ORDER` by `KO_SCHEDULE[m]` with match-number tiebreaker, computed inside `renderKoStandings`. `KO_MOB_LAST = 5`. No live override yet (KO live scores not built). Squares assembled from `koSqByNum` map in `koChronoOrder` order.
+- **KO mode** (`renderKoStandings`): last 5 of `KO_MATCH_ORDER` **by kickoff time** (same issue — KO match numbers are also not chronological). `koChronoOrder` sorts `KO_MATCH_ORDER` by `KO_SCHEDULE[m]` with match-number tiebreaker, computed inside `renderKoStandings`. `KO_MOB_LAST = 5`. Squares assembled from `koSqByNum` map in `koChronoOrder` order.
 - Column header: `Recent`. Tooltip data attributes are present on every mob square — existing tooltip handler works automatically.
 
 ---
 
-## Live scores (leaderboard — group stage)
+## Live scores (leaderboard — group stage + KO)
 
-> **Built.** Group stage only; KO live scores planned for later.
+> **Built.** Group stage and KO stage.
 
 **Toggle:** `const LIVE_SCORES_ENABLED = true/false` at the top of the leaderboard JS. Off = no ESPN fetch, no live UI. This is an internal dev toggle, not a URL param.
 
@@ -210,10 +210,11 @@ A `.td-mob-sq` / `.th-mob-sq` column is hidden on desktop and revealed at `max-w
 
 **Standings:** Points, rank, and all aggregate numbers stay frozen during live. Only squares change color. (May extend to preview standings in future.)
 
-**Scope:** Group stage only for now. KO live scores to be added later — same architecture applies.
+**Scope:** Group stage and KO stage.
 
 **Diagnostics (DevTools console):**
 ```js
+// Group stage
 document.querySelectorAll('.sq-live-correct, .sq-live-wrong').length  // should be > 0 while game is live
 _liveData[matchNum]       // { homeScore, awayScore, state, minute }
 _lastResults?.[matchNum]  // undefined = CSV not updated yet
@@ -221,6 +222,13 @@ _bridgeScores[matchNum]   // { homeScore, awayScore } — persists after ESPN dr
 _pendingResults.size      // > 0 = waiting for CSV confirmation
 _livePoller               // null = stopped; number = interval ID (running)
 renderStandings(_lastStandings, _liveData);  // force re-render if squares look wrong
+// KO stage
+_koLiveData[matchNum]     // { homeScore, awayScore, state, minute }
+_lastKoResults?.[matchNum]
+_koBridgeScores[matchNum]
+_koPendingResults.size
+_koLivePoller
+renderKoBracket(_lastKoBracketData, _lastKoResults, _lastKoScores, _lastKoCounts, _koLiveData);
 ```
 
 **`_pendingResults` seeding — two paths:**
@@ -244,11 +252,13 @@ All downstream renders (`renderResults`, `renderGroupTables`, `renderBracket`) a
 
 **`#provisional_bracket` deep link:** `_revealSections()` calls `bracketSectionLabel.scrollIntoView({ behavior: 'smooth' })` when `window.location.hash === '#provisional_bracket'`. Shareable URLs: `WC2026_Pool_Leaderboard_Swiftly.html#provisional_bracket` and `WC2026_Pool_Leaderboard_FandF.html#provisional_bracket`.
 
-**TODO before KO stage (Jun 28):**
-- **KO upset detection** — wire `_isUpsetResult` into `renderKoStandings` the same way group stage does it in `renderStandings`. CSS + tooltip already exist. ~5 lines.
-- **KO live scores** — extend group stage ESPN polling to KO matches. Architecture is identical. See KO bracket live treatment spec below.
+**Not doing:** KO upset detection — decided against it.
 
-**KO bracket live treatment (planned):** During a live KO match, both team rows in the bracket card pulse (1→0.3→1, 1.8s). Currently winning team: pulsing solid blue (same as final winner style). Currently losing team: pulsing muted/transparent (same as final loser style). Minute shown pulsing in `.bk-mnum` alongside the match number. On FT, both rows snap to solid winner/loser state.
+**KO bracket live treatment (built):** During a live KO match, both team rows pulse (1→0.3→1, 1.8s). Currently winning team: `.live-win` — pulsing solid blue. Currently losing team: `.live-lose` — pulsing muted/transparent. If tied (ET/pens): no win/lose class on either row — match number label pulses via `.bk-mnum-label.live`. Live minute shown in `.bk-mnum-live` span alongside the match number label. On FT (CSV confirmed), rows snap to solid `.w`/`.l` winner/loser state. Bridge period (ESPN post, CSV unconfirmed): `_koPendingResults` tracks; polling continues. 135 min threshold (vs 95 for group) to account for ET + pens.
+
+**KO live — `_pendingResults` seeding (same two paths as group):**
+- **Score-based:** `_koBridgeScores[num]` set + CSV not confirmed → added to `_koPendingResults` each poll cycle.
+- **Time-based fallback:** elapsed > 135 min from kickoff and < 24 h → add to `_koPendingResults`.
 
 ---
 

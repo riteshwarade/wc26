@@ -18,7 +18,7 @@ const ESPN_TEAM_MAP_JS = {
 };
 // ──────────────────────────────────────────────────────────
 
-// ── Live scores state ─────────────────────────────────────
+// ── Live scores state — group stage ──────────────────────
 let _liveData       = {};   // { matchNum: { minute, homeScore, awayScore, state } }
 let _lastStandings  = null;
 let _lastResults    = null;
@@ -27,6 +27,18 @@ let _pendingResults = new Set(); // matches where ESPN said game ended but CSV n
 let _bridgeScores  = {};         // last known score per match — keeps squares pulsing after ESPN drops the event
 let _lastGrpCounts  = null;
 let _livePoller     = null;
+
+// ── Live scores state — KO stage ─────────────────────────
+let _koLiveData       = {};  // { matchNum: { minute, homeScore, awayScore, state } }
+let _koPendingResults = new Set();
+let _koBridgeScores   = {};
+let _koLivePoller     = null;
+// KO render state — stored so fetchKoLiveScores can re-render without re-running init()
+let _lastKoCombined    = null;
+let _lastKoBracketData = null;
+let _lastKoResults     = null;
+let _lastKoScores      = null;
+let _lastKoCounts      = null;
 let _lastUpdated    = null;
 let _cardData       = null;  // { matchNum: { teamName: {Y, IR, DR} } } from group_cards.json
 let _lastRenderedMatchCount = -1;   // tracks last match count renderGroupTables/renderBracket ran with
@@ -78,7 +90,7 @@ function pickLabel(outcome, t1, t2) {
 }
 
 // ── Render KO standings (KO mode) ────────────────────────
-function renderKoStandings(combinedStandings, koResults, bracketData) {
+function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData = {}) {
   if (!combinedStandings.length) {
     document.getElementById('koStandingsSection').innerHTML =
       '<div class="state-msg"><span class="emoji">📭</span>No standings available yet.</div>';
@@ -110,9 +122,23 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
       const teamsStr = `${t1} v ${t2}`;
       const pickStr = pr.pick || '—';
       const resultStr = pr.winner || 'Not played yet';
-      const koSqHtml = `<span class="sq sq-${pr.status}"
+
+      // Live overlay: if match is in-progress/bridge and not yet confirmed in CSV
+      let sqStatus = pr.status;
+      const lm = koLiveData[m];
+      if (lm && !koResults[m] && pr.pick) {
+        const { homeScore: hs, awayScore: as_ } = lm;
+        if (hs !== as_) {
+          // Determine which team is currently winning
+          const leading = hs > as_ ? t1 : t2;
+          sqStatus = pr.pick === leading ? 'live-correct' : 'live-wrong';
+        }
+        // If tied (ET / pens in progress): leave as current status (pending/empty)
+      }
+
+      const koSqHtml = `<span class="sq sq-${sqStatus}"
         data-match="${m}" data-teams="${_esc(teamsStr)}"
-        data-pick="${_esc(pickStr)}" data-result="${_esc(resultStr)}" data-status="${pr.status}"
+        data-pick="${_esc(pickStr)}" data-result="${_esc(resultStr)}" data-status="${sqStatus}"
         data-name="${_esc(_abbrevName(p.name))}"></span>`;
       koSquareParts.push(koSqHtml);
       koSqByNum[m] = koSqHtml;
@@ -172,7 +198,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData) {
 }
 
 // ── Render KO bracket (KO mode) ───────────────────────────
-function renderKoBracket(bracketData, koResults, koScores, koCounts) {
+function renderKoBracket(bracketData, koResults, koScores, koCounts, koLiveData = {}) {
   const el = document.getElementById('koBracketCard');
   if (!el) return;
 
@@ -184,20 +210,26 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts) {
   function mkCard(m) {
     const [h, a] = getKoTeams(m, bracketData, koResults);
     const winner = koResults[m];
+    const lm     = !winner ? koLiveData[m] : null;
     const sc     = koScores ? koScores[m] : null;
     let homeCls = '', awayCls = '';
     if (winner) {
       homeCls = winner === h ? 'w' : 'l';
       awayCls = winner === a ? 'w' : 'l';
+    } else if (lm) {
+      const { homeScore: hs, awayScore: as_ } = lm;
+      if (hs > as_) { homeCls = 'live-win'; awayCls = 'live-lose'; }
+      else if (as_ > hs) { homeCls = 'live-lose'; awayCls = 'live-win'; }
+      // tied (ET/pens): no class — both rows pulse via .bk-mnum.live parent
     }
-    let hSc = sc ? sc.home : undefined;
-    let aSc = sc ? sc.away : undefined;
+    let hSc = sc ? sc.home : (lm ? lm.homeScore : undefined);
+    let aSc = sc ? sc.away : (lm ? lm.awayScore : undefined);
     if (sc && sc.homePen != null) {
       hSc = `${sc.home} (${sc.homePen})`;
       aSc = `${sc.away} (${sc.awayPen})`;
     }
     let cardHtml = matchCard(m, h, a, '', hSc, aSc, homeCls, awayCls);
-    // Inject correctness pill into .bk-mnum as a flex row
+    // Inject correctness pill and/or live minute into .bk-mnum
     if (winner) {
       const c = koCounts && koCounts[m];
       const pill = c ? correctnessPill(c.correct, c.total, c.names) : '';
@@ -205,8 +237,13 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts) {
         /(<div class="bk-mnum">)([\s\S]*?)(<\/div>)/,
         `$1<span class="bk-mnum-label">$2</span>${pill}$3`
       );
+    } else if (lm) {
+      const liveMinute = lm.minute ? `<span class="bk-mnum-live">${lm.minute}</span>` : '';
+      cardHtml = cardHtml.replace(
+        /(<div class="bk-mnum">)([\s\S]*?)(<\/div>)/,
+        `$1<span class="bk-mnum-label live">$2</span>${liveMinute}$3`
+      );
     } else {
-      // No pill but still wrap label for consistent flex layout
       cardHtml = cardHtml.replace(
         /(<div class="bk-mnum">)([\s\S]*?)(<\/div>)/,
         `$1<span class="bk-mnum-label">$2</span>$3`
@@ -242,13 +279,23 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts) {
   function koMobMatchCard(m) {
     const [h, a] = getKoTeams(m, bracketData, koResults);
     const winner = koResults[m];
+    const lm     = !winner ? koLiveData[m] : null;
     const sc     = koScores ? koScores[m] : null;
     const hTbd   = isTbd(h), aTbd = isTbd(a);
-    const hCls   = winner ? (winner === h ? ' bk-mob-win' : ' bk-mob-los') : '';
-    const aCls   = winner ? (winner === a ? ' bk-mob-win' : ' bk-mob-los') : '';
+    let hCls = '', aCls = '';
+    if (winner) {
+      hCls = winner === h ? ' bk-mob-win' : ' bk-mob-los';
+      aCls = winner === a ? ' bk-mob-win' : ' bk-mob-los';
+    } else if (lm) {
+      const { homeScore: hs, awayScore: as_ } = lm;
+      if (hs > as_)       { hCls = ' live-win'; aCls = ' live-lose'; }
+      else if (as_ > hs)  { hCls = ' live-lose'; aCls = ' live-win'; }
+      // tied: no class
+    }
     const date   = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
     const c      = koCounts && koCounts[m];
     const pill   = (winner && c) ? ' ' + correctnessPill(c.correct, c.total, c.names) : '';
+    const liveMeta = lm && lm.minute ? ` <span class="bk-mob-live-min">${lm.minute}</span>` : '';
     // Per-team score strings (shown on each row, not in meta)
     let hScTxt = '', aScTxt = '';
     if (sc) {
@@ -259,14 +306,17 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts) {
         hScTxt = String(sc.home);
         aScTxt = String(sc.away);
       }
+    } else if (lm) {
+      hScTxt = String(lm.homeScore);
+      aScTxt = String(lm.awayScore);
     }
     const hHtml  = hTbd ? h : teamHtml(h);
     const aHtml  = aTbd ? a : teamHtml(a);
     const hScHtml = hScTxt ? `<span class="bk-mob-sc">${hScTxt}</span>` : '';
     const aScHtml = aScTxt ? `<span class="bk-mob-sc">${aScTxt}</span>` : '';
-    const upCls  = !winner ? ' bk-mob-upcoming' : '';
+    const upCls  = (!winner && !lm) ? ' bk-mob-upcoming' : '';
     return `<div class="bk-mob-match${upCls}">
-      <div class="bk-mob-meta">M${m}${date}${pill}</div>
+      <div class="bk-mob-meta">M${m}${date}${pill}${liveMeta}</div>
       <div class="bk-mob-teams">
         <div class="bk-mob-team${hTbd ? ' tbd' : hCls}"><span class="bk-mob-team-name">${hHtml}</span>${hScHtml}</div>
         <div class="bk-mob-team${aTbd ? ' tbd' : aCls}"><span class="bk-mob-team-name">${aHtml}</span>${aScHtml}</div>
@@ -1782,6 +1832,133 @@ function startLivePolling() {
 function stopLivePolling() {
   if (_livePoller) { clearInterval(_livePoller); _livePoller = null; }
 }
+
+// ── KO live scores ────────────────────────────────────────
+async function fetchKoLiveScores() {
+  if (!LIVE_SCORES_ENABLED || !knockoutMode) return;
+  if (!_lastKoBracketData) return;
+  try {
+    const now  = new Date();
+    const yest = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const d1   = yest.toISOString().slice(0, 10).replace(/-/g, '');
+    const d2   = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const [r1, r2] = await Promise.all([
+      fetch(`${ESPN_SCOREBOARD}?dates=${d1}`),
+      fetch(`${ESPN_SCOREBOARD}?dates=${d2}`),
+    ]);
+    const allEvents = [
+      ...((r1.ok ? await r1.json() : {}).events || []),
+      ...((r2.ok ? await r2.json() : {}).events || []),
+    ];
+
+    const newLive = {};
+    let anyIn = false;
+    const nowMs = Date.now();
+
+    // Seed _koPendingResults — same two paths as group stage but 135 min threshold
+    // (KO games can go to 120 min ET + pens buffer).
+    for (const [mNum, utcKick] of Object.entries(KO_SCHEDULE)) {
+      const num = Number(mNum);
+      if (_lastKoResults?.[num]) continue;
+      if (_koPendingResults.has(num)) continue;
+      const sawLive = !!_koBridgeScores[num];
+      const elapsed = nowMs - new Date(utcKick).getTime();
+      const pastEnd = elapsed > 135 * 60 * 1000 && elapsed < 24 * 60 * 60 * 1000;
+      if (sawLive || pastEnd) _koPendingResults.add(num);
+    }
+
+    // Build set of KO match numbers with known teams for faster lookup
+    const koMatchTeams = {};
+    for (const mNum of Object.keys(KO_SCHEDULE)) {
+      const m = Number(mNum);
+      if (_lastKoResults?.[m]) continue; // already confirmed
+      const [t1, t2] = getKoTeams(m, _lastKoBracketData, _lastKoResults || {});
+      if (!isTbd(t1) && !isTbd(t2)) koMatchTeams[m] = [t1, t2];
+    }
+
+    for (const event of allEvents) {
+      const state = event.status?.type?.state;
+      if (state !== 'in' && state !== 'post') continue;
+      const comp = event.competitions?.[0];
+      const home = comp?.competitors?.find(c => c.homeAway === 'home');
+      const away = comp?.competitors?.find(c => c.homeAway === 'away');
+      if (!home || !away) continue;
+
+      const hn = ESPN_TEAM_MAP_JS[home.team.displayName] || home.team.displayName;
+      const an = ESPN_TEAM_MAP_JS[away.team.displayName] || away.team.displayName;
+
+      // Find which KO match this event belongs to
+      let matchNum = null;
+      for (const [m, [t1, t2]] of Object.entries(koMatchTeams)) {
+        if ((t1 === hn && t2 === an) || (t2 === hn && t1 === an)) {
+          matchNum = Number(m); break;
+        }
+      }
+      if (matchNum === null) continue;
+
+      const [t1] = koMatchTeams[matchNum];
+      const hs = parseInt(home.score) || 0;
+      const as_ = parseInt(away.score) || 0;
+      const [h, a] = t1 === hn ? [hs, as_] : [as_, hs];
+
+      // Clock — handle penalty display
+      const rawClock = event.status?.displayClock || '';
+      const periodType = event.status?.type?.shortDetail || '';
+      const isPen = /pen/i.test(periodType) || /pen/i.test(rawClock);
+      const isAet = /ET|AET|extra/i.test(periodType);
+      let minute;
+      if (isPen)      minute = 'PEN';
+      else if (isAet) minute = 'AET';
+      else            minute = rawClock === 'HT' ? 'HT' : (rawClock.split(':')[0] || '');
+
+      newLive[matchNum] = { minute, homeScore: h, awayScore: a, state };
+      if (state === 'in') anyIn = true;
+      if (state === 'post' && !_lastKoResults?.[matchNum]) _koPendingResults.add(matchNum);
+      _koBridgeScores[matchNum] = { homeScore: h, awayScore: a };
+    }
+
+    // Re-inject bridge scores for matches ESPN has dropped
+    for (const num of _koPendingResults) {
+      if (!newLive[num] && _koBridgeScores[num] && !_lastKoResults?.[num]) {
+        newLive[num] = { ..._koBridgeScores[num], state: 'post', minute: '' };
+      }
+    }
+
+    // Clear confirmed matches
+    if (_lastKoResults) {
+      for (const num of Object.keys(newLive)) {
+        if (_lastKoResults[Number(num)]) delete newLive[Number(num)];
+      }
+      for (const num of _koPendingResults) {
+        if (_lastKoResults[num]) { _koPendingResults.delete(num); delete _koBridgeScores[num]; }
+      }
+    }
+
+    _koLiveData = newLive;
+
+    if (_lastKoCombined) {
+      renderKoStandings(_lastKoCombined, _lastKoResults || {}, _lastKoBracketData, _koLiveData);
+      renderKoBracket(_lastKoBracketData, _lastKoResults || {}, _lastKoScores, _lastKoCounts, _koLiveData);
+    }
+
+    if (!anyIn) {
+      if (_koPendingResults.size === 0) {
+        stopKoLivePolling();
+      } else if (!_inInit) {
+        init();
+      }
+    }
+  } catch (e) { /* silent — live scores are best-effort */ }
+}
+
+function startKoLivePolling() {
+  if (_koLivePoller) return;
+  _koLivePoller = setInterval(fetchKoLiveScores, 60 * 1000);
+}
+
+function stopKoLivePolling() {
+  if (_koLivePoller) { clearInterval(_koLivePoller); _koLivePoller = null; }
+}
 // ──────────────────────────────────────────────────────────
 
 // ── Main ──────────────────────────────────────────────────
@@ -1836,8 +2013,18 @@ async function init() {
       const combined = computeCombinedStandings(standings, koPicksData, koResults, bracketData);
       _buildAbbrevMap(combined.map(p => p.name));
       const koCounts = buildKoCounts(combined);
-      renderKoStandings(combined, koResults, bracketData);
-      renderKoBracket(bracketData, koResults, koScores, koCounts);
+      // Store for live polling re-renders
+      _lastKoCombined    = combined;
+      _lastKoBracketData = bracketData;
+      _lastKoResults     = koResults;
+      _lastKoScores      = koScores;
+      _lastKoCounts      = koCounts;
+      renderKoStandings(combined, koResults, bracketData, _koLiveData);
+      renderKoBracket(bracketData, koResults, koScores, koCounts, _koLiveData);
+      if (LIVE_SCORES_ENABLED) {
+        fetchKoLiveScores();
+        startKoLivePolling();
+      }
     } else {
       _buildAbbrevMap(standings.map(p => p.name));
       // Guard against Fastly CDN stale CSV regressing confirmed results.
