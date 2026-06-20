@@ -520,6 +520,18 @@ const sqStatus = pr.status === 'correct' && _isUpsetResult(t1, t2, pr.result?.ou
 
 **Mobile:** `.th-squares`, `.td-squares`, `.th-champ`, `.td-champ` all hidden at `max-width: 640px`. `.th-mob-sq` / `.td-mob-sq` revealed instead (last 5 KO squares, chronological order, `sq-sm` size).
 
+### KO-only participants
+
+A participant who submitted KO picks but has no matching group picks (by name) is flagged `koOnly: true` and `groupPtsIsFloor: true` in `computeCombinedStandings` (`scoring.js`). They receive the minimum group score of all group-stage participants as their baseline (floor), not 0. This prevents a legitimate KO-only joiner from starting at a hopeless deficit.
+
+**`scoring.js`:** `minGroupPts = Math.min(...groupStandings.map(p => p.points))` — computed once before the KO-only loop; falls back to 0 if `groupStandings` is empty. KO-only row: `groupPts: minGroupPts, points: minGroupPts, totalPts: minGroupPts + koPts, maxPts: minGroupPts + koPossiblePts`.
+
+**`leaderboard.js`:** When `p.groupPtsIsFloor`, the Grp cell renders as `<span class="grp-floor">N<span class="grp-floor-mark" title="...">*</span></span>` — amber number + small amber superscript asterisk.
+
+**CSS:** `.grp-floor { color: #b45309 }` · `.grp-floor-mark { font-size: 0.65rem; color: #ba7517; vertical-align: super }` — both in Swiftly HTML.
+
+**Name mismatch:** Both the orphaned KO row (showing floor pts + ⚠) and the real group-only row (group pts + 0 KO) appear simultaneously. Fix by renaming the KO picks file to match the group picks name.
+
 ---
 
 ## Post-tournament / WC2030 cleanup

@@ -342,14 +342,20 @@ function computeCombinedStandings(groupStandings, koPicksData, koResults, bracke
     };
   });
 
+  // Minimum group pts — floor baseline for KO-only participants
+  const minGroupPts = groupStandings.length
+    ? Math.min(...groupStandings.map(p => p.points))
+    : 0;
+
   // Add KO-only participants not in group standings
   Object.keys(koPicksData).forEach(name => {
     if (!combined.find(p => p.name === name)) {
       const { koPts, koPossiblePts, totalCorrect, correctChampion, koPickResults } =
         evalKoPicks(koPicksData[name]);
-      combined.push({ name, points: 0, groupPts: 0, pickResults: {}, koPts,
-        totalPts: koPts, maxPts: koPossiblePts, correctChampion, totalCorrect, koPickResults,
-        koOnly: true });
+      combined.push({ name, points: minGroupPts, groupPts: minGroupPts, pickResults: {}, koPts,
+        totalPts: minGroupPts + koPts, maxPts: minGroupPts + koPossiblePts,
+        correctChampion, totalCorrect, koPickResults,
+        koOnly: true, groupPtsIsFloor: true });
     }
   });
 

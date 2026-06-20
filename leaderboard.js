@@ -164,11 +164,14 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
     const koOnlyWarn = p.koOnly
       ? ` <span class="ko-only-warn" title="No group picks found — possible name mismatch">⚠</span>`
       : '';
+    const grpPtsCell = p.groupPtsIsFloor
+      ? `<span class="grp-floor">${p.groupPts}<span class="grp-floor-mark" title="Floor score — minimum group pts; no group picks found">*</span></span>`
+      : p.groupPts;
 
     rows += `<tr>
       <td class="td-rank${topClass}">${rank}</td>
       <td class="td-name">${_esc(_abbrevName(p.name))}${koOnlyWarn}</td>
-      <td class="td-grp-pts">${p.groupPts}</td>
+      <td class="td-grp-pts">${grpPtsCell}</td>
       <td class="td-ko-pts">${p.koPts}</td>
       <td class="td-total-pts">${p.totalPts}</td>
       <td class="td-max-pts">${p.maxPts}</td>
