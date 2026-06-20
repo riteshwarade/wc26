@@ -242,7 +242,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 2px;
-    padding: 2px 0;
   }
 
   .sq {
@@ -701,12 +700,12 @@
   .td-grp-pts, .td-ko-pts, .td-total-pts, .td-max-pts { width: 64px; min-width: 64px; text-align: center; }
   .td-grp-pts   { color: var(--neutral-dark); font-weight: 400; }
   .td-ko-pts    { color: var(--neutral-dark); font-weight: 400; }
-  .td-total-pts { font-weight: 700; color: var(--neutral-darkest); }
+  .td-total-pts { font-weight: 700; color: var(--swiftly-blue); }
   .td-max-pts   { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
   .sq-divider {
     display: inline-block;
     width: 1.5px;
-    height: 14px;
+    height: 12px;
     background: var(--neutral-medium);
     margin: 0 5px;
     vertical-align: middle;
@@ -723,7 +722,9 @@
     border-radius: 1px;
     flex-shrink: 0;
   }
-  .champ-pick  { font-size: 0.82rem; color: var(--neutral-dark); margin-left: 6px; white-space: nowrap; align-self: center; }
+  .th-champ, .td-champ { white-space: nowrap; padding-left: 8px; padding-right: 12px; }
+  .th-champ { font-size: 0.82rem; text-align: left; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--neutral-dark); }
+  .champ-pick  { font-size: 0.82rem; color: var(--neutral-dark); white-space: nowrap; line-height: 1; }
   .champ-correct   { color: var(--swiftly-blue); font-weight: 600; }
   .champ-wrong     { color: var(--swiftly-red); text-decoration: line-through; }
   .champ-cascaded  { color: var(--swiftly-red); text-decoration: line-through; font-style: italic; }
@@ -743,7 +744,8 @@
     .side-right { order: 1; }
 
     /* Standings: hide per-match squares and max-pts — too wide for phones */
-    .th-squares, .td-squares   { display: none; }
+    .th-squares, .td-squares,
+    .th-champ,   .td-champ     { display: none; }
     .th-max-pts, .td-max-pts   { display: none; }
     /* KO standings: hide split pts columns, keep total */
     .th-grp-pts, .td-grp-pts   { display: none; }
