@@ -104,7 +104,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
     (KO_SCHEDULE[a] || '9999') < (KO_SCHEDULE[b] || '9999') ? -1 :
     (KO_SCHEDULE[a] || '9999') > (KO_SCHEDULE[b] || '9999') ? 1 : a - b
   );
-  const koPlayedNums = koChronoOrder.filter(m => koResults[m]);
+  const koPlayedNums = koChronoOrder.filter(m => koResults[m] || koLiveData[m]);
   const koMobMatchNums = new Set(koPlayedNums.slice(-KO_MOB_LAST));
 
   const KO_ROUND_BREAKS = new Set([88, 96, 100, 102]); // dividers after R32/R16/QF/SF; 103 removed (trailing divider after 3rd-place)
