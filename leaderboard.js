@@ -2021,9 +2021,10 @@ async function init() {
       _lastKoCounts      = koCounts;
       renderKoStandings(combined, koResults, bracketData, _koLiveData);
       renderKoBracket(bracketData, koResults, koScores, koCounts, _koLiveData);
-      if (LIVE_SCORES_ENABLED) {
-        fetchKoLiveScores();
-        startKoLivePolling();
+      if (LIVE_SCORES_ENABLED && !_koLivePoller) {
+        fetchKoLiveScores().then(() => {
+          if (Object.keys(_koLiveData).length > 0 || _koPendingResults.size > 0) startKoLivePolling();
+        });
       }
     } else {
       _buildAbbrevMap(standings.map(p => p.name));
