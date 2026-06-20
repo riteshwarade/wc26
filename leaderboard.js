@@ -43,6 +43,8 @@ let _lastUpdated    = null;
 let _cardData       = null;  // { matchNum: { teamName: {Y, IR, DR} } } from group_cards.json
 let _lastRenderedMatchCount = -1;   // tracks last match count renderGroupTables/renderBracket ran with
 let _lastBracketConfirmed   = undefined; // tracks last bracketConfirmed value renderBracket ran with
+let _lastRenderedKoMatchCount = -1;   // tracks last KO match count renderKoBracket ran with (flash guard)
+let _lastKoLiveStr  = '';             // serialized _koLiveData — skip re-render when unchanged
 // ──────────────────────────────────────────────────────────
 
 
@@ -1936,11 +1938,16 @@ async function fetchKoLiveScores() {
       }
     }
 
-    _koLiveData = newLive;
+    const newLiveStr = JSON.stringify(newLive);
+    const liveChanged = newLiveStr !== _lastKoLiveStr;
+    _koLiveData   = newLive;
+    _lastKoLiveStr = newLiveStr;
 
     if (_lastKoCombined) {
       renderKoStandings(_lastKoCombined, _lastKoResults || {}, _lastKoBracketData, _koLiveData);
-      renderKoBracket(_lastKoBracketData, _lastKoResults || {}, _lastKoScores, _lastKoCounts, _koLiveData);
+      if (liveChanged) {
+        renderKoBracket(_lastKoBracketData, _lastKoResults || {}, _lastKoScores, _lastKoCounts, _koLiveData);
+      }
     }
 
     if (!anyIn) {
@@ -2015,14 +2022,25 @@ async function init() {
       const combined = computeCombinedStandings(standings, koPicksData, koResults, bracketData);
       _buildAbbrevMap(combined.map(p => p.name));
       const koCounts = buildKoCounts(combined);
-      // Store for live polling re-renders
-      _lastKoCombined    = combined;
-      _lastKoBracketData = bracketData;
-      _lastKoResults     = koResults;
-      _lastKoScores      = koScores;
-      _lastKoCounts      = koCounts;
-      renderKoStandings(combined, koResults, bracketData, _koLiveData);
-      renderKoBracket(bracketData, koResults, koScores, koCounts, _koLiveData);
+      // Stale-CSV regression guard: only update stored state if CSV has >= confirmed results
+      const _newKoMatchCount = Object.keys(koResults).length;
+      const _oldKoMatchCount = _lastKoResults ? Object.keys(_lastKoResults).length : -1;
+      if (_newKoMatchCount >= _oldKoMatchCount) {
+        _lastKoCombined    = combined;
+        _lastKoBracketData = bracketData;
+        _lastKoResults     = koResults;
+        _lastKoScores      = koScores;
+        _lastKoCounts      = koCounts;
+      }
+      // Always render standings with best-known data
+      renderKoStandings(_lastKoCombined, _lastKoResults || {}, _lastKoBracketData || bracketData, _koLiveData);
+      // Only re-render KO bracket when new confirmed matches arrive (flash guard — bracket
+      // re-renders trigger positionAndConnectBracket via rAF which flashes cards at top:0)
+      const freshKoData = _newKoMatchCount > _lastRenderedKoMatchCount;
+      if (freshKoData) {
+        _lastRenderedKoMatchCount = _newKoMatchCount;
+        renderKoBracket(_lastKoBracketData || bracketData, _lastKoResults || {}, _lastKoScores, _lastKoCounts, _koLiveData);
+      }
       if (LIVE_SCORES_ENABLED && !_koLivePoller) {
         fetchKoLiveScores().then(() => {
           if (Object.keys(_koLiveData).length > 0 || _koPendingResults.size > 0) startKoLivePolling();

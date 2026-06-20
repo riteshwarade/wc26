@@ -260,6 +260,10 @@ All downstream renders (`renderResults`, `renderGroupTables`, `renderBracket`) a
 - **Score-based:** `_koBridgeScores[num]` set + CSV not confirmed → added to `_koPendingResults` each poll cycle.
 - **Time-based fallback:** elapsed > 135 min from kickoff and < 24 h → add to `_koPendingResults`.
 
+**KO stale-CSV regression fix:** Same pattern as group stage. In `init()` KO branch, `_lastKo*` globals are only updated when `_newKoMatchCount >= _oldKoMatchCount`. Renders use `_lastKo*` rather than local fetch results, so a Fastly-stale CSV during the bridge can't revert confirmed KO results.
+
+**KO bracket flash fixes:** `renderKoBracket` triggers `positionAndConnectBracket` via two rAF frames (cards flash at `top:0` before positioning). Two guards prevent unnecessary re-renders: (1) From `init()`: `renderKoBracket` only fires when `_newKoMatchCount > _lastRenderedKoMatchCount` — i.e., only when a new KO match is confirmed. `_lastRenderedKoMatchCount` is a module-scope tracker (init: -1). (2) From `fetchKoLiveScores`: `renderKoBracket` only fires when `_koLiveData` actually changed — checked by serializing `newLive` to JSON and comparing to `_lastKoLiveStr`. `renderKoStandings` (no absolute positioning, no flash) is called every time from both paths.
+
 ---
 
 ## Mobile breakpoints (leaderboard)
