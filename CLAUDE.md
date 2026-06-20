@@ -90,7 +90,7 @@ function localMatchTime(utcStr) {
 ## Bracket
 
 Three bracket variants — all share `bracket.js` primitives, each supplies its own `mkCard()`:
-- **Variant 1** — Provisional bracket. Embedded in both leaderboard pages. Read-only; derived from group results. Shows Provisional (orange) / Confirmed ✓ (green) badge. `renderBracket()`.
+- **Variant 1** — Provisional bracket. Embedded in both leaderboard pages. Read-only; derived from group results. Shows Provisional (orange) / Confirmed ✓ (green) badge. `renderBracket()`. Mobile: matches grouped in pairs with "winners meet in R16 · M89" connector pills (`MOB_PAIR_NEXT`), same as Variants 2/3.
 - **Variant 2** — Pick bracket. `WC2026_Pool_Knockout_Picks.html`. Interactive; users click to pick winners. Uses `data-match`/`data-team` attrs via `bkTeamRow`'s `extraAttrs` param.
 - **Variant 3** — Results bracket. Leaderboard, KO stage. Same cards as Variant 1 but `mkCard` reads `koResults`: winner solid blue, loser muted, scores + penalty rendering, correctness pill in `.bk-mnum`. `renderKoBracket()`.
 
