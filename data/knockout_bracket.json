@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-06-20T00:00:30.661735Z",
+  "generated_at": "2026-06-20T02:35:16.404431Z",
   "confirmed": false,
   "status": "provisional",
-  "matches_played": 30,
+  "matches_played": 31,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABCEFGHK",
   "combination_found": true,
@@ -20,9 +20,9 @@
       "fourth": "Qatar"
     },
     "C": {
-      "first": "Morocco",
-      "second": "Scotland",
-      "third": "Brazil",
+      "first": "Brazil",
+      "second": "Morocco",
+      "third": "Scotland",
       "fourth": "Haiti"
     },
     "D": {
@@ -82,18 +82,18 @@
   },
   "qualified_thirds": [
     {
+      "group": "C",
+      "team": "Scotland",
+      "pts": 3,
+      "gd": 0,
+      "gf": 1
+    },
+    {
       "group": "F",
       "team": "Netherlands",
       "pts": 1,
       "gd": 0,
       "gf": 2
-    },
-    {
-      "group": "C",
-      "team": "Brazil",
-      "pts": 1,
-      "gd": 0,
-      "gf": 1
     },
     {
       "group": "G",
@@ -145,14 +145,14 @@
     },
     "74": {
       "home": "Germany",
-      "away": "Brazil"
+      "away": "Scotland"
     },
     "75": {
       "home": "Sweden",
-      "away": "Scotland"
+      "away": "Morocco"
     },
     "76": {
-      "home": "Morocco",
+      "home": "Brazil",
       "away": "Japan"
     },
     "77": {
