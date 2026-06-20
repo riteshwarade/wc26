@@ -881,6 +881,8 @@ let _lastGrpCounts  = null;
 let _livePoller     = null;
 let _lastUpdated    = null;
 let _cardData       = null;  // { matchNum: { teamName: {Y, IR, DR} } } from group_cards.json
+let _lastRenderedMatchCount = -1;   // tracks last match count renderGroupTables/renderBracket ran with
+let _lastBracketConfirmed   = undefined; // tracks last bracketConfirmed value renderBracket ran with
 // ──────────────────────────────────────────────────────────
 
 
@@ -2747,11 +2749,22 @@ async function init() {
 
     if (!knockoutMode) {
       renderResults(_lastResults, _lastGrpCounts, _liveData);
-      renderGroupTables(_lastResults);
-      const allTeamsPlayed = Array.from({length: 24}, (_, i) => i + 1).every(m => _lastResults[m]);
-      renderBracket(_lastResults, allTeamsPlayed, bracketConfirmed);
-      // Kick off live polling (fetches ESPN, starts interval if games are live)
-      if (LIVE_SCORES_ENABLED) {
+      // Only re-render group tables and bracket when actual match data changed or
+      // bracket confirmation status flipped — not on every bridge polling cycle.
+      const currentMatchCount = Object.keys(_lastResults).length;
+      const freshData = currentMatchCount > _lastRenderedMatchCount;
+      const bracketChanged = bracketConfirmed !== _lastBracketConfirmed;
+      if (freshData || bracketChanged) {
+        renderGroupTables(_lastResults);
+        const allTeamsPlayed = Array.from({length: 24}, (_, i) => i + 1).every(m => _lastResults[m]);
+        renderBracket(_lastResults, allTeamsPlayed, bracketConfirmed);
+        _lastRenderedMatchCount = currentMatchCount;
+        _lastBracketConfirmed   = bracketConfirmed;
+      }
+      // Kick off live polling on page load only — skip if poller is already running
+      // (avoids a redundant fetchLiveScores → renderStandings/renderResults on every
+      // bridge cycle when init() is called from inside fetchLiveScores itself).
+      if (LIVE_SCORES_ENABLED && !_livePoller) {
         fetchLiveScores().then(() => {
           if (Object.keys(_liveData).length > 0 || _pendingResults.size > 0) startLivePolling();
         });
