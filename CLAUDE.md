@@ -226,6 +226,7 @@ _lastResults?.[matchNum]  // undefined = CSV not updated yet
 _bridgeScores[matchNum]   // { homeScore, awayScore } — persists after ESPN drops event
 _pendingResults.size      // > 0 = waiting for CSV confirmation
 _livePoller               // null = stopped; number = interval ID (running)
+_groupFrozen              // true = group standings locked (bracketConfirmed + 72 results seen)
 renderStandings(_lastStandings, _liveData);  // force re-render if squares look wrong
 // KO stage
 _koLiveData[matchNum]     // { homeScore, awayScore, state, minute }
