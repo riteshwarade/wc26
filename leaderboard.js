@@ -238,10 +238,12 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts, koLiveData 
         `$1<span class="bk-mnum-label">$2</span>${pill}$3`
       );
     } else if (lm) {
+      const tied = lm.homeScore === lm.awayScore;
+      const lblCls = tied ? 'bk-mnum-label live' : 'bk-mnum-label';
       const liveMinute = lm.minute ? `<span class="bk-mnum-live">${lm.minute}</span>` : '';
       cardHtml = cardHtml.replace(
         /(<div class="bk-mnum">)([\s\S]*?)(<\/div>)/,
-        `$1<span class="bk-mnum-label live">$2</span>${liveMinute}$3`
+        `$1<span class="${lblCls}">$2</span>${liveMinute}$3`
       );
     } else {
       cardHtml = cardHtml.replace(
