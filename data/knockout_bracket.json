@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-06-20T02:35:16.404431Z",
+  "generated_at": "2026-06-20T05:10:23.972196Z",
   "confirmed": false,
   "status": "provisional",
-  "matches_played": 31,
+  "matches_played": 32,
   "source": "Wikipedia (canonical)",
-  "combination_key": "ABCEFGHK",
+  "combination_key": "ABCDFGHK",
   "combination_found": true,
   "groups": {
     "A": {
@@ -28,8 +28,8 @@
     "D": {
       "first": "United States",
       "second": "Australia",
-      "third": "Turkey",
-      "fourth": "Paraguay"
+      "third": "Paraguay",
+      "fourth": "Turkey"
     },
     "E": {
       "first": "Germany",
@@ -89,6 +89,13 @@
       "gf": 1
     },
     {
+      "group": "D",
+      "team": "Paraguay",
+      "pts": 3,
+      "gd": -2,
+      "gf": 2
+    },
+    {
       "group": "F",
       "team": "Netherlands",
       "pts": 1,
@@ -129,13 +136,6 @@
       "pts": 1,
       "gd": -3,
       "gf": 2
-    },
-    {
-      "group": "E",
-      "team": "Ecuador",
-      "pts": 0,
-      "gd": -1,
-      "gf": 0
     }
   ],
   "round_of_32": {
@@ -197,7 +197,7 @@
     },
     "87": {
       "home": "Colombia",
-      "away": "Ecuador"
+      "away": "Paraguay"
     },
     "88": {
       "home": "Australia",
