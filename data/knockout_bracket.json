@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-21T02:00:30.845428Z",
+  "generated_at": "2026-06-21T06:00:27.040261Z",
   "confirmed": false,
   "wikipedia_seen": false,
   "status": "provisional",
-  "matches_played": 35,
+  "matches_played": 36,
   "source": "Wikipedia (canonical)",
   "combination_key": "ACDEFGHK",
   "combination_found": true,
@@ -40,8 +40,8 @@
     },
     "F": {
       "first": "Netherlands",
-      "second": "Sweden",
-      "third": "Japan",
+      "second": "Japan",
+      "third": "Sweden",
       "fourth": "Tunisia"
     },
     "G": {
@@ -83,6 +83,13 @@
   },
   "qualified_thirds": [
     {
+      "group": "F",
+      "team": "Sweden",
+      "pts": 3,
+      "gd": 0,
+      "gf": 6
+    },
+    {
       "group": "C",
       "team": "Scotland",
       "pts": 3,
@@ -94,13 +101,6 @@
       "team": "Paraguay",
       "pts": 3,
       "gd": -2,
-      "gf": 2
-    },
-    {
-      "group": "F",
-      "team": "Japan",
-      "pts": 1,
-      "gd": 0,
       "gf": 2
     },
     {
@@ -154,11 +154,11 @@
     },
     "76": {
       "home": "Brazil",
-      "away": "Sweden"
+      "away": "Japan"
     },
     "77": {
       "home": "Norway",
-      "away": "Japan"
+      "away": "Sweden"
     },
     "78": {
       "home": "Ivory Coast",
