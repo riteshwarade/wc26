@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-21T06:00:27.040261Z",
+  "generated_at": "2026-06-21T18:05:18.680691Z",
   "confirmed": false,
   "wikipedia_seen": false,
   "status": "provisional",
-  "matches_played": 36,
+  "matches_played": 37,
   "source": "Wikipedia (canonical)",
   "combination_key": "ACDEFGHK",
   "combination_found": true,
@@ -51,10 +51,10 @@
       "fourth": "Egypt"
     },
     "H": {
-      "first": "Uruguay",
-      "second": "Saudi Arabia",
-      "third": "Spain",
-      "fourth": "Cape Verde"
+      "first": "Spain",
+      "second": "Uruguay",
+      "third": "Cape Verde",
+      "fourth": "Saudi Arabia"
     },
     "I": {
       "first": "Norway",
@@ -119,7 +119,7 @@
     },
     {
       "group": "H",
-      "team": "Spain",
+      "team": "Cape Verde",
       "pts": 1,
       "gd": 0,
       "gf": 0
@@ -166,7 +166,7 @@
     },
     "79": {
       "home": "Mexico",
-      "away": "Spain"
+      "away": "Cape Verde"
     },
     "80": {
       "home": "England",
@@ -185,7 +185,7 @@
       "away": "Ghana"
     },
     "84": {
-      "home": "Uruguay",
+      "home": "Spain",
       "away": "Austria"
     },
     "85": {
@@ -194,7 +194,7 @@
     },
     "86": {
       "home": "Argentina",
-      "away": "Saudi Arabia"
+      "away": "Uruguay"
     },
     "87": {
       "home": "Colombia",
