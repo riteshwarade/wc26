@@ -8,6 +8,15 @@ const _MATCHES_CHRONO = [...MATCHES].sort((a, b) =>
 );
 // ──────────────────────────────────────────────────────────
 
+// ── Correctness pill tier config ──────────────────────────
+// Consensus ≥ 80%, Contrarian ≤ 20%, Middle everything else.
+const PILL_TIERS = [
+  { minPct: 0.80, cls: 'cp-hi'  },  // Consensus
+  { minPct: 0.21, cls: 'cp-mid' },  // Middle  (> 20%)
+  { minPct: 0.00, cls: 'cp-lo'  },  // Contrarian (≤ 20%)
+];
+// ──────────────────────────────────────────────────────────
+
 // ── ESPN team name map (5 names differ from internal) ─────
 const ESPN_TEAM_MAP_JS = {
   'Czechia':             'Czech Republic',
@@ -459,7 +468,7 @@ function localMatchTime(utcStr) {
 function correctnessPill(correct, total, names = []) {
   if (!total) return '';
   const pct = correct / total;
-  const cls = pct >= 0.67 ? 'cp-hi' : pct >= 0.33 ? 'cp-mid' : 'cp-lo';
+  const cls = pct <= 0.20 ? 'cp-lo' : pct >= 0.80 ? 'cp-hi' : 'cp-mid';
   const nameAttr = names.length ? ` data-cp-names="${_esc(names.join('|'))}"` : '';
   return `<span class="cp-pill ${cls}"${nameAttr}>${correct}/${total}</span>`;
 }
