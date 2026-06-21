@@ -405,8 +405,9 @@ function renderStandings(standings, liveData = {}) {
       } else {
         res = 'Not played yet';
       }
-      let sqStatus = pr.status === 'correct' && _isUpsetResult(t1, t2, pr.result?.outcome)
-        ? 'correct-upset' : pr.status;
+      const _c = _lastGrpCounts && _lastGrpCounts[num];
+      const _isContrarian = _c && _c.total > 0 && (_c.correct / _c.total) <= 0.20;
+      let sqStatus = pr.status === 'correct' && _isContrarian ? 'correct-upset' : pr.status;
       // Override with live status if match is in-progress and pick is still pending
       if (lm && pr.status === 'pending' && pr.pick) {
         const cur = lm.homeScore > lm.awayScore ? 'W1' : lm.awayScore > lm.homeScore ? 'W2' : 'Draw';
@@ -636,15 +637,6 @@ function renderGroupTableCard(grp, teams, stats, opts={}) {
 // ── HTML attribute escape helper ──────────────────────────
 function _esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
 
-// ── Upset detection: true when the lower-ranked (higher rank#) team won ──────
-// outcome = 'W1'|'W2'|'Draw'; t1/t2 = home/away team names
-function _isUpsetResult(t1, t2, outcome) {
-  if (!outcome || outcome === 'Draw') return false;
-  const r1 = RANKINGS[t1] || 999, r2 = RANKINGS[t2] || 999;
-  if (r1 === r2) return false;
-  const favWon = r1 < r2 ? outcome === 'W1' : outcome === 'W2';
-  return !favWon;
-}
 
 // ── Display name: "First L" (last name abbreviated to initial, UI-only) ──
 // Full name is stored in the JSON; abbreviation is only for display.
@@ -1648,7 +1640,7 @@ function _showSqTooltip(sq) {
   const status = sq.dataset.status;
   const name   = sq.dataset.name || 'Their';
   const statusText = status === 'correct'        ? '✓ Correct'
-                   : status === 'correct-upset'  ? '✓ Correct ✦ Upset'
+                   : status === 'correct-upset'  ? '✓ Correct ✦ Contrarian'
                    : status === 'wrong'          ? '✗ Wrong'
                    : status === 'cascaded'       ? '⚡ Void — team eliminated earlier'
                    : status === 'pending'        ? '⏳ Pending'

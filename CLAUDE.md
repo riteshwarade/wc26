@@ -487,29 +487,20 @@ Group `pickResults[num].status`: `correct` · `correct-upset` · `wrong` · `pen
 
 KO `koPickResults[num].status`: same five + `cascaded` (team already eliminated, pick voids)
 
-### Upset detection (`correct-upset`)
+### Contrarian detection (`correct-upset`)
 
-A pick is promoted from `correct` to `correct-upset` when the winning team had a worse FIFA ranking (higher rank number) than the loser.
-
-```js
-function _isUpsetResult(t1, t2, outcome) {
-  if (!outcome || outcome === 'Draw') return false;
-  const r1 = RANKINGS[t1] || 999, r2 = RANKINGS[t2] || 999;
-  if (r1 === r2) return false;
-  const favWon = r1 < r2 ? outcome === 'W1' : outcome === 'W2';
-  return !favWon;
-}
-```
+A pick is promoted from `correct` to `correct-upset` when ≤ 20% of participants got that match correct (i.e., the match's correctness pill is in the Contrarian tier). `_isUpsetResult` has been removed — contrarian is pool-consensus-based, not FIFA-ranking-based.
 
 `sqStatus` in the square builder:
 ```js
-const sqStatus = pr.status === 'correct' && _isUpsetResult(t1, t2, pr.result?.outcome)
-  ? 'correct-upset' : pr.status;
+const _c = _lastGrpCounts && _lastGrpCounts[num];
+const _isContrarian = _c && _c.total > 0 && (_c.correct / _c.total) <= 0.20;
+let sqStatus = pr.status === 'correct' && _isContrarian ? 'correct-upset' : pr.status;
 ```
 
 **Visual:** `.sq-correct-upset` — same Swiftly Blue background as `.sq-correct`, with a white ✦ (U+2726, 4-pointed star) via `::after` pseudo-element at 6px font-size (5px for `.sq-sm`).
 
-**Tooltip:** `'✓ Correct ✦ Upset'` — uses `.correct` CSS class for the status line color (same green as a normal correct pick).
+**Tooltip:** `'✓ Correct ✦ Contrarian'` — uses `.correct` CSS class for the status line color (same green as a normal correct pick).
 
 ---
 
