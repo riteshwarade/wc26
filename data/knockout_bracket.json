@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-06-20T23:20:21.978680Z",
+  "generated_at": "2026-06-21T02:00:30.845428Z",
   "confirmed": false,
   "wikipedia_seen": false,
   "status": "provisional",
-  "matches_played": 34,
+  "matches_played": 35,
   "source": "Wikipedia (canonical)",
-  "combination_key": "ABCDFGHK",
+  "combination_key": "ACDEFGHK",
   "combination_found": true,
   "groups": {
     "A": {
@@ -132,11 +132,11 @@
       "gf": 2
     },
     {
-      "group": "B",
-      "team": "Bosnia and Herzegovina",
+      "group": "E",
+      "team": "Ecuador",
       "pts": 1,
-      "gd": -3,
-      "gf": 2
+      "gd": -1,
+      "gf": 0
     }
   ],
   "round_of_32": {
@@ -174,7 +174,7 @@
     },
     "81": {
       "home": "United States",
-      "away": "Bosnia and Herzegovina"
+      "away": "Ecuador"
     },
     "82": {
       "home": "New Zealand",
