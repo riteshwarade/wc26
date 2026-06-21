@@ -135,8 +135,11 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
       const pickStr = pr.pick || '—';
       const resultStr = pr.winner || 'Not played yet';
 
+      // Contrarian detection: ✦ marker if ≤ 20% of participants got this pick correct
+      const _kc = _lastKoCounts && _lastKoCounts[m];
+      const _isKoContrarian = _kc && _kc.total > 0 && (_kc.correct / _kc.total) <= 0.20;
+      let sqStatus = pr.status === 'correct' && _isKoContrarian ? 'correct-upset' : pr.status;
       // Live overlay: if match is in-progress/bridge and not yet confirmed in CSV
-      let sqStatus = pr.status;
       const lm = koLiveData[m];
       if (lm && !koResults[m] && pr.pick) {
         const { homeScore: hs, awayScore: as_ } = lm;
