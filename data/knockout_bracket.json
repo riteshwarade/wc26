@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-21T21:05:18.597912Z",
+  "generated_at": "2026-06-22T00:05:20.770870Z",
   "confirmed": false,
   "wikipedia_seen": false,
   "status": "provisional",
-  "matches_played": 38,
+  "matches_played": 39,
   "source": "Wikipedia (canonical)",
   "combination_key": "ACDEFGHK",
   "combination_found": true,
@@ -104,6 +104,13 @@
       "gf": 2
     },
     {
+      "group": "H",
+      "team": "Cape Verde",
+      "pts": 2,
+      "gd": 0,
+      "gf": 2
+    },
+    {
       "group": "G",
       "team": "New Zealand",
       "pts": 1,
@@ -116,13 +123,6 @@
       "pts": 1,
       "gd": 0,
       "gf": 1
-    },
-    {
-      "group": "H",
-      "team": "Cape Verde",
-      "pts": 1,
-      "gd": 0,
-      "gf": 0
     },
     {
       "group": "A",
