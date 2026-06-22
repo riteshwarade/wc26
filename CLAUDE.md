@@ -275,6 +275,16 @@ renderStandings(_lastStandings, _liveData);
 
 ## Mobile breakpoints (leaderboard)
 
+### Mobile bracket card styling (all 3 variants)
+
+`.bk-mob-pair-group` — white background (`#ffffff`), `1px solid var(--blue-light)` border, `border-radius: 12px`. Groups two matches + connector pill.
+`.bk-mob-match` — grey background (`#f4f5f6`), `0.5px solid #dde3ea` border, `border-radius: 10px`. Individual match card nested inside the pair group.
+Team rows (`.bk-team`) remain white with `#cce8f4` border. Selected winner: solid Swiftly Blue. Loser: transparent/faded. Defined in each HTML file (not `bracket.js`).
+
+---
+
+## Mobile breakpoints (leaderboard)
+
 Two media queries govern mobile layout:
 
 - **Portrait** — `@media (max-width: 640px)`: stacks group tables/results, hides squares + max-pts columns, hides date/time/# in results table, shows mobile bracket tabs. Also reveals `.th-mob-sq` / `.td-mob-sq` — the last-5 recent squares column (see below).
