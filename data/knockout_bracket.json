@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-22T00:05:20.770870Z",
+  "generated_at": "2026-06-22T03:05:18.228704Z",
   "confirmed": false,
   "wikipedia_seen": false,
   "status": "provisional",
-  "matches_played": 39,
+  "matches_played": 40,
   "source": "Wikipedia (canonical)",
   "combination_key": "ACDEFGHK",
   "combination_found": true,
@@ -45,10 +45,10 @@
       "fourth": "Tunisia"
     },
     "G": {
-      "first": "Iran",
-      "second": "Belgium",
-      "third": "New Zealand",
-      "fourth": "Egypt"
+      "first": "Egypt",
+      "second": "Iran",
+      "third": "Belgium",
+      "fourth": "New Zealand"
     },
     "H": {
       "first": "Spain",
@@ -112,10 +112,10 @@
     },
     {
       "group": "G",
-      "team": "New Zealand",
-      "pts": 1,
+      "team": "Belgium",
+      "pts": 2,
       "gd": 0,
-      "gf": 2
+      "gf": 1
     },
     {
       "group": "K",
@@ -177,7 +177,7 @@
       "away": "Ecuador"
     },
     "82": {
-      "home": "Iran",
+      "home": "Egypt",
       "away": "Czech Republic"
     },
     "83": {
@@ -190,7 +190,7 @@
     },
     "85": {
       "home": "Canada",
-      "away": "New Zealand"
+      "away": "Belgium"
     },
     "86": {
       "home": "Argentina",
@@ -202,7 +202,7 @@
     },
     "88": {
       "home": "Australia",
-      "away": "Belgium"
+      "away": "Iran"
     }
   },
   "round_of_16": {
