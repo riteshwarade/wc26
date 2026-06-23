@@ -9,11 +9,11 @@ const _MATCHES_CHRONO = [...MATCHES].sort((a, b) =>
 // ──────────────────────────────────────────────────────────
 
 // ── Correctness pill tier config ──────────────────────────
-// Consensus ≥ 80%, Contrarian ≤ 20%, Middle everything else.
+// Consensus ≥ 90%, Contrarian ≤ 10%, Middle everything else.
 const PILL_TIERS = [
-  { minPct: 0.80, cls: 'cp-hi'  },  // Consensus
-  { minPct: 0.21, cls: 'cp-mid' },  // Middle  (> 20%)
-  { minPct: 0.00, cls: 'cp-lo'  },  // Contrarian (≤ 20%)
+  { minPct: 0.90, cls: 'cp-hi'  },  // Consensus
+  { minPct: 0.11, cls: 'cp-mid' },  // Middle  (> 10%)
+  { minPct: 0.00, cls: 'cp-lo'  },  // Contrarian (≤ 10%)
 ];
 // ──────────────────────────────────────────────────────────
 
@@ -135,9 +135,9 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
       const pickStr = pr.pick || '—';
       const resultStr = pr.winner || 'Not played yet';
 
-      // Contrarian detection: ✦ marker if ≤ 20% of participants got this pick correct
+      // Contrarian detection: ✦ marker if ≤ 10% of participants got this pick correct
       const _kc = _lastKoCounts && _lastKoCounts[m];
-      const _isKoContrarian = _kc && _kc.total > 0 && (_kc.correct / _kc.total) <= 0.20;
+      const _isKoContrarian = _kc && _kc.total > 0 && (_kc.correct / _kc.total) <= 0.10;
       let sqStatus = pr.status === 'correct' && _isKoContrarian ? 'correct-upset' : pr.status;
       // Live overlay: if match is in-progress/bridge and not yet confirmed in CSV
       const lm = koLiveData[m];
@@ -409,7 +409,7 @@ function renderStandings(standings, liveData = {}) {
         res = 'Not played yet';
       }
       const _c = _lastGrpCounts && _lastGrpCounts[num];
-      const _isContrarian = _c && _c.total > 0 && (_c.correct / _c.total) <= 0.20;
+      const _isContrarian = _c && _c.total > 0 && (_c.correct / _c.total) <= 0.10;
       let sqStatus = pr.status === 'correct' && _isContrarian ? 'correct-upset' : pr.status;
       // Override with live status if match is in-progress and pick is still pending
       if (lm && pr.status === 'pending' && pr.pick) {
@@ -472,7 +472,7 @@ function localMatchTime(utcStr) {
 function correctnessPill(correct, total, names = []) {
   if (!total) return '';
   const pct = correct / total;
-  const cls = pct <= 0.20 ? 'cp-lo' : pct >= 0.80 ? 'cp-hi' : 'cp-mid';
+  const cls = pct <= 0.10 ? 'cp-lo' : pct >= 0.90 ? 'cp-hi' : 'cp-mid';
   const nameAttr = names.length ? ` data-cp-names="${_esc(names.join('|'))}"` : '';
   return `<span class="cp-pill ${cls}"${nameAttr}>${correct}/${total}</span>`;
 }

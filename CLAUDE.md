@@ -368,9 +368,9 @@ Both `sortedStandings` and `computeGroupStandings` must stay in sync by always c
 Shows `N/total` for completed matches. Locations: in its own `td-correct` column in the group results table; right-aligned in `.bk-mnum` header (KO desktop); inline in `.bk-mob-meta` (KO mobile). `bracket.js` is not modified — injected entirely in the leaderboard.
 
 **Color classes** (% of participants correct):
-- ≥ 80%: `.cp-hi` — Consensus — `#d4f0fb` bg / `#00628a` text
-- 21–79%: `.cp-mid` — Middle — `#fff0d0` bg / `#a05800` text
-- ≤ 20%: `.cp-lo` — Contrarian — `#fce0e7` bg / `#b3003d` text
+- ≥ 90%: `.cp-hi` — Consensus — `#d4f0fb` bg / `#00628a` text
+- 11–89%: `.cp-mid` — Middle — `#fff0d0` bg / `#a05800` text
+- ≤ 10%: `.cp-lo` — Contrarian — `#fce0e7` bg / `#b3003d` text
 
 **Pill tooltip:** Hovering a `.cp-pill` shows the shared `#sq-tooltip` with "Picked correctly:" header and a `✓ Name` line per correct picker (or "— nobody" if zero). Pill carries `data-cp-names` (pipe-delimited abbreviated names). `buildGrpCounts` and `buildKoCounts` both store `names: []` alongside `correct`/`total`. The live correctness block in `renderResults` also collects `liveNames`. `.cp-pill` has `cursor: help`.
 
@@ -499,19 +499,19 @@ KO `koPickResults[num].status`: same five + `cascaded` (team already eliminated,
 
 ### Contrarian detection (`correct-upset`)
 
-A pick is promoted from `correct` to `correct-upset` when ≤ 20% of participants got that match correct (i.e., the match's correctness pill is in the Contrarian tier). `_isUpsetResult` has been removed — contrarian is pool-consensus-based, not FIFA-ranking-based. Applies to both group and KO squares.
+A pick is promoted from `correct` to `correct-upset` when ≤ 10% of participants got that match correct (i.e., the match's correctness pill is in the Contrarian tier). `_isUpsetResult` has been removed — contrarian is pool-consensus-based, not FIFA-ranking-based. Applies to both group and KO squares.
 
 `sqStatus` in the group square builder (uses `_lastGrpCounts`):
 ```js
 const _c = _lastGrpCounts && _lastGrpCounts[num];
-const _isContrarian = _c && _c.total > 0 && (_c.correct / _c.total) <= 0.20;
+const _isContrarian = _c && _c.total > 0 && (_c.correct / _c.total) <= 0.10;
 let sqStatus = pr.status === 'correct' && _isContrarian ? 'correct-upset' : pr.status;
 ```
 
 `sqStatus` in the KO square builder (uses `_lastKoCounts`):
 ```js
 const _kc = _lastKoCounts && _lastKoCounts[m];
-const _isKoContrarian = _kc && _kc.total > 0 && (_kc.correct / _kc.total) <= 0.20;
+const _isKoContrarian = _kc && _kc.total > 0 && (_kc.correct / _kc.total) <= 0.10;
 let sqStatus = pr.status === 'correct' && _isKoContrarian ? 'correct-upset' : pr.status;
 ```
 
