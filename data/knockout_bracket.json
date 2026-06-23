@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-22T19:05:22.036499Z",
+  "generated_at": "2026-06-23T00:50:20.924797Z",
   "confirmed": false,
   "wikipedia_seen": false,
   "status": "provisional",
-  "matches_played": 41,
+  "matches_played": 42,
   "source": "Wikipedia (canonical)",
   "combination_key": "ACDEFGHK",
   "combination_found": true,
@@ -57,8 +57,8 @@
       "fourth": "Saudi Arabia"
     },
     "I": {
-      "first": "Norway",
-      "second": "France",
+      "first": "France",
+      "second": "Norway",
       "third": "Senegal",
       "fourth": "Iraq"
     },
@@ -157,12 +157,12 @@
       "away": "Japan"
     },
     "77": {
-      "home": "Norway",
+      "home": "France",
       "away": "Sweden"
     },
     "78": {
       "home": "Ivory Coast",
-      "away": "France"
+      "away": "Norway"
     },
     "79": {
       "home": "Mexico",
