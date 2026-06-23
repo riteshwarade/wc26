@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-06-23T02:00:29.555495Z",
+  "generated_at": "2026-06-23T05:05:20.379375Z",
   "confirmed": false,
   "wikipedia_seen": false,
   "status": "provisional",
-  "matches_played": 43,
+  "matches_played": 44,
   "source": "Wikipedia (canonical)",
-  "combination_key": "ACDEFGHK",
+  "combination_key": "ACDFGHJK",
   "combination_found": true,
   "groups": {
     "A": {
@@ -65,8 +65,8 @@
     "J": {
       "first": "Argentina",
       "second": "Austria",
-      "third": "Jordan",
-      "fourth": "Algeria"
+      "third": "Algeria",
+      "fourth": "Jordan"
     },
     "K": {
       "first": "Colombia",
@@ -95,6 +95,13 @@
       "pts": 3,
       "gd": 0,
       "gf": 1
+    },
+    {
+      "group": "J",
+      "team": "Algeria",
+      "pts": 3,
+      "gd": -2,
+      "gf": 2
     },
     {
       "group": "D",
@@ -130,13 +137,6 @@
       "pts": 1,
       "gd": -1,
       "gf": 2
-    },
-    {
-      "group": "E",
-      "team": "Ecuador",
-      "pts": 1,
-      "gd": -1,
-      "gf": 0
     }
   ],
   "round_of_32": {
@@ -174,7 +174,7 @@
     },
     "81": {
       "home": "United States",
-      "away": "Ecuador"
+      "away": "Algeria"
     },
     "82": {
       "home": "Egypt",
