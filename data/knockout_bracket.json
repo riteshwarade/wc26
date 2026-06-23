@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-23T05:05:20.379375Z",
+  "generated_at": "2026-06-23T19:00:35.081287Z",
   "confirmed": false,
   "wikipedia_seen": false,
   "status": "provisional",
-  "matches_played": 44,
+  "matches_played": 45,
   "source": "Wikipedia (canonical)",
   "combination_key": "ACDFGHJK",
   "combination_found": true,
@@ -69,9 +69,9 @@
       "fourth": "Jordan"
     },
     "K": {
-      "first": "Colombia",
-      "second": "DR Congo",
-      "third": "Portugal",
+      "first": "Portugal",
+      "second": "Colombia",
+      "third": "DR Congo",
       "fourth": "Uzbekistan"
     },
     "L": {
@@ -126,7 +126,7 @@
     },
     {
       "group": "K",
-      "team": "Portugal",
+      "team": "DR Congo",
       "pts": 1,
       "gd": 0,
       "gf": 1
@@ -170,7 +170,7 @@
     },
     "80": {
       "home": "England",
-      "away": "Portugal"
+      "away": "DR Congo"
     },
     "81": {
       "home": "United States",
@@ -181,7 +181,7 @@
       "away": "Czech Republic"
     },
     "83": {
-      "home": "DR Congo",
+      "home": "Colombia",
       "away": "Ghana"
     },
     "84": {
@@ -197,7 +197,7 @@
       "away": "Uruguay"
     },
     "87": {
-      "home": "Colombia",
+      "home": "Portugal",
       "away": "Paraguay"
     },
     "88": {
