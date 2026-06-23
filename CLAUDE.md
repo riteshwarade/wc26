@@ -368,9 +368,9 @@ Both `sortedStandings` and `computeGroupStandings` must stay in sync by always c
 Shows `N/total` for completed matches. Locations: in its own `td-correct` column in the group results table; right-aligned in `.bk-mnum` header (KO desktop); inline in `.bk-mob-meta` (KO mobile). `bracket.js` is not modified — injected entirely in the leaderboard.
 
 **Color classes** (% of participants correct):
-- ≥ 67%: `.cp-hi` — `#d4f0fb` bg / `#00628a` text
-- 33–66%: `.cp-mid` — `#fff0d0` bg / `#a05800` text
-- < 33%: `.cp-lo` — `#fce0e7` bg / `#b3003d` text
+- ≥ 80%: `.cp-hi` — Consensus — `#d4f0fb` bg / `#00628a` text
+- 21–79%: `.cp-mid` — Middle — `#fff0d0` bg / `#a05800` text
+- ≤ 20%: `.cp-lo` — Contrarian — `#fce0e7` bg / `#b3003d` text
 
 **Pill tooltip:** Hovering a `.cp-pill` shows the shared `#sq-tooltip` with "Picked correctly:" header and a `✓ Name` line per correct picker (or "— nobody" if zero). Pill carries `data-cp-names` (pipe-delimited abbreviated names). `buildGrpCounts` and `buildKoCounts` both store `names: []` alongside `correct`/`total`. The live correctness block in `renderResults` also collects `liveNames`. `.cp-pill` has `cursor: help`.
 
