@@ -1956,6 +1956,7 @@ async function fetchKoLiveScores() {
 
     if (_lastKoCombined) {
       renderKoStandings(_lastKoCombined, _lastKoResults || {}, _lastKoBracketData, _koLiveData);
+      _revealSections(); // re-reveal after async re-render replaces section wrappers
       if (liveChanged) {
         renderKoBracket(_lastKoBracketData, _lastKoResults || {}, _lastKoScores, _lastKoCounts, _koLiveData);
       }
