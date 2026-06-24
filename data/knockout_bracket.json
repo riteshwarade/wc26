@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-24T22:37:41.140542Z",
+  "generated_at": "2026-06-24T23:55:17.231633Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
@@ -156,12 +156,12 @@
       "home": "Netherlands",
       "away": "Morocco",
       "wiki_home": null,
-      "wiki_away": null
+      "wiki_away": "Morocco"
     },
     "76": {
       "home": "Brazil",
       "away": "Japan",
-      "wiki_home": null,
+      "wiki_home": "Brazil",
       "wiki_away": null
     },
     "77": {
