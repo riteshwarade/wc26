@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-06-23T22:05:30.190673Z",
+  "generated_at": "2026-06-24T00:55:15.659045Z",
   "confirmed": false,
   "wikipedia_seen": false,
   "status": "provisional",
-  "matches_played": 46,
+  "matches_played": 47,
   "source": "Wikipedia (canonical)",
-  "combination_key": "ACDFGHJK",
+  "combination_key": "CDFGHJKL",
   "combination_found": true,
   "groups": {
     "A": {
@@ -77,8 +77,8 @@
     "L": {
       "first": "England",
       "second": "Ghana",
-      "third": "Panama",
-      "fourth": "Croatia"
+      "third": "Croatia",
+      "fourth": "Panama"
     }
   },
   "qualified_thirds": [
@@ -95,6 +95,13 @@
       "pts": 3,
       "gd": 0,
       "gf": 1
+    },
+    {
+      "group": "L",
+      "team": "Croatia",
+      "pts": 3,
+      "gd": -1,
+      "gf": 3
     },
     {
       "group": "J",
@@ -130,13 +137,6 @@
       "pts": 1,
       "gd": 0,
       "gf": 1
-    },
-    {
-      "group": "A",
-      "team": "Czech Republic",
-      "pts": 1,
-      "gd": -1,
-      "gf": 2
     }
   ],
   "round_of_32": {
@@ -146,7 +146,7 @@
     },
     "74": {
       "home": "Germany",
-      "away": "Scotland"
+      "away": "Paraguay"
     },
     "75": {
       "home": "Netherlands",
@@ -166,7 +166,7 @@
     },
     "79": {
       "home": "Mexico",
-      "away": "Cape Verde"
+      "away": "Scotland"
     },
     "80": {
       "home": "England",
@@ -178,7 +178,7 @@
     },
     "82": {
       "home": "Egypt",
-      "away": "Czech Republic"
+      "away": "Cape Verde"
     },
     "83": {
       "home": "Colombia",
@@ -198,7 +198,7 @@
     },
     "87": {
       "home": "Portugal",
-      "away": "Paraguay"
+      "away": "Croatia"
     },
     "88": {
       "home": "Australia",
