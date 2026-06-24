@@ -182,10 +182,23 @@ def generate_picks(pool_id, participant_num):
     print(f'  Generated: {filename}')
 
 
-def generate_ko_results(r32_teams):
+def _check_no_real_results(path, force):
+    """Abort if the results file already contains real (non-empty) data, unless --force."""
+    if not os.path.exists(path):
+        return
+    with open(path, encoding='utf-8') as f:
+        lines = [l for l in f if l.strip() and not l.startswith('match')]
+    if lines and not force:
+        print(f'\nERROR: {path} already contains {len(lines)} result(s).')
+        print('This looks like real tournament data. Pass --force to overwrite anyway.')
+        raise SystemExit(1)
+
+
+def generate_ko_results(r32_teams, force=False):
     """Write results/knockout_results.csv with simulated winners for all 32 KO matches."""
     os.makedirs('results', exist_ok=True)
     path = 'results/knockout_results.csv'
+    _check_no_real_results(path, force)
     winners, _ = simulate_ko_bracket(r32_teams)
     with open(path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
@@ -195,9 +208,10 @@ def generate_ko_results(r32_teams):
     print(f'Generated results for all 32 KO matches → {path}')
 
 
-def generate_results():
+def generate_results(force=False):
     os.makedirs('results', exist_ok=True)
     path = 'results/group_results.csv'
+    _check_no_real_results(path, force)
     with open(path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['match', 'home_score', 'away_score', 'outcome'])
@@ -215,6 +229,8 @@ if __name__ == '__main__':
                         help='Which stage to simulate (default: all)')
     parser.add_argument('--seed', type=int, default=None,
                         help='Random seed for reproducible output (default: random)')
+    parser.add_argument('--force', action='store_true',
+                        help='Overwrite results CSVs even if they contain real data (dangerous)')
     args = parser.parse_args()
 
     if args.seed is not None:
@@ -228,7 +244,7 @@ if __name__ == '__main__':
             for n in range(1, args.participants + 1):
                 generate_picks(pool_id, n)
         print('\nGenerating results for all 72 group matches...')
-        generate_results()
+        generate_results(force=args.force)
 
     if args.stage in ('knockout', 'all'):
         print(f'\nGenerating knockout bracket (confirmed R32 teams)...')
@@ -239,6 +255,6 @@ if __name__ == '__main__':
             for n in range(1, args.participants + 1):
                 generate_knockout_picks(pool_id, n, R32_SIM_TEAMS)
         print('\nGenerating results for all 32 KO matches...')
-        generate_ko_results(R32_SIM_TEAMS)
+        generate_ko_results(R32_SIM_TEAMS, force=args.force)
 
     print('\nDone. Run aggregate_picks.py next to update the leaderboard data.')
