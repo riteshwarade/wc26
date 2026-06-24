@@ -398,6 +398,9 @@ ESPN name mapping (5 teams differ from internal names):
 ```bash
 # Generate sim data and serve
 python .github/scripts/simulate.py --participants 10 --stage all [--seed N]
+# NOTE: simulate.py will refuse to overwrite results CSVs that already contain real data.
+# Use --force only if you intentionally want to overwrite real results (dangerous):
+# python .github/scripts/simulate.py --participants 10 --stage all --force
 python .github/scripts/aggregate_picks.py
 python -m http.server 8000
 # open http://localhost:8000/WC2026_Pool_Leaderboard_Swiftly.html?games=88
