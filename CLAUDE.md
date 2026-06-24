@@ -57,7 +57,7 @@ If `index.lock` error: `rm ~/Documents/GitHub/wc26/.git/index.lock` first.
 | `test_bracket.py` | Bracket + standings end-to-end (all 495 3rd-place combos) |
 | `test_ko_picks.js` | Node unit tests for ko_picks.js pure logic: feedsInto topology, getTeams resolution, clearInvalidDownstream cascades (58 tests) |
 | `.github/workflows/ci.yml` | CI: runs all four test suites on every push/PR |
-| `.github/workflows/pages.yml` | Deploys GitHub Pages. Triggered only on HTML/JS/CSS changes (not data commits) — prevents cron job pushes from queueing deployments. `cancel-in-progress: false` queues rather than cancels. |
+| `.github/workflows/pages.yml` | Deploys GitHub Pages via `peaceiris/actions-gh-pages@v4` — pushes to `gh-pages` branch (no Deployments API, no hangs). Triggered only on HTML/JS/CSS changes; cron data pushes never trigger it. GitHub Pages source is set to `gh-pages` branch in repo Settings. |
 | `live_scores_test_plan.md` | Manual test plan for live scores + pulsing feature (phases 1–4 + console sim) |
 
 ---
