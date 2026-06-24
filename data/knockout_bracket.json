@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-06-24T20:57:40.851141Z",
+  "generated_at": "2026-06-24T21:00:28.686959Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 49,
+  "matches_played": 50,
   "source": "Wikipedia (canonical)",
-  "combination_key": "ACDFGHJL",
+  "combination_key": "BCDFGHJL",
   "combination_found": true,
   "groups": {
     "A": {
@@ -83,6 +83,13 @@
   },
   "qualified_thirds": [
     {
+      "group": "B",
+      "team": "Bosnia and Herzegovina",
+      "pts": 4,
+      "gd": -1,
+      "gf": 5
+    },
+    {
       "group": "F",
       "team": "Sweden",
       "pts": 3,
@@ -130,13 +137,6 @@
       "pts": 2,
       "gd": 0,
       "gf": 1
-    },
-    {
-      "group": "A",
-      "team": "Czech Republic",
-      "pts": 1,
-      "gd": -1,
-      "gf": 2
     }
   ],
   "round_of_32": {
@@ -170,15 +170,15 @@
     },
     "80": {
       "home": "England",
-      "away": "Cape Verde"
+      "away": "Algeria"
     },
     "81": {
       "home": "United States",
-      "away": "Algeria"
+      "away": "Bosnia and Herzegovina"
     },
     "82": {
       "home": "Egypt",
-      "away": "Czech Republic"
+      "away": "Cape Verde"
     },
     "83": {
       "home": "Portugal",
