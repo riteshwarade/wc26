@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-24T15:30:28.265461Z",
+  "generated_at": "2026-06-24T20:57:40.851141Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 48,
+  "matches_played": 49,
   "source": "Wikipedia (canonical)",
   "combination_key": "ACDFGHJL",
   "combination_found": true,
@@ -15,8 +15,8 @@
       "fourth": "South Africa"
     },
     "B": {
-      "first": "Canada",
-      "second": "Switzerland",
+      "first": "Switzerland",
+      "second": "Canada",
       "third": "Bosnia and Herzegovina",
       "fourth": "Qatar"
     },
@@ -142,7 +142,7 @@
   "round_of_32": {
     "73": {
       "home": "South Korea",
-      "away": "Switzerland"
+      "away": "Canada"
     },
     "74": {
       "home": "Germany",
@@ -189,7 +189,7 @@
       "away": "Austria"
     },
     "85": {
-      "home": "Canada",
+      "home": "Switzerland",
       "away": "Belgium"
     },
     "86": {
