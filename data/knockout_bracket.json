@@ -1,22 +1,22 @@
 {
-  "generated_at": "2026-06-24T15:02:11.450910Z",
+  "generated_at": "2026-06-24T15:30:28.265461Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 72,
+  "matches_played": 48,
   "source": "Wikipedia (canonical)",
-  "combination_key": "ACFGHJKL",
+  "combination_key": "ACDFGHJL",
   "combination_found": true,
   "groups": {
     "A": {
       "first": "Mexico",
-      "second": "South Africa",
-      "third": "South Korea",
-      "fourth": "Czech Republic"
+      "second": "South Korea",
+      "third": "Czech Republic",
+      "fourth": "South Africa"
     },
     "B": {
-      "first": "Switzerland",
-      "second": "Canada",
+      "first": "Canada",
+      "second": "Switzerland",
       "third": "Bosnia and Herzegovina",
       "fourth": "Qatar"
     },
@@ -39,8 +39,8 @@
       "fourth": "Cura\u00e7ao"
     },
     "F": {
-      "first": "Japan",
-      "second": "Netherlands",
+      "first": "Netherlands",
+      "second": "Japan",
       "third": "Sweden",
       "fourth": "Tunisia"
     },
@@ -52,20 +52,20 @@
     },
     "H": {
       "first": "Spain",
-      "second": "Cape Verde",
-      "third": "Uruguay",
+      "second": "Uruguay",
+      "third": "Cape Verde",
       "fourth": "Saudi Arabia"
     },
     "I": {
       "first": "France",
       "second": "Norway",
-      "third": "Iraq",
-      "fourth": "Senegal"
+      "third": "Senegal",
+      "fourth": "Iraq"
     },
     "J": {
       "first": "Argentina",
-      "second": "Algeria",
-      "third": "Austria",
+      "second": "Austria",
+      "third": "Algeria",
       "fourth": "Jordan"
     },
     "K": {
@@ -75,86 +75,86 @@
       "fourth": "Uzbekistan"
     },
     "L": {
-      "first": "Ghana",
-      "second": "England",
-      "third": "Panama",
-      "fourth": "Croatia"
+      "first": "England",
+      "second": "Ghana",
+      "third": "Croatia",
+      "fourth": "Panama"
     }
   },
   "qualified_thirds": [
     {
-      "group": "K",
-      "team": "DR Congo",
-      "pts": 4,
-      "gd": 3,
-      "gf": 5
-    },
-    {
-      "group": "H",
-      "team": "Uruguay",
+      "group": "F",
+      "team": "Sweden",
       "pts": 3,
       "gd": 0,
-      "gf": 4
-    },
-    {
-      "group": "G",
-      "team": "Belgium",
-      "pts": 3,
-      "gd": 0,
-      "gf": 3
-    },
-    {
-      "group": "L",
-      "team": "Panama",
-      "pts": 3,
-      "gd": 0,
-      "gf": 2
-    },
-    {
-      "group": "J",
-      "team": "Austria",
-      "pts": 3,
-      "gd": -1,
-      "gf": 5
+      "gf": 6
     },
     {
       "group": "C",
       "team": "Scotland",
       "pts": 3,
+      "gd": 0,
+      "gf": 1
+    },
+    {
+      "group": "L",
+      "team": "Croatia",
+      "pts": 3,
       "gd": -1,
+      "gf": 3
+    },
+    {
+      "group": "J",
+      "team": "Algeria",
+      "pts": 3,
+      "gd": -2,
+      "gf": 2
+    },
+    {
+      "group": "D",
+      "team": "Paraguay",
+      "pts": 3,
+      "gd": -2,
+      "gf": 2
+    },
+    {
+      "group": "H",
+      "team": "Cape Verde",
+      "pts": 2,
+      "gd": 0,
+      "gf": 2
+    },
+    {
+      "group": "G",
+      "team": "Belgium",
+      "pts": 2,
+      "gd": 0,
       "gf": 1
     },
     {
       "group": "A",
-      "team": "South Korea",
-      "pts": 3,
-      "gd": -2,
-      "gf": 3
-    },
-    {
-      "group": "F",
-      "team": "Sweden",
-      "pts": 3,
-      "gd": -4,
-      "gf": 6
+      "team": "Czech Republic",
+      "pts": 1,
+      "gd": -1,
+      "gf": 2
     }
   ],
   "round_of_32": {
     "73": {
-      "home": "South Africa",
-      "away": "Canada"
+      "home": "South Korea",
+      "away": "Switzerland"
     },
     "74": {
       "home": "Germany",
-      "away": "Scotland"
+      "away": "Paraguay"
     },
     "75": {
-      "home": "Japan",
+      "home": "Netherlands",
       "away": "Morocco"
     },
     "76": {
       "home": "Brazil",
-      "away": "Netherlands"
+      "away": "Japan"
     },
     "77": {
       "home": "France",
@@ -166,39 +166,39 @@
     },
     "79": {
       "home": "Mexico",
-      "away": "Uruguay"
+      "away": "Scotland"
     },
     "80": {
-      "home": "Ghana",
-      "away": "DR Congo"
+      "home": "England",
+      "away": "Cape Verde"
     },
     "81": {
       "home": "United States",
-      "away": "Austria"
+      "away": "Algeria"
     },
     "82": {
       "home": "Egypt",
-      "away": "South Korea"
+      "away": "Czech Republic"
     },
     "83": {
       "home": "Portugal",
-      "away": "England"
+      "away": "Ghana"
     },
     "84": {
       "home": "Spain",
-      "away": "Algeria"
+      "away": "Austria"
     },
     "85": {
-      "home": "Switzerland",
+      "home": "Canada",
       "away": "Belgium"
     },
     "86": {
       "home": "Argentina",
-      "away": "Cape Verde"
+      "away": "Uruguay"
     },
     "87": {
       "home": "Colombia",
-      "away": "Panama"
+      "away": "Croatia"
     },
     "88": {
       "home": "Australia",
