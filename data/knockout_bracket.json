@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-24T21:00:28.686959Z",
+  "generated_at": "2026-06-24T22:37:41.140542Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
@@ -142,67 +142,99 @@
   "round_of_32": {
     "73": {
       "home": "South Korea",
-      "away": "Canada"
+      "away": "Canada",
+      "wiki_home": null,
+      "wiki_away": "Canada"
     },
     "74": {
       "home": "Germany",
-      "away": "Paraguay"
+      "away": "Paraguay",
+      "wiki_home": "Germany",
+      "wiki_away": null
     },
     "75": {
       "home": "Netherlands",
-      "away": "Morocco"
+      "away": "Morocco",
+      "wiki_home": null,
+      "wiki_away": null
     },
     "76": {
       "home": "Brazil",
-      "away": "Japan"
+      "away": "Japan",
+      "wiki_home": null,
+      "wiki_away": null
     },
     "77": {
       "home": "France",
-      "away": "Sweden"
+      "away": "Sweden",
+      "wiki_home": null,
+      "wiki_away": null
     },
     "78": {
       "home": "Ivory Coast",
-      "away": "Norway"
+      "away": "Norway",
+      "wiki_home": null,
+      "wiki_away": null
     },
     "79": {
       "home": "Mexico",
-      "away": "Scotland"
+      "away": "Scotland",
+      "wiki_home": "Mexico",
+      "wiki_away": null
     },
     "80": {
       "home": "England",
-      "away": "Algeria"
+      "away": "Algeria",
+      "wiki_home": null,
+      "wiki_away": null
     },
     "81": {
       "home": "United States",
-      "away": "Bosnia and Herzegovina"
+      "away": "Bosnia and Herzegovina",
+      "wiki_home": "United States",
+      "wiki_away": null
     },
     "82": {
       "home": "Egypt",
-      "away": "Cape Verde"
+      "away": "Cape Verde",
+      "wiki_home": null,
+      "wiki_away": null
     },
     "83": {
       "home": "Portugal",
-      "away": "Ghana"
+      "away": "Ghana",
+      "wiki_home": null,
+      "wiki_away": null
     },
     "84": {
       "home": "Spain",
-      "away": "Austria"
+      "away": "Austria",
+      "wiki_home": null,
+      "wiki_away": null
     },
     "85": {
       "home": "Switzerland",
-      "away": "Belgium"
+      "away": "Belgium",
+      "wiki_home": "Switzerland",
+      "wiki_away": null
     },
     "86": {
       "home": "Argentina",
-      "away": "Uruguay"
+      "away": "Uruguay",
+      "wiki_home": "Argentina",
+      "wiki_away": null
     },
     "87": {
       "home": "Colombia",
-      "away": "Croatia"
+      "away": "Croatia",
+      "wiki_home": null,
+      "wiki_away": null
     },
     "88": {
       "home": "Australia",
-      "away": "Iran"
+      "away": "Iran",
+      "wiki_home": null,
+      "wiki_away": null
     }
   },
   "round_of_16": {

@@ -53,6 +53,7 @@ let _lastUpdated    = null;
 let _cardData       = null;  // { matchNum: { teamName: {Y, IR, DR} } } from group_cards.json
 let _lastRenderedMatchCount = -1;   // tracks last match count renderGroupTables/renderBracket ran with
 let _lastBracketConfirmed   = undefined; // tracks last bracketConfirmed value renderBracket ran with
+let _lastBracketWikiKey     = '';         // serialized wiki slot data — triggers re-render when Wikipedia confirms a new slot
 let _lastRenderedKoMatchCount = -1;   // tracks last KO match count renderKoBracket ran with (flash guard)
 let _lastKoLiveStr  = '{}';           // serialized _koLiveData — skip re-render when unchanged; init to '{}' so first empty-live fetch doesn't trigger a redundant renderKoBracket
 // ──────────────────────────────────────────────────────────
@@ -1531,7 +1532,7 @@ function computeGroupStandings(results, cardData) {
 
 // ── Bracket rendering (Variant 1 — read-only, group-results-derived) ──────────
 // buildBracketHtml, positionAndConnectBracket, drawBracketConnectors → bracket.js
-function renderBracket(results, allGroupsStarted, bracketConfirmed) {
+function renderBracket(results, allGroupsStarted, bracketConfirmed, bracketData) {
   const el = document.getElementById('bracketCard');
 
   if (!allGroupsStarted) {
@@ -1568,9 +1569,29 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed) {
     return ['TBD','TBD'];
   }
 
+  // Slot confirmation state from Wikipedia data.
+  // Returns '' (confirmed), 'slot-tbd' (unconfirmed), or 'slot-mismatch' (wrong team).
+  // Only applied to R32 slots — R16+ are always placeholders so no wiki data.
+  // Order-independent: wiki team is checked against both computed home and away
+  // because Wikipedia's row ordering may differ from our bracket topology.
+  function slotCls(wikiTeam, compHome, compAway) {
+    if (!wikiTeam) return 'slot-tbd';
+    if (wikiTeam === compHome || wikiTeam === compAway) return '';
+    return 'slot-mismatch';
+  }
+
   // mkCard: builds a read-only match card using shared matchCard() from bracket.js
   function mkCard(m) {
     const [h, a] = slotTeams(m);
+    // Only apply wiki slot state for R32 matches (73–88)
+    if (m >= 73 && m <= 88) {
+      const slot = bracketData?.round_of_32?.[m];
+      const wh = slot?.wiki_home ?? null;
+      const wa = slot?.wiki_away ?? null;
+      const hCls = isTbd(h) ? '' : slotCls(wh, h, a);
+      const aCls = isTbd(a) ? '' : slotCls(wa, h, a);
+      return matchCard(m, h, a, '', undefined, undefined, hCls, aCls);
+    }
     return matchCard(m, h, a, '');
   }
 
@@ -1590,11 +1611,23 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed) {
     const hTbd  = isTbd(h), aTbd = isTbd(a);
     const hHtml = hTbd ? h : teamHtml(h);
     const aHtml = aTbd ? a : teamHtml(a);
+    // Wiki slot state for R32 only
+    let hCls = hTbd ? ' tbd' : '';
+    let aCls = aTbd ? ' tbd' : '';
+    if (m >= 73 && m <= 88 && !hTbd && !aTbd) {
+      const slot = bracketData?.round_of_32?.[m];
+      const wh = slot?.wiki_home ?? null;
+      const wa = slot?.wiki_away ?? null;
+      const hState = slotCls(wh, h, a);
+      const aState = slotCls(wa, h, a);
+      if (hState) hCls = ' ' + hState;
+      if (aState) aCls = ' ' + aState;
+    }
     return `<div class="bk-mob-match">
       <div class="bk-mob-meta">M${m}${date}</div>
       <div class="bk-mob-teams">
-        <div class="bk-mob-team${hTbd ? ' tbd' : ''}"><span class="bk-mob-team-name">${hHtml}</span></div>
-        <div class="bk-mob-team${aTbd ? ' tbd' : ''}"><span class="bk-mob-team-name">${aHtml}</span></div>
+        <div class="bk-mob-team${hCls}"><span class="bk-mob-team-name">${hHtml}</span></div>
+        <div class="bk-mob-team${aCls}"><span class="bk-mob-team-name">${aHtml}</span></div>
       </div>
     </div>`;
   }
@@ -2091,12 +2124,17 @@ async function init() {
       const currentMatchCount = Object.keys(_lastResults).length;
       const freshData = currentMatchCount > _lastRenderedMatchCount;
       const bracketChanged = bracketConfirmed !== _lastBracketConfirmed;
-      if (freshData || bracketChanged) {
+      const wikiKey = JSON.stringify(
+        Object.values(bracketData?.round_of_32 || {}).map(s => [s.wiki_home, s.wiki_away])
+      );
+      const wikiChanged = wikiKey !== _lastBracketWikiKey;
+      if (freshData || bracketChanged || wikiChanged) {
         renderGroupTables(_lastResults);
         const allTeamsPlayed = Array.from({length: 24}, (_, i) => i + 1).every(m => _lastResults[m]);
-        renderBracket(_lastResults, allTeamsPlayed, bracketConfirmed);
+        renderBracket(_lastResults, allTeamsPlayed, bracketConfirmed, bracketData);
         _lastRenderedMatchCount = currentMatchCount;
         _lastBracketConfirmed   = bracketConfirmed;
+        _lastBracketWikiKey     = wikiKey;
       }
       // Kick off live polling on page load only — skip if poller is already running
       // (avoids a redundant fetchLiveScores → renderStandings/renderResults on every

@@ -1266,6 +1266,87 @@ def compute_group_standings(results, cards=None):
     return grp_standings, stats
 
 
+# R32 display order — matches Wikipedia bracket row order and bracket.js R32_SLOTS
+_R32_DISPLAY_ORDER = [74, 77, 73, 75, 83, 84, 81, 82, 76, 78, 79, 80, 86, 88, 85, 87]
+
+
+def _fetch_ko_wikitext():
+    """Fetch raw wikitext of the WC2026 knockout stage Wikipedia article."""
+    resp = requests.get(
+        'https://en.wikipedia.org/w/api.php',
+        params={
+            'action':  'parse',
+            'page':    '2026_FIFA_World_Cup_knockout_stage',
+            'prop':    'wikitext',
+            'format':  'json',
+        },
+        timeout=30,
+        headers={'User-Agent': 'wc26-pool-bot/1.0 (github.com/riteshwarade/wc26)'},
+    )
+    resp.raise_for_status()
+    return resp.json()['parse']['wikitext']['*']
+
+
+def _parse_wiki_r32_slots(wikitext):
+    """
+    Parse the R32 bracket section of the knockout stage wikitext.
+
+    Wikipedia uses {{#invoke:flag|fb|CODE}} for confirmed teams and
+    <!--{{#invoke:flag|fb|}}-->placeholder for unconfirmed slots.
+
+    Returns a dict mapping match number → (wiki_home, wiki_away) where each
+    value is a team name string (from TEAM_CODES) or None if unconfirmed.
+    Rows are matched to match numbers via _R32_DISPLAY_ORDER.
+    """
+    start = wikitext.find('<!--Round of 32-->')
+    end   = wikitext.find('<!--Round of 16-->')
+    if start == -1 or end == -1:
+        return {}
+
+    section = wikitext[start:end]
+
+    # Strip HTML comments so commented-out placeholders don't match
+    clean = re.sub(r'<!--.*?-->', '', section, flags=re.DOTALL)
+
+    # Each row starts with | and contains || (cell separator)
+    rows = [l for l in clean.split('\n') if l.startswith('|') and '||' in l]
+    if len(rows) < 16:
+        return {}
+
+    def _team_from(text):
+        """Return team name if {{#invoke:flag|fb|CODE}} found, else None."""
+        m = re.search(r'\{\{#invoke:flag\|fb\|([A-Z]{2,4})\}\}', text, re.IGNORECASE)
+        return TEAM_CODES.get(m.group(1).upper()) if m else None
+
+    slots = {}
+    for i, row in enumerate(rows[:16]):
+        match_num = _R32_DISPLAY_ORDER[i]
+        # Split on || to separate home cell from away cell
+        home_half, away_half = row.split('||', 1)
+        slots[match_num] = (_team_from(home_half), _team_from(away_half))
+
+    return slots
+
+
+def fetch_wikipedia_r32_slots():
+    """
+    Fetch Wikipedia and return per-slot confirmation for all 16 R32 matches.
+
+    Returns dict: {74: {"wiki_home": "Germany", "wiki_away": None}, ...}
+    On fetch/parse error returns {} (caller treats all slots as unconfirmed).
+    """
+    try:
+        wikitext = _fetch_ko_wikitext()
+        slots = _parse_wiki_r32_slots(wikitext)
+        return {
+            m: {'wiki_home': wh, 'wiki_away': wa}
+            for m, (wh, wa) in slots.items()
+        }
+    except Exception as e:
+        print(f'  fetch_wikipedia_r32_slots error: {e}')
+        return {}
+
+
 def verify_r32_against_wikipedia(computed_r32):
     """
     Fetch the WC2026 knockout stage Wikipedia page and compare R32 matchups
@@ -1280,53 +1361,25 @@ def verify_r32_against_wikipedia(computed_r32):
       }
     """
     try:
-        resp = requests.get(
-            'https://en.wikipedia.org/w/api.php',
-            params={
-                'action':  'parse',
-                'page':    '2026_FIFA_World_Cup_knockout_stage',
-                'prop':    'wikitext',
-                'format':  'json',
-            },
-            timeout=30,
-            headers={'User-Agent': 'wc26-pool-bot/1.0 (github.com/riteshwarade/wc26)'},
-        )
-        resp.raise_for_status()
-        wikitext = resp.json()['parse']['wikitext']['*']
+        wikitext = _fetch_ko_wikitext()
     except Exception as e:
         return {'verified': False, 'wiki_parsed': 0, 'mismatches': [], 'error': str(e)}
 
-    wiki_r32 = {}
-    for m in range(73, 89):
-        # Wikipedia bracket wikitext has patterns like:
-        #   {{fb|MEX}}\n...\nMatch 73\n...\n{{fb|SUI}}
-        # The fb template may be fbr, fbl, fbx etc.
-        pattern = (
-            r'\{\{fb[a-z]*\|([A-Z]{2,3})\}[^\n]*\n'   # team 1 line
-            r'(?:[^\n]*\n){0,4}'                        # 0–4 lines between
-            r'[^\n]*Match\s+' + str(m) + r'[^\n]*\n'   # match number line
-            r'(?:[^\n]*\n){0,4}'                        # 0–4 lines between
-            r'[^\n]*\{\{fb[a-z]*\|([A-Z]{2,3})\}'      # team 2
-        )
-        match = re.search(pattern, wikitext, re.IGNORECASE)
-        if match:
-            home = TEAM_CODES.get(match.group(1).upper())
-            away = TEAM_CODES.get(match.group(2).upper())
-            if home and away:
-                wiki_r32[m] = (home, away)
+    slots = _parse_wiki_r32_slots(wikitext)
 
-    if len(wiki_r32) < 16:
+    # Require all 16 matches to be confirmed before declaring verified
+    confirmed = {m: (wh, wa) for m, (wh, wa) in slots.items() if wh and wa}
+    if len(confirmed) < 16:
         return {
             'verified':    False,
-            'wiki_parsed': len(wiki_r32),
+            'wiki_parsed': len(confirmed),
             'mismatches':  [],
-            'error':       f'Wikipedia bracket not yet fully populated ({len(wiki_r32)}/16 R32 matches parsed)',
+            'error':       f'Wikipedia bracket not yet fully confirmed ({len(confirmed)}/16 R32 matches)',
         }
 
     mismatches = []
-    for m in range(73, 89):
-        wiki_home, wiki_away   = wiki_r32[m]
-        comp_home, comp_away   = computed_r32.get(m, (None, None))
+    for m, (wiki_home, wiki_away) in confirmed.items():
+        comp_home, comp_away = computed_r32.get(m, (None, None))
         if {wiki_home, wiki_away} != {comp_home, comp_away}:
             mismatches.append({
                 'match':     m,
@@ -1336,7 +1389,7 @@ def verify_r32_against_wikipedia(computed_r32):
 
     return {
         'verified':    len(mismatches) == 0,
-        'wiki_parsed': len(wiki_r32),
+        'wiki_parsed': len(confirmed),
         'mismatches':  mismatches,
         'error':       None,
     }
@@ -1433,6 +1486,16 @@ def write_bracket_json(results, cards=None, double_confirmed=False):
         88: (pos.get('2D'), pos.get('2G')),
     }
 
+    # Fetch per-slot Wikipedia confirmation on every run (graceful on error → all null)
+    print('Fetching Wikipedia R32 slot confirmations...')
+    wiki_slots = fetch_wikipedia_r32_slots()
+    confirmed_count = sum(1 for s in wiki_slots.values()
+                         if s.get('wiki_home') or s.get('wiki_away'))
+    print(f'  {confirmed_count} slot(s) confirmed by Wikipedia')
+    for mn, s in sorted(wiki_slots.items()):
+        if s.get('wiki_home') or s.get('wiki_away'):
+            print(f'    M{mn}: home={s["wiki_home"] or "—"}  away={s["wiki_away"] or "—"}')
+
     # Cross-check R32 against Wikipedia — only when double_confirmed
     if all_played and double_confirmed:
         wiki_check = verify_r32_against_wikipedia(r32)
@@ -1479,7 +1542,12 @@ def write_bracket_json(results, cards=None, double_confirmed=False):
             for g, t, s in thirds
         ],
         'round_of_32': {
-            str(m): {'home': home, 'away': away}
+            str(m): {
+                'home': home,
+                'away': away,
+                'wiki_home': wiki_slots.get(m, {}).get('wiki_home'),
+                'wiki_away': wiki_slots.get(m, {}).get('wiki_away'),
+            }
             for m, (home, away) in r32.items()
         },
         'round_of_16': {

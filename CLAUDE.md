@@ -114,6 +114,29 @@ Three bracket variants — all share `bracket.js` primitives, each supplies its 
 - R16/QF/SF/Final cards are `position: absolute` inside `.bk-float` — absolutely positioned cards have no intrinsic width, so column sizing is driven by R32 content only
 - `roundLabel(103)` returns `'3rd'` (not `'3rd Place'`)
 
+### Wikipedia slot confirmation (R32 bracket)
+
+Per-slot confirmation is fetched from Wikipedia on every cron run (once all 12 groups have started) and stored in `knockout_bracket.json` alongside each R32 match:
+
+```json
+"74": { "home": "Germany", "away": "Paraguay", "wiki_home": "Germany", "wiki_away": null }
+```
+
+`wiki_home`/`wiki_away` are `null` when Wikipedia hasn't confirmed that slot yet. Stored via `fetch_wikipedia_r32_slots()` in `parse_results.py`, which calls `_parse_wiki_r32_slots()`.
+
+**Wikipedia template format:** `{{#invoke:flag|fb|CODE}}` (confirmed) vs `<!--{{#invoke:flag|fb|}}-->placeholder` (unconfirmed). Parsing strips HTML comments first, then splits rows on `||`.
+
+**Row order:** Wikipedia bracket rows follow `_R32_DISPLAY_ORDER = [74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87]` — same as `bracket.js` R32_SLOTS display order.
+
+**JS rendering (`renderBracket`):** `slotCls(wikiTeam, compHome, compAway)` returns:
+- `'slot-tbd'` — Wikipedia hasn't confirmed this slot → team row pulses
+- `''` — Wikipedia team matches our computed team (order-independent) → normal
+- `'slot-mismatch'` — Wikipedia has a different team → red border + text
+
+Only applied to R32 slots (M73–M88). Re-render triggered by `_lastBracketWikiKey` tracker (JSON of all `[wiki_home, wiki_away]` pairs) alongside the existing `bracketChanged` guard.
+
+**`verify_r32_against_wikipedia`** was fixed in this feature — the old regex `{{fb[a-z]*|CODE}}` never matched; Wikipedia uses `{{#invoke:flag|fb|CODE}}`. Now shares `_parse_wiki_r32_slots()` / `_fetch_ko_wikitext()` helpers.
+
 ### Bracket display condition (leaderboard)
 
 The bracket section shows "Bracket appears once every team has played." until `allTeamsPlayed` is true. This requires all 24 matchday-1 results to be in the CSV (M1–M24 = 2 matches per group × 12 groups). The check:
