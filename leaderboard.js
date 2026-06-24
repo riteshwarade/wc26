@@ -172,7 +172,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
                      : champPr.status === 'wrong'    ? 'champ-wrong'
                      : champPr.status === 'cascaded' ? 'champ-cascaded'
                      : '';
-    const champIcon = champPr.pick ? '🥇 ' : '';
+    const champIcon = ''; // emoji lives in column header only
     const champLabel = `<span class="champ-pick ${champClass}">${champIcon}${_esc(champName)}</span>`;
     const koOnlyWarn = p.koOnly
       ? ` <span class="ko-only-warn" title="No group picks found — possible name mismatch">⚠</span>`
