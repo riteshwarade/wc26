@@ -527,7 +527,7 @@ let sqStatus = pr.status === 'correct' && _isKoContrarian ? 'correct-upset' : pr
 
 ## KO standings layout
 
-**Columns:** `#` · Name · Grp · KO · **Total** · Max · Picks · Champ · Recent (mobile only)
+**Columns:** `#` · Name · Grp · KO · **Total** · Max · Champ · Picks · Recent (mobile only)
 
 **Square sizing:** Group stage uses `sq-sm` (10px); KO stage uses `sq` (12px). Row height is driven by text cells (~0.78rem ≈ 15px line-height + 16px td padding = ~31px). Squares stay under this threshold only if `squares-wrap` has no extra padding — `.squares-wrap` has no `padding` (was `2px 0`; removing it keeps 12px squares from pushing td-squares above 31px).
 

@@ -188,8 +188,8 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
       <td class="td-ko-pts">${p.koPts}</td>
       <td class="td-total-pts">${p.totalPts}</td>
       <td class="td-max-pts">${p.maxPts}</td>
-      <td class="td-squares"><div class="squares-wrap nowrap">${koSquares}</div></td>
       <td class="td-champ">${champLabel}</td>
+      <td class="td-squares"><div class="squares-wrap nowrap">${koSquares}</div></td>
       <td class="td-mob-sq"><div class="sq-row-mob">${koMobSquares}</div></td>
     </tr>`;
   });
@@ -207,8 +207,8 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
               <th class="th-ko-pts">KO</th>
               <th class="th-total-pts">Total</th>
               <th class="th-max-pts">Max</th>
-              <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · red italic = cascaded void · empty = pending)</span></th>
               <th class="th-champ">Champion</th>
+              <th class="th-squares" style="text-align:center">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · red italic = cascaded void · empty = pending)</span></th>
               <th class="th-mob-sq">Recent</th>
             </tr>
           </thead>
