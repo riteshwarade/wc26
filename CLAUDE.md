@@ -4,6 +4,12 @@ Full design doc: `WC2026_Pool_Plan.md`
 
 ---
 
+## Working style
+
+**Always plan before building.** Present the plan and wait for explicit approval before writing any code or making file changes.
+
+---
+
 ## Pick submission timeline
 
 - **Group picks** — submitted before the tournament starts (deadline: first group match, Jun 11)
