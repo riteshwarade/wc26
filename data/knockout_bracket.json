@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-25T00:00:28.417265Z",
+  "generated_at": "2026-06-25T00:05:18.063071Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 50,
+  "matches_played": 52,
   "source": "Wikipedia (canonical)",
   "combination_key": "BCDFGHJL",
   "combination_found": true,
@@ -97,13 +97,6 @@
       "gf": 6
     },
     {
-      "group": "C",
-      "team": "Scotland",
-      "pts": 3,
-      "gd": 0,
-      "gf": 1
-    },
-    {
       "group": "L",
       "team": "Croatia",
       "pts": 3,
@@ -123,6 +116,13 @@
       "pts": 3,
       "gd": -2,
       "gf": 2
+    },
+    {
+      "group": "C",
+      "team": "Scotland",
+      "pts": 3,
+      "gd": -3,
+      "gf": 1
     },
     {
       "group": "H",
@@ -156,12 +156,12 @@
       "home": "Netherlands",
       "away": "Morocco",
       "wiki_home": null,
-      "wiki_away": null
+      "wiki_away": "Morocco"
     },
     "76": {
       "home": "Brazil",
       "away": "Japan",
-      "wiki_home": null,
+      "wiki_home": "Brazil",
       "wiki_away": null
     },
     "77": {
