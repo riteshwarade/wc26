@@ -1,12 +1,13 @@
 // ko_picks.js — WC2026 Pool knockout picks page logic
 // Depends on: bracket.js
-// FLAGS, RANKINGS, KO_SCHEDULE, R16, QF, SF, isTbd, matchCard,
+// FLAGS, RANKINGS, KO_SCHEDULE, R16, QF, SF, isTbd, slotCls, matchCard,
 // buildBracketHtml, buildPodiumHtml, positionAndConnectBracket → bracket.js
 
 const BRACKET_URL = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/data/knockout_bracket.json';
 
 var r32Teams = {}; // { matchNum: [home, away] } — from knockout_bracket.json
 var picks    = {}; // { matchNum: winnerName }   — user's current picks
+var r32Data  = {}; // round_of_32 from knockout_bracket.json — includes wiki_home/wiki_away
 
 // ── feedsInto[m] = the match that the winner of m feeds into ──
 // Built at runtime from R16/QF/SF topology in bracket.js.
@@ -78,14 +79,17 @@ function clearInvalidDownstream(m) {
 
 // ── Build one card's HTML (shared by full render and surgical update) ──
 function mkCard(m) {
-  const [h, a] = getTeams(m);
-  const picked  = picks[m];
-  const homeCls = picked ? (picked === h ? 'w' : 'l') : '';
-  const awayCls = picked ? (picked === a ? 'w' : 'l') : '';
-  // Both teams must be known before either row is clickable
-  const bothKnown = !isTbd(h) && !isTbd(a);
-  const homeAttrs = bothKnown ? `data-match="${m}" data-team="${h.replace(/"/g,'&quot;')}"` : '';
-  const awayAttrs = bothKnown ? `data-match="${m}" data-team="${a.replace(/"/g,'&quot;')}"` : '';
+  const [h, a]   = getTeams(m);
+  const picked   = picks[m];
+  const slot     = m >= 73 && m <= 88 ? r32Data[String(m)] : null;
+  const hSlotCls = slot && !isTbd(h) ? slotCls(slot.wiki_home ?? null, h, a) : '';
+  const aSlotCls = slot && !isTbd(a) ? slotCls(slot.wiki_away ?? null, h, a) : '';
+  const homeCls  = picked ? (picked === h ? 'w' : 'l') : hSlotCls;
+  const awayCls  = picked ? (picked === a ? 'w' : 'l') : aSlotCls;
+  // Both teams must be known AND Wikipedia-confirmed before the match is pickable
+  const bothPickable = !isTbd(h) && !isTbd(a) && hSlotCls === '' && aSlotCls === '';
+  const homeAttrs = bothPickable ? `data-match="${m}" data-team="${h.replace(/"/g,'&quot;')}"` : '';
+  const awayAttrs = bothPickable ? `data-match="${m}" data-team="${a.replace(/"/g,'&quot;')}"` : '';
   return matchCard(m, h, a, '', '', '', homeCls, awayCls, homeAttrs, awayAttrs);
 }
 
@@ -334,17 +338,21 @@ const MOB_ROUNDS = [
 ];
 
 function mobPickCard(m) {
-  const [h, a]    = getTeams(m);
-  const picked    = picks[m];
-  const hTbd      = isTbd(h), aTbd = isTbd(a);
-  const bothKnown = !hTbd && !aTbd;
-  const hCls      = picked ? (picked === h ? ' w' : ' l') : '';
-  const aCls      = picked ? (picked === a ? ' w' : ' l') : '';
-  const date      = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
-  const hAttrs    = bothKnown ? ` data-match="${m}" data-team="${h.replace(/"/g,'&quot;')}"` : '';
-  const aAttrs    = bothKnown ? ` data-match="${m}" data-team="${a.replace(/"/g,'&quot;')}"` : '';
-  const hHtml     = hTbd ? h : teamHtml(h);
-  const aHtml     = aTbd ? a : teamHtml(a);
+  const [h, a]   = getTeams(m);
+  const picked   = picks[m];
+  const hTbd = isTbd(h), aTbd = isTbd(a);
+  const slot     = m >= 73 && m <= 88 ? r32Data[String(m)] : null;
+  const hSlotCls = slot && !hTbd ? slotCls(slot.wiki_home ?? null, h, a) : '';
+  const aSlotCls = slot && !aTbd ? slotCls(slot.wiki_away ?? null, h, a) : '';
+  let hCls = picked ? (picked === h ? ' w' : ' l') : (hSlotCls ? ' ' + hSlotCls : '');
+  let aCls = picked ? (picked === a ? ' w' : ' l') : (aSlotCls ? ' ' + aSlotCls : '');
+  // Both teams must be known AND Wikipedia-confirmed before the match is pickable
+  const bothPickable = !hTbd && !aTbd && hSlotCls === '' && aSlotCls === '';
+  const date   = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
+  const hAttrs = bothPickable ? ` data-match="${m}" data-team="${h.replace(/"/g,'&quot;')}"` : '';
+  const aAttrs = bothPickable ? ` data-match="${m}" data-team="${a.replace(/"/g,'&quot;')}"` : '';
+  const hHtml  = hTbd ? h : teamHtml(h);
+  const aHtml  = aTbd ? a : teamHtml(a);
   return `<div class="bk-mob-match" id="mob-card-${m}">
     <div class="bk-mob-meta">${roundLabel(m)} · M${m}${date}</div>
     <div class="bk-mob-teams">
@@ -409,8 +417,8 @@ async function init() {
     return;
   }
 
-  // Populate r32Teams: { 73: ['Spain','Morocco'], 74: [...], ... }
-  const r32Data = bracketData.round_of_32 || {};
+  // Populate r32Teams + r32Data (includes wiki_home/wiki_away for slot confirmation)
+  r32Data = bracketData.round_of_32 || {};
   for (let m = 73; m <= 88; m++) {
     const slot = r32Data[String(m)];
     if (slot && slot.home && slot.away) r32Teams[m] = [slot.home, slot.away];

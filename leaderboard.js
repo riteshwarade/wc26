@@ -1569,18 +1569,8 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed, bracketData)
     return ['TBD','TBD'];
   }
 
-  // Slot confirmation state from Wikipedia data.
-  // Returns '' (confirmed), 'slot-tbd' (unconfirmed), or 'slot-mismatch' (wrong team).
-  // Only applied to R32 slots — R16+ are always placeholders so no wiki data.
-  // Order-independent: wiki team is checked against both computed home and away
-  // because Wikipedia's row ordering may differ from our bracket topology.
-  function slotCls(wikiTeam, compHome, compAway) {
-    if (!wikiTeam) return 'slot-tbd';
-    if (wikiTeam === compHome || wikiTeam === compAway) return '';
-    return 'slot-mismatch';
-  }
-
   // mkCard: builds a read-only match card using shared matchCard() from bracket.js
+  // slotCls() is a shared primitive in bracket.js (used by Variant 1 + 2).
   function mkCard(m) {
     const [h, a] = slotTeams(m);
     // Only apply wiki slot state for R32 matches (73–88)

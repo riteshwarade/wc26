@@ -107,7 +107,7 @@ Three bracket variants — all share `bracket.js` primitives, each supplies its 
 
 ### JS primitives (`bracket.js`)
 
-- Exports: `KO_SCHEDULE`, `koDisplay()`, `R16`, `QF`, `SF`, `R32_SLOTS`, `FLAGS`, `RANKINGS`, `roundLabel()`, `matchCard()`, `buildBracketHtml()`, `positionAndConnectBracket()`, `drawBracketConnectors()`
+- Exports: `KO_SCHEDULE`, `koDisplay()`, `R16`, `QF`, `SF`, `R32_SLOTS`, `FLAGS`, `RANKINGS`, `roundLabel()`, `matchCard()`, `buildBracketHtml()`, `positionAndConnectBracket()`, `drawBracketConnectors()`, `slotCls()`
 - Match numbers: R32=73–88, R16=89–96, QF=97–100, SF=101–102, 3rd=103, Final=104
 - R32 display order follows Wikipedia bracket (not M73–M88 numeric): `[74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87]`
 - `bkTeamRow` renders flag in `.bk-fl` and name+rank in `.bk-tn` separately — do NOT call `teamHtml()` inside bracket cards (double-flag bug)
@@ -128,12 +128,16 @@ Per-slot confirmation is fetched from Wikipedia on every cron run (once all 12 g
 
 **Row order:** Wikipedia bracket rows follow `_R32_DISPLAY_ORDER = [74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87]` — same as `bracket.js` R32_SLOTS display order.
 
-**JS rendering (`renderBracket`):** `slotCls(wikiTeam, compHome, compAway)` returns:
+**`slotCls(wikiTeam, compHome, compAway)`** — shared primitive in `bracket.js` (used by Variant 1 leaderboard and Variant 2 KO picks). Returns:
 - `'slot-tbd'` — Wikipedia hasn't confirmed this slot → team row pulses
 - `''` — Wikipedia team matches our computed team (order-independent) → normal
 - `'slot-mismatch'` — Wikipedia has a different team → red border + text
 
-Only applied to R32 slots (M73–M88). Re-render triggered by `_lastBracketWikiKey` tracker (JSON of all `[wiki_home, wiki_away]` pairs) alongside the existing `bracketChanged` guard.
+Only applied to R32 slots (M73–M88).
+
+**Variant 1 (leaderboard):** Re-render triggered by `_lastBracketWikiKey` tracker (JSON of all `[wiki_home, wiki_away]` pairs) alongside the existing `bracketChanged` guard.
+
+**Variant 2 (KO picks):** `r32Data` (module-level in `ko_picks.js`) holds the full `round_of_32` object from `knockout_bracket.json`, including `wiki_home`/`wiki_away`. Slot state is applied in `mkCard` and `mobPickCard`. Importantly, a slot-tbd or slot-mismatch team row is **not pickable** — `data-team` attrs are only set when `bothPickable = !isTbd(h) && !isTbd(a) && hSlotCls === '' && aSlotCls === ''`. Mobile rows use `pointer-events: none` to suppress hover on unconfirmed slots (desktop hover is already gated on `[data-match]`). `simulate.py` writes `wiki_home: home, wiki_away: away` so simulated brackets are fully confirmed/pickable.
 
 **`verify_r32_against_wikipedia`** was fixed in this feature — the old regex `{{fb[a-z]*|CODE}}` never matched; Wikipedia uses `{{#invoke:flag|fb|CODE}}`. Now shares `_parse_wiki_r32_slots()` / `_fetch_ko_wikitext()` helpers.
 

@@ -155,6 +155,17 @@ function isTbd(name) {
   return !name || name === 'TBD' || /^[WL]\d+$/.test(name) || /^[12][A-L]$/.test(name) || /^3M\d+$/.test(name);
 }
 
+// ── Wikipedia R32 slot confirmation class ─────────────────
+// Returns '' (confirmed), 'slot-tbd' (null/unconfirmed), or 'slot-mismatch' (wrong team).
+// Order-independent: wiki team checked against both computed home and away
+// because Wikipedia's row ordering may differ from our bracket topology.
+// Used by leaderboard (Variant 1) and KO picks (Variant 2).
+function slotCls(wikiTeam, compHome, compAway) {
+  if (!wikiTeam) return 'slot-tbd';
+  if (wikiTeam === compHome || wikiTeam === compAway) return '';
+  return 'slot-mismatch';
+}
+
 // ── Single team row inside a bracket card ─────────────────
 // extraAttrs: optional HTML attribute string, e.g. 'data-match="73" data-team="Mexico"'
 // Used by Variant 2 (picks) to attach click-target data.
