@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-06-25T03:00:27.544809Z",
+  "generated_at": "2026-06-25T22:00:24.064803Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 54,
+  "matches_played": 56,
   "source": "Wikipedia (canonical)",
-  "combination_key": "ABCDFHJL",
+  "combination_key": "ABCDEFJL",
   "combination_found": true,
   "groups": {
     "A": {
@@ -83,6 +83,13 @@
   },
   "qualified_thirds": [
     {
+      "group": "E",
+      "team": "Ecuador",
+      "pts": 4,
+      "gd": 0,
+      "gf": 2
+    },
+    {
       "group": "B",
       "team": "Bosnia and Herzegovina",
       "pts": 4,
@@ -130,13 +137,6 @@
       "pts": 3,
       "gd": -3,
       "gf": 1
-    },
-    {
-      "group": "H",
-      "team": "Cape Verde",
-      "pts": 2,
-      "gd": 0,
-      "gf": 2
     }
   ],
   "round_of_32": {
@@ -173,7 +173,7 @@
     "78": {
       "home": "Ivory Coast",
       "away": "Norway",
-      "wiki_home": null,
+      "wiki_home": "Ivory Coast",
       "wiki_away": null
     },
     "79": {
@@ -184,7 +184,7 @@
     },
     "80": {
       "home": "England",
-      "away": "Cape Verde",
+      "away": "Ecuador",
       "wiki_home": null,
       "wiki_away": null
     },
