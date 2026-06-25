@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-06-25T00:05:18.063071Z",
+  "generated_at": "2026-06-25T03:00:27.544809Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 52,
+  "matches_played": 54,
   "source": "Wikipedia (canonical)",
-  "combination_key": "BCDFGHJL",
+  "combination_key": "ABCDFHJL",
   "combination_found": true,
   "groups": {
     "A": {
       "first": "Mexico",
-      "second": "South Korea",
-      "third": "Czech Republic",
-      "fourth": "South Africa"
+      "second": "South Africa",
+      "third": "South Korea",
+      "fourth": "Czech Republic"
     },
     "B": {
       "first": "Switzerland",
@@ -104,6 +104,13 @@
       "gf": 3
     },
     {
+      "group": "A",
+      "team": "South Korea",
+      "pts": 3,
+      "gd": -1,
+      "gf": 2
+    },
+    {
       "group": "J",
       "team": "Algeria",
       "pts": 3,
@@ -130,20 +137,13 @@
       "pts": 2,
       "gd": 0,
       "gf": 2
-    },
-    {
-      "group": "G",
-      "team": "Belgium",
-      "pts": 2,
-      "gd": 0,
-      "gf": 1
     }
   ],
   "round_of_32": {
     "73": {
-      "home": "South Korea",
+      "home": "South Africa",
       "away": "Canada",
-      "wiki_home": null,
+      "wiki_home": "South Africa",
       "wiki_away": "Canada"
     },
     "74": {
@@ -184,7 +184,7 @@
     },
     "80": {
       "home": "England",
-      "away": "Algeria",
+      "away": "Cape Verde",
       "wiki_home": null,
       "wiki_away": null
     },
@@ -196,7 +196,7 @@
     },
     "82": {
       "home": "Egypt",
-      "away": "Cape Verde",
+      "away": "South Korea",
       "wiki_home": null,
       "wiki_away": null
     },
@@ -214,7 +214,7 @@
     },
     "85": {
       "home": "Switzerland",
-      "away": "Belgium",
+      "away": "Algeria",
       "wiki_home": "Switzerland",
       "wiki_away": null
     },
