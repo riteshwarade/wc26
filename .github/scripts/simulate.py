@@ -120,7 +120,7 @@ def generate_knockout_bracket(r32_teams):
         'confirmed': True,
         'wikipedia_seen': True,
         'round_of_32': {
-            str(m): {'home': home, 'away': away}
+            str(m): {'home': home, 'away': away, 'wiki_home': home, 'wiki_away': away}
             for m, (home, away) in r32_teams.items()
         },
     }

@@ -304,6 +304,15 @@
   .bk-mob-pick-team.l { border-color: transparent; background: transparent; color: var(--neutral-medium); font-weight: 400; }
   .bk-mob-team-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+  /* Wikipedia slot confirmation — R32 bracket (Variant 2) */
+  @keyframes sq-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .bk-team.slot-tbd      { animation: sq-pulse 1.8s ease-in-out infinite; }
+  .bk-team.slot-mismatch { border-color: #e24b4a; color: #e24b4a; }
+  .bk-team.slot-mismatch .team-rank { color: #e24b4a; }
+  /* Mobile — pointer-events: none suppresses hover (existing hover rule doesn't exclude these classes) */
+  .bk-mob-pick-team.slot-tbd      { animation: sq-pulse 1.8s ease-in-out infinite; pointer-events: none; }
+  .bk-mob-pick-team.slot-mismatch { border-color: #e24b4a; color: #e24b4a; pointer-events: none; }
+
   @media (max-width: 640px) {
     header { padding: 16px 0 14px; }
     .header-title { font-size: clamp(0.82rem, 3.6vw, 1.2rem); white-space: nowrap; }
