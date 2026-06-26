@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-26T00:55:17.342887Z",
+  "generated_at": "2026-06-26T01:00:26.119275Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 57,
+  "matches_played": 58,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABCDEFJL",
   "combination_found": true,
@@ -83,6 +83,13 @@
   },
   "qualified_thirds": [
     {
+      "group": "F",
+      "team": "Sweden",
+      "pts": 4,
+      "gd": 0,
+      "gf": 7
+    },
+    {
       "group": "E",
       "team": "Ecuador",
       "pts": 4,
@@ -95,13 +102,6 @@
       "pts": 4,
       "gd": -1,
       "gf": 5
-    },
-    {
-      "group": "F",
-      "team": "Sweden",
-      "pts": 3,
-      "gd": 0,
-      "gf": 6
     },
     {
       "group": "L",
@@ -192,7 +192,7 @@
       "home": "United States",
       "away": "Bosnia and Herzegovina",
       "wiki_home": "United States",
-      "wiki_away": null
+      "wiki_away": "Bosnia and Herzegovina"
     },
     "82": {
       "home": "Egypt",
