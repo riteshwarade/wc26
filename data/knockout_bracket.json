@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-26T03:35:15.262954Z",
+  "generated_at": "2026-06-26T04:00:25.612506Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 58,
+  "matches_played": 59,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABCDEFJL",
   "combination_found": true,
@@ -104,6 +104,13 @@
       "gf": 5
     },
     {
+      "group": "D",
+      "team": "Paraguay",
+      "pts": 4,
+      "gd": -2,
+      "gf": 2
+    },
+    {
       "group": "L",
       "team": "Croatia",
       "pts": 3,
@@ -120,13 +127,6 @@
     {
       "group": "J",
       "team": "Algeria",
-      "pts": 3,
-      "gd": -2,
-      "gf": 2
-    },
-    {
-      "group": "D",
-      "team": "Paraguay",
       "pts": 3,
       "gd": -2,
       "gf": 2
@@ -233,7 +233,7 @@
     "88": {
       "home": "Australia",
       "away": "Iran",
-      "wiki_home": null,
+      "wiki_home": "Australia",
       "wiki_away": null
     }
   },
