@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-26T04:05:16.858079Z",
+  "generated_at": "2026-06-26T21:00:28.066188Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 60,
+  "matches_played": 61,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABCDEFJL",
   "combination_found": true,
@@ -167,14 +167,14 @@
     "77": {
       "home": "France",
       "away": "Sweden",
-      "wiki_home": null,
+      "wiki_home": "France",
       "wiki_away": null
     },
     "78": {
       "home": "Ivory Coast",
       "away": "Norway",
       "wiki_home": "Ivory Coast",
-      "wiki_away": null
+      "wiki_away": "Norway"
     },
     "79": {
       "home": "Mexico",
