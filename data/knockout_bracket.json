@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-25T22:00:24.064803Z",
+  "generated_at": "2026-06-26T00:55:17.342887Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 56,
+  "matches_played": 57,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABCDEFJL",
   "combination_found": true,
@@ -155,14 +155,14 @@
     "75": {
       "home": "Netherlands",
       "away": "Morocco",
-      "wiki_home": null,
+      "wiki_home": "Netherlands",
       "wiki_away": "Morocco"
     },
     "76": {
       "home": "Brazil",
       "away": "Japan",
       "wiki_home": "Brazil",
-      "wiki_away": null
+      "wiki_away": "Japan"
     },
     "77": {
       "home": "France",
