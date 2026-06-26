@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-26T03:30:24.355947Z",
+  "generated_at": "2026-06-26T03:35:15.262954Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
@@ -143,26 +143,26 @@
     "73": {
       "home": "South Africa",
       "away": "Canada",
-      "wiki_home": null,
-      "wiki_away": null
+      "wiki_home": "South Africa",
+      "wiki_away": "Canada"
     },
     "74": {
       "home": "Germany",
       "away": "Paraguay",
-      "wiki_home": null,
+      "wiki_home": "Germany",
       "wiki_away": null
     },
     "75": {
       "home": "Netherlands",
       "away": "Morocco",
-      "wiki_home": null,
-      "wiki_away": null
+      "wiki_home": "Netherlands",
+      "wiki_away": "Morocco"
     },
     "76": {
       "home": "Brazil",
       "away": "Japan",
-      "wiki_home": null,
-      "wiki_away": null
+      "wiki_home": "Brazil",
+      "wiki_away": "Japan"
     },
     "77": {
       "home": "France",
@@ -173,13 +173,13 @@
     "78": {
       "home": "Ivory Coast",
       "away": "Norway",
-      "wiki_home": null,
+      "wiki_home": "Ivory Coast",
       "wiki_away": null
     },
     "79": {
       "home": "Mexico",
       "away": "Scotland",
-      "wiki_home": null,
+      "wiki_home": "Mexico",
       "wiki_away": null
     },
     "80": {
@@ -191,8 +191,8 @@
     "81": {
       "home": "United States",
       "away": "Bosnia and Herzegovina",
-      "wiki_home": null,
-      "wiki_away": null
+      "wiki_home": "United States",
+      "wiki_away": "Bosnia and Herzegovina"
     },
     "82": {
       "home": "Egypt",
@@ -215,13 +215,13 @@
     "85": {
       "home": "Switzerland",
       "away": "Algeria",
-      "wiki_home": null,
+      "wiki_home": "Switzerland",
       "wiki_away": null
     },
     "86": {
       "home": "Argentina",
       "away": "Uruguay",
-      "wiki_home": null,
+      "wiki_home": "Argentina",
       "wiki_away": null
     },
     "87": {
