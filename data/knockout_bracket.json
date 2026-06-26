@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-06-26T21:00:28.066188Z",
+  "generated_at": "2026-06-26T21:05:18.295775Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 61,
+  "matches_played": 62,
   "source": "Wikipedia (canonical)",
-  "combination_key": "ABCDEFJL",
+  "combination_key": "ABDEFIJL",
   "combination_found": true,
   "groups": {
     "A": {
@@ -111,6 +111,13 @@
       "gf": 2
     },
     {
+      "group": "I",
+      "team": "Senegal",
+      "pts": 3,
+      "gd": 2,
+      "gf": 8
+    },
+    {
       "group": "L",
       "team": "Croatia",
       "pts": 3,
@@ -130,13 +137,6 @@
       "pts": 3,
       "gd": -2,
       "gf": 2
-    },
-    {
-      "group": "C",
-      "team": "Scotland",
-      "pts": 3,
-      "gd": -3,
-      "gf": 1
     }
   ],
   "round_of_32": {
@@ -178,13 +178,13 @@
     },
     "79": {
       "home": "Mexico",
-      "away": "Scotland",
+      "away": "Ecuador",
       "wiki_home": "Mexico",
       "wiki_away": null
     },
     "80": {
       "home": "England",
-      "away": "Ecuador",
+      "away": "Senegal",
       "wiki_home": null,
       "wiki_away": null
     },
