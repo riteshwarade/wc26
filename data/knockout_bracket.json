@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-26T21:05:18.295775Z",
+  "generated_at": "2026-06-27T02:00:32.430824Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 62,
+  "matches_played": 63,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABDEFIJL",
   "combination_found": true,
@@ -52,8 +52,8 @@
     },
     "H": {
       "first": "Spain",
-      "second": "Uruguay",
-      "third": "Cape Verde",
+      "second": "Cape Verde",
+      "third": "Uruguay",
       "fourth": "Saudi Arabia"
     },
     "I": {
@@ -220,7 +220,7 @@
     },
     "86": {
       "home": "Argentina",
-      "away": "Uruguay",
+      "away": "Cape Verde",
       "wiki_home": "Argentina",
       "wiki_away": null
     },
