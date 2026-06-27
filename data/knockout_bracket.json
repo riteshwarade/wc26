@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-27T02:00:32.430824Z",
+  "generated_at": "2026-06-27T02:05:17.407270Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 63,
+  "matches_played": 64,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABDEFIJL",
   "combination_found": true,
@@ -150,7 +150,7 @@
       "home": "Germany",
       "away": "Paraguay",
       "wiki_home": "Germany",
-      "wiki_away": null
+      "wiki_away": "Paraguay"
     },
     "75": {
       "home": "Netherlands",
@@ -168,7 +168,7 @@
       "home": "France",
       "away": "Sweden",
       "wiki_home": "France",
-      "wiki_away": null
+      "wiki_away": "Sweden"
     },
     "78": {
       "home": "Ivory Coast",
@@ -209,7 +209,7 @@
     "84": {
       "home": "Spain",
       "away": "Austria",
-      "wiki_home": null,
+      "wiki_home": "Spain",
       "wiki_away": null
     },
     "85": {
@@ -222,7 +222,7 @@
       "home": "Argentina",
       "away": "Cape Verde",
       "wiki_home": "Argentina",
-      "wiki_away": null
+      "wiki_away": "Cape Verde"
     },
     "87": {
       "home": "Colombia",
