@@ -1,7 +1,8 @@
 // ko_picks.js — WC2026 Pool knockout picks page logic
 // Depends on: bracket.js
-// FLAGS, RANKINGS, KO_SCHEDULE, R16, QF, SF, isTbd, slotCls, matchCard,
-// buildBracketHtml, buildPodiumHtml, positionAndConnectBracket → bracket.js
+// FLAGS, RANKINGS, KO_SCHEDULE, R16, QF, SF, MOB_ROUNDS, isTbd, slotCls,
+// roundLabel, matchCard, buildBracketHtml, buildMobTabHtml, buildPodiumHtml,
+// positionAndConnectBracket → bracket.js
 
 const BRACKET_URL = 'https://raw.githubusercontent.com/riteshwarade/wc26/main/data/knockout_bracket.json';
 
@@ -29,15 +30,6 @@ const MATCH_ORDER = [
   103,104,                                           // 3rd place & Final
 ];
 
-function koRoundLabel(m) {
-  if (m >= 73 && m <= 88)  return 'R32';
-  if (m >= 89 && m <= 96)  return 'R16';
-  if (m >= 97 && m <= 100) return 'QF';
-  if (m === 101 || m === 102) return 'SF';
-  if (m === 103) return '3rd';
-  if (m === 104) return 'Final';
-  return '';
-}
 
 // ── Resolve teams for any match based on current picks ──
 function getTeams(m) {
@@ -212,7 +204,13 @@ function renderBracket() {
   const runnerUp   = champion ? (champion === h104 ? a104 : h104) : null;
   const thirdPlace = picks[103] || null;
 
-  el.innerHTML = buildBracketHtml(mkCard, { podiumHtml: buildPodiumHtml(champion, runnerUp, thirdPlace) }) + buildMobTabHtml();
+  // Auto-open first round with any unpicked matches
+  let activeRound = MOB_ROUNDS[MOB_ROUNDS.length - 1].id;
+  for (const r of MOB_ROUNDS) {
+    if (r.matches.some(m => !picks[m])) { activeRound = r.id; break; }
+  }
+
+  el.innerHTML = buildBracketHtml(mkCard, { podiumHtml: buildPodiumHtml(champion, runnerUp, thirdPlace) }) + buildMobTabHtml(MOB_ROUNDS, activeRound, mobPickCard);
   requestAnimationFrame(() => requestAnimationFrame(positionAndConnectBracket));
 
   // Update progress bar
@@ -308,7 +306,7 @@ function downloadCSV(name) {
   for (const m of MATCH_ORDER) {
     const [home, away] = getTeams(m);
     const matchup = escape(`${home} v ${away}`);
-    rows.push([m, koRoundLabel(m), matchup, escape(picks[m] || '')]);
+    rows.push([m, roundLabel(m), matchup, escape(picks[m] || '')]);
   }
   const csv  = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -327,15 +325,6 @@ function switchBracketTab(roundId) {
   document.querySelectorAll('.bk-tab-panel').forEach(p =>
     p.classList.toggle('active', p.id === 'bk-panel-' + roundId));
 }
-
-const MOB_ROUNDS = [
-  { id: 'r32', label: 'R32',   matches: [74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87] },
-  { id: 'r16', label: 'R16',   matches: [89,90,93,94,91,92,95,96] },
-  { id: 'qf',  label: 'QF',    matches: [97,98,99,100] },
-  { id: 'sf',  label: 'SF',    matches: [101,102] },
-  { id: '3rd', label: '3rd',   matches: [103] },
-  { id: 'fin', label: 'Final', matches: [104] },
-];
 
 function mobPickCard(m) {
   const [h, a]   = getTeams(m);
@@ -362,45 +351,6 @@ function mobPickCard(m) {
   </div>`;
 }
 
-const PAIR_NEXT = {
-  r32: [['R16','M89'],['R16','M90'],['R16','M93'],['R16','M94'],['R16','M91'],['R16','M92'],['R16','M95'],['R16','M96']],
-  r16: [['QF','M97'],['QF','M98'],['QF','M99'],['QF','M100']],
-  qf:  [['SF','M101'],['SF','M102']],
-  sf:  [['Final','M104']],
-};
-
-function buildMobTabHtml() {
-  // Auto-open first round with any unpicked matches
-  let activeRound = MOB_ROUNDS[MOB_ROUNDS.length - 1].id;
-  for (const r of MOB_ROUNDS) {
-    if (r.matches.some(m => !picks[m])) { activeRound = r.id; break; }
-  }
-  const tabBar = MOB_ROUNDS.map(r =>
-    `<button class="bk-tab${r.id === activeRound ? ' active' : ''}" onclick="switchBracketTab('${r.id}')" data-round="${r.id}">${r.label}</button>`
-  ).join('');
-  const panels = MOB_ROUNDS.map(r => {
-    const pairs = PAIR_NEXT[r.id] || [];
-    let html = '';
-    for (let i = 0; i < r.matches.length; i += 2) {
-      const m1 = r.matches[i];
-      const m2 = r.matches[i + 1];
-      const pair = pairs[i / 2];
-      if (m2 !== undefined && pair) {
-        const [rl, mn] = pair;
-        html += `<div class="bk-mob-pair-group">`;
-        html += mobPickCard(m1);
-        html += `<div class="bk-mob-pair-pill"><span>winners meet in ${rl} · ${mn}</span></div>`;
-        html += mobPickCard(m2);
-        html += `</div>`;
-      } else {
-        html += mobPickCard(m1);
-        if (m2 !== undefined) html += mobPickCard(m2);
-      }
-    }
-    return `<div class="bk-tab-panel${r.id === activeRound ? ' active' : ''}" id="bk-panel-${r.id}">${html}</div>`;
-  }).join('');
-  return `<div class="bk-mobile-tabs"><div class="bk-tab-bar">${tabBar}</div>${panels}</div>`;
-}
 
 // ── Load bracket JSON, then render ──
 async function init() {

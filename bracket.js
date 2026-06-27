@@ -128,10 +128,22 @@ const R32_SLOTS = {
 // Column index in the best-3rd combination array [M79,M85,M81,M74,M82,M77,M87,M80]
 const THIRD_MATCH_COL = { 79:0, 85:1, 81:2, 74:3, 82:4, 77:5, 87:6, 80:7 };
 
+// ── Mobile rounds (shared by all variants) ────────────────
+// Round definitions for the mobile tab view. Matches listed in display order
+// (mirrors R32_SLOTS for R32; chronological/natural order for later rounds).
+const MOB_ROUNDS = [
+  { id: 'r32', label: 'R32',   matches: [74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87] },
+  { id: 'r16', label: 'R16',   matches: [89,90,93,94,91,92,95,96] },
+  { id: 'qf',  label: 'QF',    matches: [97,98,99,100] },
+  { id: 'sf',  label: 'SF',    matches: [101,102] },
+  { id: '3rd', label: '3rd',   matches: [103] },
+  { id: 'fin', label: 'Final', matches: [104] },
+];
+
 // ── Mobile pair-next lookup (shared by all variants) ─────
 // Maps each mobile tab round to the next-round matches its winners feed into.
 // Used by buildMobTabHtml() to render "winners meet in R16 · M89" connector pills.
-// Order within each round matches the display order in MOB_ROUNDS / KO_MOB_ROUNDS.
+// Order within each round matches the display order in MOB_ROUNDS.
 const MOB_PAIR_NEXT = {
   r32: [['R16','M89'],['R16','M90'],['R16','M93'],['R16','M94'],['R16','M91'],['R16','M92'],['R16','M95'],['R16','M96']],
   r16: [['QF','M97'],['QF','M98'],['QF','M99'],['QF','M100']],

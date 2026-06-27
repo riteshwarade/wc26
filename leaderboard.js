@@ -287,17 +287,9 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts, koLiveData 
   const podiumHtml = buildPodiumHtml(champion, runnerUp, thirdPlace);
 
   // ── Mobile tab view (Variant 3) ─────────────────────────
-  const KO_MOB_ROUNDS = [
-    { id: 'r32', label: 'R32',   matches: [74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87] },
-    { id: 'r16', label: 'R16',   matches: [89,90,93,94,91,92,95,96] },
-    { id: 'qf',  label: 'QF',    matches: [97,98,99,100] },
-    { id: 'sf',  label: 'SF',    matches: [101,102] },
-    { id: '3rd', label: '3rd',   matches: [103] },
-    { id: 'fin', label: 'Final', matches: [104] },
-  ];
   // Auto-open the first round with any unplayed matches
-  let koActiveRound = KO_MOB_ROUNDS[KO_MOB_ROUNDS.length - 1].id;
-  for (const r of KO_MOB_ROUNDS) {
+  let koActiveRound = MOB_ROUNDS[MOB_ROUNDS.length - 1].id;
+  for (const r of MOB_ROUNDS) {
     if (r.matches.some(m => !koResults[m])) { koActiveRound = r.id; break; }
   }
   function koMobMatchCard(m) {
@@ -347,7 +339,7 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts, koLiveData 
       </div>
     </div>`;
   }
-  const koMobTabHtml = buildMobTabHtml(KO_MOB_ROUNDS, koActiveRound, koMobMatchCard);
+  const koMobTabHtml = buildMobTabHtml(MOB_ROUNDS, koActiveRound, koMobMatchCard);
 
   el.innerHTML = buildBracketHtml(mkCard, { podiumHtml }) + koMobTabHtml;
   requestAnimationFrame(() => requestAnimationFrame(positionAndConnectBracket));
@@ -1587,14 +1579,6 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed, bracketData)
 
   // ── Mobile tab view ──────────────────────────────────────
   // Match order mirrors desktop bracket (buildBracketHtml top-to-bottom layout)
-  const MOB_ROUNDS = [
-    { id: 'r32', label: 'R32',   matches: [74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87] },
-    { id: 'r16', label: 'R16',   matches: [89,90,93,94,91,92,95,96] },
-    { id: 'qf',  label: 'QF',    matches: [97,98,99,100] },
-    { id: 'sf',  label: 'SF',    matches: [101,102] },
-    { id: '3rd', label: '3rd',   matches: [103] },
-    { id: 'fin', label: 'Final', matches: [104] },
-  ];
   function mobMatchCard(m) {
     const [h, a] = slotTeams(m);
     const date  = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
