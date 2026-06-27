@@ -417,6 +417,7 @@ A `<div class="scoring-info-anchor">` is injected in the KO standings section-la
 - **Mobile:** CSS hover disabled. Tap on `.scoring-info-link` toggles `.tooltip-open` class on `.scoring-info-anchor` via the `touchstart` handler (added before the existing `.cp-pill`/`.sq` checks). Tooltip is `position: static` and expands inline below the header row. Tap elsewhere closes it.
 - The section-label `<p>` was changed to `<div class="section-label section-label-row">` to allow block children and flex layout. `_revealSections()` still picks it up via `.section-label` selector.
 - **Does not share `#sq-tooltip`** — self-contained CSS/class toggle. No interference with existing square or pill tooltips.
+- **Gotcha:** `.scoring-info-anchor` has `white-space: nowrap` (to keep the link text on one line). `.scoring-tooltip-box` must explicitly set `white-space: normal` to prevent inheriting `nowrap`, which would cause the note text to overflow without wrapping.
 
 ---
 
