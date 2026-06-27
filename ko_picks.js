@@ -356,7 +356,7 @@ async function init() {
   } catch (e) { /* offline or file not yet generated */ }
 
   if (!bracketData) {
-    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--neutral-dark);font-size:0.875rem;">Bracket not yet available — check back after all group matches are complete (around Jun 27).</div>';
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--neutral-dark);font-size:0.875rem;">Bracket not yet available — check back after all group matches are complete.</div>';
     return;
   }
 
