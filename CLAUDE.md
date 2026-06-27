@@ -409,6 +409,15 @@ Shows `N/total` for completed matches. Locations: in its own `td-correct` column
 
 **Pill tooltip:** Hovering a `.cp-pill` shows the shared `#sq-tooltip` with "Picked correctly:" header and a `✓ Name` line per correct picker (or "— nobody" if zero). Pill carries `data-cp-names` (pipe-delimited abbreviated names). `buildGrpCounts` and `buildKoCounts` both store `names: []` alongside `correct`/`total`. The live correctness block in `renderResults` also collects `liveNames`. `.cp-pill` has `cursor: help`.
 
+### "How scoring works" tooltip (KO standings)
+
+A `<div class="scoring-info-anchor">` is injected in the KO standings section-label (right side) by `renderKoStandings`. Contains a `<span class="scoring-info-link">How scoring works ⓘ</span>` and a `<div class="scoring-tooltip-box">` child with the KO points table and a short note.
+
+- **Desktop:** purely CSS-driven — `.scoring-info-anchor:hover .scoring-tooltip-box { display: block }`. Tooltip is `position: absolute; right: 0; top: calc(100% + 8px)` — floats below the anchor, anchored right.
+- **Mobile:** CSS hover disabled. Tap on `.scoring-info-link` toggles `.tooltip-open` class on `.scoring-info-anchor` via the `touchstart` handler (added before the existing `.cp-pill`/`.sq` checks). Tooltip is `position: static` and expands inline below the header row. Tap elsewhere closes it.
+- The section-label `<p>` was changed to `<div class="section-label section-label-row">` to allow block children and flex layout. `_revealSections()` still picks it up via `.section-label` selector.
+- **Does not share `#sq-tooltip`** — self-contained CSS/class toggle. No interference with existing square or pill tooltips.
+
 ---
 
 ## ESPN API

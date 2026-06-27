@@ -187,8 +187,9 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
     </tr>`;
   });
 
+  const _scoringTooltipHtml = `<div class="scoring-info-anchor" id="scoring-info-anchor"><span class="scoring-info-link">How scoring works ⓘ</span><div class="scoring-tooltip-box"><div class="stt-title">Knockout points</div><div class="stt-row"><span>Round of 32</span><span class="stt-pts">4</span></div><div class="stt-row"><span>Round of 16</span><span class="stt-pts">8</span></div><div class="stt-row"><span>Quarterfinals</span><span class="stt-pts">12</span></div><div class="stt-row"><span>Semifinals</span><span class="stt-pts">16</span></div><div class="stt-row"><span>3rd place</span><span class="stt-pts">12</span></div><div class="stt-row"><span>Final</span><span class="stt-pts">24</span></div><div class="stt-note">Picks for a knocked-out team score 0. Group stage was 2 pts per correct result.</div></div></div>`;
   document.getElementById('koStandingsSection').innerHTML = `
-    <p class="section-label">Knockout Standings <span class="standings-count">${combinedStandings.length} players</span></p>
+    <div class="section-label section-label-row"><span>Knockout Standings <span class="standings-count">${combinedStandings.length} players</span></span>${_scoringTooltipHtml}</div>
     <div class="section-body">
       <div class="card">
         <table class="standings-table">
@@ -1620,6 +1621,17 @@ document.addEventListener('touchstart', e => {
   _isTouchInteraction = true;
   clearTimeout(_touchTimer);
   _touchTimer = setTimeout(() => { _isTouchInteraction = false; }, 600);
+
+  // Scoring info anchor — toggle inline tooltip on tap
+  const scoringLink = e.target.closest('.scoring-info-link');
+  if (scoringLink) {
+    const anchor = scoringLink.closest('.scoring-info-anchor');
+    if (anchor) anchor.classList.toggle('tooltip-open');
+    return;
+  }
+  // Close scoring tooltip if open and tapping elsewhere
+  const openAnchor = document.querySelector('.scoring-info-anchor.tooltip-open');
+  if (openAnchor) openAnchor.classList.remove('tooltip-open');
 
   const pill = e.target.closest('.cp-pill');
   const sq   = e.target.closest('.sq');

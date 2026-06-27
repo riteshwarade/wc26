@@ -1,0 +1,73 @@
+match,group,matchup,pick
+1,A,Mexico v South Africa,South Africa
+2,A,South Korea v Czech Republic,South Korea
+3,B,Canada v Bosnia and Herzegovina,Bosnia and Herzegovina
+4,D,United States v Paraguay,Paraguay
+5,C,Haiti v Scotland,Haiti
+6,D,Australia v Turkey,Turkey
+7,C,Brazil v Morocco,Brazil
+8,B,Qatar v Switzerland,Draw
+9,E,Ivory Coast v Ecuador,Ecuador
+10,E,Germany v Curaçao,Curaçao
+11,F,Netherlands v Japan,Japan
+12,F,Sweden v Tunisia,Tunisia
+13,H,Saudi Arabia v Uruguay,Draw
+14,H,Spain v Cape Verde,Draw
+15,G,Iran v New Zealand,Iran
+16,G,Belgium v Egypt,Egypt
+17,I,France v Senegal,Senegal
+18,I,Iraq v Norway,Draw
+19,J,Argentina v Algeria,Argentina
+20,J,Austria v Jordan,Draw
+21,L,Ghana v Panama,Draw
+22,L,England v Croatia,England
+23,K,Portugal v DR Congo,DR Congo
+24,K,Uzbekistan v Colombia,Colombia
+25,A,Czech Republic v South Africa,Draw
+26,B,Switzerland v Bosnia and Herzegovina,Draw
+27,B,Canada v Qatar,Draw
+28,A,Mexico v South Korea,Mexico
+29,C,Brazil v Haiti,Brazil
+30,C,Scotland v Morocco,Draw
+31,D,Turkey v Paraguay,Paraguay
+32,D,United States v Australia,Australia
+33,E,Germany v Ivory Coast,Germany
+34,E,Ecuador v Curaçao,Ecuador
+35,F,Netherlands v Sweden,Sweden
+36,F,Tunisia v Japan,Tunisia
+37,H,Uruguay v Cape Verde,Cape Verde
+38,H,Spain v Saudi Arabia,Draw
+39,G,Belgium v Iran,Belgium
+40,G,New Zealand v Egypt,Draw
+41,I,Norway v Senegal,Norway
+42,I,France v Iraq,France
+43,J,Argentina v Austria,Draw
+44,J,Jordan v Algeria,Draw
+45,L,England v Ghana,England
+46,L,Panama v Croatia,Draw
+47,K,Portugal v Uzbekistan,Uzbekistan
+48,K,Colombia v DR Congo,DR Congo
+49,C,Scotland v Brazil,Draw
+50,C,Morocco v Haiti,Haiti
+51,B,Switzerland v Canada,Canada
+52,B,Bosnia and Herzegovina v Qatar,Qatar
+53,A,Czech Republic v Mexico,Czech Republic
+54,A,South Africa v South Korea,South Korea
+55,E,Curaçao v Ivory Coast,Ivory Coast
+56,E,Ecuador v Germany,Draw
+57,F,Japan v Sweden,Sweden
+58,F,Tunisia v Netherlands,Tunisia
+59,D,Turkey v United States,Turkey
+60,D,Paraguay v Australia,Draw
+61,I,Norway v France,Norway
+62,I,Senegal v Iraq,Senegal
+63,G,Egypt v Iran,Iran
+64,G,New Zealand v Belgium,Belgium
+65,H,Cape Verde v Saudi Arabia,Cape Verde
+66,H,Uruguay v Spain,Draw
+67,L,Panama v England,Draw
+68,L,Croatia v Ghana,Ghana
+69,J,Algeria v Austria,Algeria
+70,J,Jordan v Argentina,Argentina
+71,K,Colombia v Portugal,Draw
+72,K,DR Congo v Uzbekistan,DR Congo

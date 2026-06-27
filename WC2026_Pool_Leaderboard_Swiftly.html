@@ -524,6 +524,53 @@
   .cp-hi   { background: #d4f0fb; color: #00628a; }
   .cp-mid  { background: #fff0d0; color: #a05800; }
   .cp-lo   { background: #fce0e7; color: #b3003d; }
+
+  /* ── Scoring info tooltip (KO standings section label) ── */
+  .section-label-row { display: flex; align-items: center; justify-content: space-between; }
+  .scoring-info-anchor { position: relative; text-transform: none; letter-spacing: 0; font-size: 0.70rem; font-weight: 500; color: var(--swiftly-blue); cursor: help; white-space: nowrap; }
+  .scoring-info-link { border-bottom: 1px dashed var(--blue-light); }
+  .scoring-tooltip-box {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    width: 214px;
+    background: #fff;
+    border: 1px solid var(--neutral-light);
+    border-radius: 8px;
+    padding: 11px 13px;
+    z-index: 200;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    cursor: default;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+  .scoring-tooltip-box::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    right: 12px;
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-left: 1px solid var(--neutral-light);
+    border-top: 1px solid var(--neutral-light);
+    transform: rotate(45deg);
+  }
+  .scoring-info-anchor:hover .scoring-tooltip-box { display: block; }
+  .stt-title { font-size: 0.72rem; font-weight: 600; color: var(--neutral-darkest); margin-bottom: 6px; }
+  .stt-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border-bottom: 0.5px solid var(--neutral-light); font-size: 0.70rem; color: var(--neutral-dark); }
+  .stt-row:last-of-type { border-bottom: none; }
+  .stt-pts { font-size: 0.68rem; font-weight: 600; color: var(--swiftly-blue); background: var(--blue-lightest); padding: 1px 6px; border-radius: 20px; }
+  .stt-note { font-size: 0.67rem; color: var(--neutral-medium); margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--neutral-light); line-height: 1.45; }
+  /* Mobile: tooltip expands inline on tap instead of floating */
+  @media (max-width: 640px) {
+    .scoring-tooltip-box { position: static; width: auto; border-radius: 6px; margin-top: 8px; box-shadow: none; }
+    .scoring-tooltip-box::before { display: none; }
+    .scoring-info-anchor:hover .scoring-tooltip-box { display: none; }
+    .scoring-info-anchor.tooltip-open .scoring-tooltip-box { display: block; }
+  }
   .bk-team {
     display: flex;
     align-items: center;
