@@ -242,30 +242,16 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts, koLiveData 
       hSc = `${sc.home} (${sc.homePen})`;
       aSc = `${sc.away} (${sc.awayPen})`;
     }
-    let cardHtml = matchCard(m, h, a, '', hSc, aSc, homeCls, awayCls);
-    // Inject correctness pill and/or live minute into .bk-mnum
+    let mnumLabelCls = 'bk-mnum-label';
+    let mnumExtra = '';
     if (winner) {
       const c = koCounts && koCounts[m];
-      const pill = c ? correctnessPill(c.correct, c.total, c.names) : '';
-      cardHtml = cardHtml.replace(
-        /(<div class="bk-mnum">)([\s\S]*?)(<\/div>)/,
-        `$1<span class="bk-mnum-label">$2</span>${pill}$3`
-      );
+      mnumExtra = c ? correctnessPill(c.correct, c.total, c.names) : '';
     } else if (lm) {
-      const tied = lm.homeScore === lm.awayScore;
-      const lblCls = tied ? 'bk-mnum-label live' : 'bk-mnum-label';
-      const liveMinute = lm.minute ? `<span class="bk-mnum-live">${lm.minute}</span>` : '';
-      cardHtml = cardHtml.replace(
-        /(<div class="bk-mnum">)([\s\S]*?)(<\/div>)/,
-        `$1<span class="${lblCls}">$2</span>${liveMinute}$3`
-      );
-    } else {
-      cardHtml = cardHtml.replace(
-        /(<div class="bk-mnum">)([\s\S]*?)(<\/div>)/,
-        `$1<span class="bk-mnum-label">$2</span>$3`
-      );
+      if (lm.homeScore === lm.awayScore) mnumLabelCls += ' live';
+      mnumExtra = lm.minute ? `<span class="bk-mnum-live">${lm.minute}</span>` : '';
     }
-    return cardHtml;
+    return matchCard(m, h, a, '', hSc, aSc, homeCls, awayCls, '', '', mnumExtra, mnumLabelCls);
   }
 
   // Determine podium teams

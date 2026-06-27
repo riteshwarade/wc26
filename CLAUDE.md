@@ -202,6 +202,7 @@ No `border-top` divider — row separation comes from `margin-top` only.
 - `.team-rank` has its own `color: var(--neutral-dark)` rule; losers need explicit `.bk-team.l .team-rank { color: var(--neutral-medium); }` to override it
 - Do NOT add `font-weight` to loser hover — font-weight changes cause text reflow even with `white-space: nowrap`
 - `matchCard()` always puts `data-match="${num}"` on the outer `.bk-card` div. The click handler uses `closest('[data-match]')`, which will bubble up to `.bk-card` if the click lands outside a team row. `.bk-card` has no `data-team`, so `pickTeam` receives `undefined` — guard with `if (!team) return` at the top of `pickTeam`
+- `matchCard()` optional params `mnumLabelCls` / `mnumExtra`: if `mnumLabelCls` is set (e.g. `'bk-mnum-label'`), the mnum text is wrapped in `<span class="...">` and `mnumExtra` (pill HTML, live-minute span, etc.) is appended inside `.bk-mnum`. Used by Variant 3 to avoid post-hoc regex surgery. Defaults to `''` (plain text) so all other callers are unaffected.
 
 ### Mobile auto-advance (KO picks page only)
 

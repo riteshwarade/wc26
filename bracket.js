@@ -207,12 +207,20 @@ function roundLabel(num) {
 
 // ── Bracket match card ────────────────────────────────────
 // homeAttrs / awayAttrs: optional extra HTML attributes for each team row.
-function matchCard(num, home, away, label, homeScore, awayScore, homeCls, awayCls, homeAttrs='', awayAttrs='') {
+// mnumLabelCls: if set, wraps the mnum text in <span class="..."> (e.g. 'bk-mnum-label')
+// mnumExtra: HTML appended inside .bk-mnum after the (possibly wrapped) label text
+//   — used by Variant 3 to inject correctness pills and live-minute spans without
+//     post-hoc regex surgery on the returned HTML string.
+function matchCard(num, home, away, label, homeScore, awayScore, homeCls, awayCls,
+                   homeAttrs='', awayAttrs='', mnumExtra='', mnumLabelCls='') {
   const round = roundLabel(num);
   const date = KO_SCHEDULE[num] ? ` · ${koDisplay(num)}` : '';
   const mnumText = `${round} · M${num}${date}${label ? ' · ' + label : ''}`;
+  const mnumInner = mnumLabelCls
+    ? `<span class="${mnumLabelCls}">${mnumText}</span>${mnumExtra}`
+    : mnumText;
   return `<div class="bk-card" data-match="${num}">
-    <div class="bk-mnum">${mnumText}</div>
+    <div class="bk-mnum">${mnumInner}</div>
     ${bkTeamRow(home, homeCls, homeScore, homeAttrs)}
     ${bkTeamRow(away, awayCls, awayScore, awayAttrs)}
   </div>`;
