@@ -1409,46 +1409,11 @@ function computeBracket(grpStandings, qualifiedThirds) {
 
 // FLAGS, RANKINGS, KO_SCHEDULE, teamHtml, isTbd, bkTeamRow, matchCard → bracket.js
 
-// Compute group standings from results (self-contained — no external deps)
+// Compute group standings from results.
+// Depends on module-level MATCHES, GROUP_ORDER, groupSort.
 function computeGroupStandings(results, cardData) {
-  const GRP_MATCHES = [
-    [1,'A','Mexico','South Africa'],[2,'A','South Korea','Czech Republic'],
-    [3,'B','Canada','Bosnia and Herzegovina'],[4,'D','United States','Paraguay'],
-    [5,'C','Haiti','Scotland'],[6,'D','Australia','Turkey'],
-    [7,'C','Brazil','Morocco'],[8,'B','Qatar','Switzerland'],
-    [9,'E','Ivory Coast','Ecuador'],[10,'E','Germany','Curaçao'],
-    [11,'F','Netherlands','Japan'],[12,'F','Sweden','Tunisia'],
-    [13,'H','Saudi Arabia','Uruguay'],[14,'H','Spain','Cape Verde'],
-    [15,'G','Iran','New Zealand'],[16,'G','Belgium','Egypt'],
-    [17,'I','France','Senegal'],[18,'I','Iraq','Norway'],
-    [19,'J','Argentina','Algeria'],[20,'J','Austria','Jordan'],
-    [21,'L','Ghana','Panama'],[22,'L','England','Croatia'],
-    [23,'K','Portugal','DR Congo'],[24,'K','Uzbekistan','Colombia'],
-    [25,'A','Czech Republic','South Africa'],[26,'B','Switzerland','Bosnia and Herzegovina'],
-    [27,'B','Canada','Qatar'],[28,'A','Mexico','South Korea'],
-    [29,'C','Brazil','Haiti'],[30,'C','Scotland','Morocco'],
-    [31,'D','Turkey','Paraguay'],[32,'D','United States','Australia'],
-    [33,'E','Germany','Ivory Coast'],[34,'E','Ecuador','Curaçao'],
-    [35,'F','Netherlands','Sweden'],[36,'F','Tunisia','Japan'],
-    [37,'H','Uruguay','Cape Verde'],[38,'H','Spain','Saudi Arabia'],
-    [39,'G','Belgium','Iran'],[40,'G','New Zealand','Egypt'],
-    [41,'I','Norway','Senegal'],[42,'I','France','Iraq'],
-    [43,'J','Argentina','Austria'],[44,'J','Jordan','Algeria'],
-    [45,'L','England','Ghana'],[46,'L','Panama','Croatia'],
-    [47,'K','Portugal','Uzbekistan'],[48,'K','Colombia','DR Congo'],
-    [49,'C','Scotland','Brazil'],[50,'C','Morocco','Haiti'],
-    [51,'B','Switzerland','Canada'],[52,'B','Bosnia and Herzegovina','Qatar'],
-    [53,'A','Czech Republic','Mexico'],[54,'A','South Africa','South Korea'],
-    [55,'E','Curaçao','Ivory Coast'],[56,'E','Ecuador','Germany'],
-    [57,'F','Japan','Sweden'],[58,'F','Tunisia','Netherlands'],
-    [59,'D','Turkey','United States'],[60,'D','Paraguay','Australia'],
-    [61,'I','Norway','France'],[62,'I','Senegal','Iraq'],
-    [63,'G','Egypt','Iran'],[64,'G','New Zealand','Belgium'],
-    [65,'H','Cape Verde','Saudi Arabia'],[66,'H','Uruguay','Spain'],
-    [67,'L','Panama','England'],[68,'L','Croatia','Ghana'],
-    [69,'J','Algeria','Austria'],[70,'J','Jordan','Argentina'],
-    [71,'K','Colombia','Portugal'],[72,'K','DR Congo','Uzbekistan'],
-  ];
+  // Derive [num, grp, t1, t2] from the canonical MATCHES array (fields 0,1,4,5)
+  const GRP_MATCHES = MATCHES.map(([num, grp, , , t1, t2]) => [num, grp, t1, t2]);
   const stats = {}, grpMatches = {};
   GRP_MATCHES.forEach(([num,grp,t1,t2]) => {
     [t1,t2].forEach(t => { if (!stats[t]) stats[t] = {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0}; });
