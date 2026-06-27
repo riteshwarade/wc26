@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-27T05:05:17.737857Z",
+  "generated_at": "2026-06-27T23:00:30.815666Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 66,
+  "matches_played": 68,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABDEFGIL",
   "combination_found": true,
@@ -76,8 +76,8 @@
     },
     "L": {
       "first": "England",
-      "second": "Ghana",
-      "third": "Croatia",
+      "second": "Croatia",
+      "third": "Ghana",
       "fourth": "Panama"
     }
   },
@@ -88,6 +88,13 @@
       "pts": 4,
       "gd": 0,
       "gf": 7
+    },
+    {
+      "group": "L",
+      "team": "Ghana",
+      "pts": 4,
+      "gd": 0,
+      "gf": 2
     },
     {
       "group": "E",
@@ -122,13 +129,6 @@
       "team": "Iran",
       "pts": 3,
       "gd": 0,
-      "gf": 3
-    },
-    {
-      "group": "L",
-      "team": "Croatia",
-      "pts": 3,
-      "gd": -1,
       "gf": 3
     },
     {
@@ -180,12 +180,12 @@
       "home": "Mexico",
       "away": "Ecuador",
       "wiki_home": "Mexico",
-      "wiki_away": null
+      "wiki_away": "Ecuador"
     },
     "80": {
       "home": "England",
       "away": "Senegal",
-      "wiki_home": null,
+      "wiki_home": "England",
       "wiki_away": null
     },
     "81": {
@@ -202,9 +202,9 @@
     },
     "83": {
       "home": "Portugal",
-      "away": "Ghana",
+      "away": "Croatia",
       "wiki_home": null,
-      "wiki_away": null
+      "wiki_away": "Croatia"
     },
     "84": {
       "home": "Spain",
@@ -226,9 +226,9 @@
     },
     "87": {
       "home": "Colombia",
-      "away": "Croatia",
+      "away": "Ghana",
       "wiki_home": null,
-      "wiki_away": null
+      "wiki_away": "Ghana"
     },
     "88": {
       "home": "Australia",
