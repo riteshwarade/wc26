@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-27T02:05:17.407270Z",
+  "generated_at": "2026-06-27T05:00:28.583089Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 64,
+  "matches_played": 65,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABDEFIJL",
   "combination_found": true,
@@ -45,9 +45,9 @@
       "fourth": "Tunisia"
     },
     "G": {
-      "first": "Egypt",
-      "second": "Iran",
-      "third": "Belgium",
+      "first": "Belgium",
+      "second": "Egypt",
+      "third": "Iran",
       "fourth": "New Zealand"
     },
     "H": {
@@ -195,7 +195,7 @@
       "wiki_away": "Bosnia and Herzegovina"
     },
     "82": {
-      "home": "Egypt",
+      "home": "Belgium",
       "away": "South Korea",
       "wiki_home": null,
       "wiki_away": null
@@ -232,7 +232,7 @@
     },
     "88": {
       "home": "Australia",
-      "away": "Iran",
+      "away": "Egypt",
       "wiki_home": "Australia",
       "wiki_away": null
     }
