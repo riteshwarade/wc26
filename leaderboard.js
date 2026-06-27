@@ -8,14 +8,6 @@ const _MATCHES_CHRONO = [...MATCHES].sort((a, b) =>
 );
 // ──────────────────────────────────────────────────────────
 
-// ── Correctness pill tier config ──────────────────────────
-// Consensus ≥ 90%, Contrarian ≤ 10%, Middle everything else.
-const PILL_TIERS = [
-  { minPct: 0.90, cls: 'cp-hi'  },  // Consensus
-  { minPct: 0.11, cls: 'cp-mid' },  // Middle  (> 10%)
-  { minPct: 0.00, cls: 'cp-lo'  },  // Contrarian (≤ 10%)
-];
-// ──────────────────────────────────────────────────────────
 
 // ── ESPN team name map (5 names differ from internal) ─────
 const ESPN_TEAM_MAP_JS = {
@@ -1471,20 +1463,6 @@ function computeGroupStandings(results, cardData) {
     [69,'J','Algeria','Austria'],[70,'J','Jordan','Argentina'],
     [71,'K','Colombia','Portugal'],[72,'K','DR Congo','Uzbekistan'],
   ];
-  const grpOrder = {
-    A:['Mexico','South Africa','South Korea','Czech Republic'],
-    B:['Canada','Bosnia and Herzegovina','Qatar','Switzerland'],
-    C:['Brazil','Morocco','Haiti','Scotland'],
-    D:['United States','Paraguay','Australia','Turkey'],
-    E:['Germany','Curaçao','Ivory Coast','Ecuador'],
-    F:['Netherlands','Japan','Sweden','Tunisia'],
-    G:['Belgium','Egypt','Iran','New Zealand'],
-    H:['Spain','Cape Verde','Saudi Arabia','Uruguay'],
-    I:['France','Senegal','Iraq','Norway'],
-    J:['Argentina','Algeria','Austria','Jordan'],
-    K:['Portugal','DR Congo','Uzbekistan','Colombia'],
-    L:['England','Croatia','Ghana','Panama'],
-  };
   const stats = {}, grpMatches = {};
   GRP_MATCHES.forEach(([num,grp,t1,t2]) => {
     [t1,t2].forEach(t => { if (!stats[t]) stats[t] = {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0}; });
@@ -1499,9 +1477,9 @@ function computeGroupStandings(results, cardData) {
     else { stats[t1].D++; stats[t1].Pts++; stats[t2].D++; stats[t2].Pts++; }
   });
   const grpStandings = {};
-  Object.keys(grpOrder).forEach(grp => {
+  Object.keys(GROUP_ORDER).forEach(grp => {
     const gm = grpMatches[grp] || [];
-    grpStandings[grp] = groupSort(grpOrder[grp], stats, gm, results, cardData)
+    grpStandings[grp] = groupSort(GROUP_ORDER[grp], stats, gm, results, cardData)
       .map(t => [t, stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0}]);
   });
   // Best 8 thirds (cross-group: Pts → GD → GF → fair play → FIFA ranking)
@@ -1607,10 +1585,9 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed, bracketData)
   }
   const mobTabHtml = buildMobTabHtml(MOB_ROUNDS, 'r32', mobMatchCard);
 
-  // Podium: shown here temporarily for preview — will be Variant 2/3 only once built.
-  // champion/runnerUp/thirdPlace come from knockout results (not yet available in Variant 1).
-  // All three pass null until knockout results are wired up.
-  const podiumHtml = buildPodiumHtml(null, null, null); // TODO: pass actual KO results (Variant 3)
+  // Variant 1 only renders during group stage — no KO results exist yet.
+  // Podium shows TBD; Variant 3 (renderKoBracket) handles the live KO podium.
+  const podiumHtml = buildPodiumHtml(null, null, null);
 
   el.innerHTML = buildBracketHtml(mkCard, { podiumHtml }) + mobTabHtml;
   requestAnimationFrame(() => requestAnimationFrame(() => {
