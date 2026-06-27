@@ -58,8 +58,8 @@ If `index.lock` error: `rm ~/Documents/GitHub/wc26/.git/index.lock` first.
 | `data/rankings.json` | **Canonical** FIFA rankings — single source of truth for all scripts |
 | `WC2026_Intro.pptx` | Swiftly-branded intro deck (13 slides, incl. host cities map as slide 6) — share with pool participants before Jun 11 |
 | `test_aggregate_picks.py` | Python unit tests for aggregate_picks.py: CSV parsing + filename extraction (28 tests) |
-| `test_parse_results.py` | Python unit tests for parse_results.py (84 tests) |
-| `test_e2e.js` | JS end-to-end: 10-user full-tournament + 105 invariant checks |
+| `test_parse_results.py` | Python unit tests for parse_results.py (103 tests) |
+| `test_e2e.js` | JS end-to-end: 10-user full-tournament + 152 invariant checks |
 | `test_bracket.py` | Bracket + standings end-to-end (all 495 3rd-place combos) |
 | `test_ko_picks.js` | Node unit tests for ko_picks.js pure logic: feedsInto topology, getTeams resolution, clearInvalidDownstream cascades (58 tests) |
 | `.github/workflows/ci.yml` | CI: runs all four test suites on every push/PR |
@@ -501,6 +501,10 @@ Set once to avoid the prompt: `git config --global pull.rebase true`
 **GitHub Actions schedule reliability** — GitHub throttles high-frequency cron jobs on low-traffic repos. The 5-min schedule may silently skip runs. Fix: **cron-job.org** externally triggers the workflow via `workflow_dispatch` every 5 min — this is live and running. The GitHub native cron is set to 10 min as a fallback only.
 
 **Bracket write guard** — `write_bracket_json` only writes `data/knockout_bracket.json` when the substantive content changes. It compares the new bracket against the existing file (ignoring `generated_at`); if identical, skips the write entirely. This prevents a spurious commit every 5 minutes when no results have changed.
+
+**Bracket confirmed immutability** — `write_bracket_json` returns immediately if `existing_bracket.get('confirmed') is True`. Once confirmed, R32 teams are locked (CSV regression guard) and wiki slots are fully populated — nothing can change. This prevents a transient Wikipedia fetch error on any post-confirmation cron run from reverting `confirmed: True` back to `False`.
+
+**KO results regression guard** — Before writing `knockout_results.csv`, `__main__` reads the existing file and merges if ESPN returned fewer results than are already on disk (same pattern as the group results guard). Guards against transient ESPN outages (0 events returned) wiping confirmed KO results.
 
 Setup (already done):
 - GitHub PAT `wc26-cron-trigger` with `Actions: write` on `wc26` repo — **expires 2026-08-11**, regenerate before then

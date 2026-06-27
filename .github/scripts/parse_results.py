@@ -1416,6 +1416,13 @@ def write_bracket_json(results, cards=None, double_confirmed=False):
             pass
     wikipedia_seen = existing_bracket.get('wikipedia_seen', False)
 
+    # Once confirmed, R32 teams and wiki slots are locked — nothing can change.
+    # Skip re-computing and re-writing to prevent a transient Wikipedia fetch
+    # error from reverting confirmed=True back to provisional on a later cron run.
+    if existing_bracket.get('confirmed') is True:
+        print('Knockout bracket already confirmed — skipping write')
+        return
+
     # Check which groups have started
     groups_started = set()
     for num, grp, t1, t2 in GROUP_MATCHES:
@@ -1638,6 +1645,35 @@ if __name__ == '__main__':
         print(f'Found {len(ko_results)} completed KO matches')
         for m in sorted(ko_results):
             print(f'  M{m}: {ko_results[m]}')
+
+        # Regression guard: merge with existing KO CSV so a transient ESPN outage
+        # (0 events returned) never wipes previously confirmed KO results.
+        existing_ko_results = {}
+        existing_ko_scores  = {}
+        ko_csv_path = 'results/knockout_results.csv'
+        if os.path.exists(ko_csv_path):
+            with open(ko_csv_path, newline='', encoding='utf-8') as _f:
+                for row in csv.DictReader(_f):
+                    try:
+                        m = int(row['match'])
+                        existing_ko_results[m] = row['winner']
+                        hs = row.get('home_score', '')
+                        as_ = row.get('away_score', '')
+                        if hs and as_:
+                            hp = row.get('home_pen', '')
+                            ap = row.get('away_pen', '')
+                            if hp and ap:
+                                existing_ko_scores[m] = (int(hs), int(as_), int(hp), int(ap))
+                            else:
+                                existing_ko_scores[m] = (int(hs), int(as_))
+                    except (KeyError, ValueError):
+                        pass
+        if len(ko_results) < len(existing_ko_results):
+            print(f'ESPN returned {len(ko_results)} KO results vs '
+                  f'{len(existing_ko_results)} on disk — merging to avoid regression')
+            ko_results = {**existing_ko_results, **ko_results}
+            ko_scores  = {**existing_ko_scores,  **ko_scores}
+
         write_ko_results_csv(ko_results, ko_scores)
     else:
         print('\nNo knockout_bracket.json yet — KO results will run once bracket is confirmed')
