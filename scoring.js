@@ -113,10 +113,12 @@ if (typeof R16 !== 'undefined') {
   _assertEq(_SF,  SF,  '_SF/SF');
 }
 
-function _isTbd(name) {
-  return !name || name === 'TBD' || /^[WL]\d+$/.test(name) ||
-         /^[12][A-L]$/.test(name) || /^3M\d+$/.test(name);
-}
+// In browser, bracket.js (loaded first) provides isTbd — alias it to avoid
+// two implementations drifting. In Node tests and group-picks page (no bracket.js),
+// falls back to own copy.
+const _isTbd = (typeof isTbd !== 'undefined') ? isTbd
+  : name => !name || name === 'TBD' || /^[WL]\d+$/.test(name)
+         || /^[12][A-L]$/.test(name) || /^3M\d+$/.test(name);
 
 // ── KO match points ───────────────────────────────────────────────────────────
 const KO_POINTS = {
