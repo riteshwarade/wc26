@@ -1598,13 +1598,6 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed, bracketData)
 }
 
 // ── Mobile bracket tab switcher ───────────────────────────
-function switchBracketTab(roundId) {
-  document.querySelectorAll('.bk-tab').forEach(b =>
-    b.classList.toggle('active', b.dataset.round === roundId));
-  document.querySelectorAll('.bk-tab-panel').forEach(p =>
-    p.classList.toggle('active', p.id === 'bk-panel-' + roundId));
-}
-
 // ── Tooltip ───────────────────────────────────────────────
 const tooltip = document.getElementById('sq-tooltip');
 
@@ -1709,24 +1702,27 @@ document.addEventListener('mouseout', e => {
 // ── Live scores fetch + polling ───────────────────────────
 const ESPN_SCOREBOARD = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard';
 
+// ESPN indexes matches by ET date, not UTC — a 10 PM ET match = 2 AM UTC next day.
+// Fetch yesterday + today UTC to catch any match currently live.
+async function _fetchEspnEvents() {
+  const now  = new Date();
+  const yest = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const d1   = yest.toISOString().slice(0, 10).replace(/-/g, '');
+  const d2   = now.toISOString().slice(0, 10).replace(/-/g, '');
+  const [r1, r2] = await Promise.all([
+    fetch(`${ESPN_SCOREBOARD}?dates=${d1}`),
+    fetch(`${ESPN_SCOREBOARD}?dates=${d2}`),
+  ]);
+  return [
+    ...((r1.ok ? await r1.json() : {}).events || []),
+    ...((r2.ok ? await r2.json() : {}).events || []),
+  ];
+}
+
 async function fetchLiveScores() {
   if (!LIVE_SCORES_ENABLED || knockoutMode) return;
   try {
-    // ESPN indexes matches by local ET date, not UTC.
-    // A 10 PM ET match = 2 AM UTC next day, so at live time the UTC date is already "tomorrow".
-    // Fetch yesterday + today UTC to catch any match that is currently live.
-    const now  = new Date();
-    const yest = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const d1   = yest.toISOString().slice(0, 10).replace(/-/g, '');
-    const d2   = now.toISOString().slice(0, 10).replace(/-/g, '');
-    const [r1, r2] = await Promise.all([
-      fetch(`${ESPN_SCOREBOARD}?dates=${d1}`),
-      fetch(`${ESPN_SCOREBOARD}?dates=${d2}`),
-    ]);
-    const allEvents = [
-      ...((r1.ok ? await r1.json() : {}).events || []),
-      ...((r2.ok ? await r2.json() : {}).events || []),
-    ];
+    const allEvents = await _fetchEspnEvents();
 
     const newLive = {};
     let anyIn = false;
@@ -1837,18 +1833,7 @@ async function fetchKoLiveScores() {
   if (!LIVE_SCORES_ENABLED || !knockoutMode) return;
   if (!_lastKoBracketData) return;
   try {
-    const now  = new Date();
-    const yest = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const d1   = yest.toISOString().slice(0, 10).replace(/-/g, '');
-    const d2   = now.toISOString().slice(0, 10).replace(/-/g, '');
-    const [r1, r2] = await Promise.all([
-      fetch(`${ESPN_SCOREBOARD}?dates=${d1}`),
-      fetch(`${ESPN_SCOREBOARD}?dates=${d2}`),
-    ]);
-    const allEvents = [
-      ...((r1.ok ? await r1.json() : {}).events || []),
-      ...((r2.ok ? await r2.json() : {}).events || []),
-    ];
+    const allEvents = await _fetchEspnEvents();
 
     const newLive = {};
     let anyIn = false;

@@ -319,13 +319,6 @@ function downloadCSV(name) {
 }
 
 // ── Mobile tab view (Variant 2) ──────────────────────────────────────────────
-function switchBracketTab(roundId) {
-  document.querySelectorAll('.bk-tab').forEach(b =>
-    b.classList.toggle('active', b.dataset.round === roundId));
-  document.querySelectorAll('.bk-tab-panel').forEach(p =>
-    p.classList.toggle('active', p.id === 'bk-panel-' + roundId));
-}
-
 function mobPickCard(m) {
   const [h, a]   = getTeams(m);
   const picked   = picks[m];

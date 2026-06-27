@@ -107,7 +107,7 @@ Three bracket variants — all share `bracket.js` primitives, each supplies its 
 
 ### JS primitives (`bracket.js`)
 
-- Exports: `KO_SCHEDULE`, `koDisplay()`, `R16`, `QF`, `SF`, `R32_SLOTS`, `FLAGS`, `RANKINGS`, `roundLabel()`, `matchCard()`, `buildBracketHtml()`, `positionAndConnectBracket()`, `drawBracketConnectors()`, `slotCls()`, `MOB_ROUNDS`, `MOB_PAIR_NEXT`, `buildMobTabHtml()`
+- Exports: `KO_SCHEDULE`, `koDisplay()`, `R16`, `QF`, `SF`, `R32_SLOTS`, `FLAGS`, `RANKINGS`, `roundLabel()`, `matchCard()`, `buildBracketHtml()`, `positionAndConnectBracket()`, `drawBracketConnectors()`, `slotCls()`, `MOB_ROUNDS`, `MOB_PAIR_NEXT`, `buildMobTabHtml()`, `switchBracketTab()`
 - Match numbers: R32=73–88, R16=89–96, QF=97–100, SF=101–102, 3rd=103, Final=104
 - R32 display order follows Wikipedia bracket (not M73–M88 numeric): `[74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87]`
 - `bkTeamRow` renders flag in `.bk-fl` and name+rank in `.bk-tn` separately — do NOT call `teamHtml()` inside bracket cards (double-flag bug)
