@@ -68,7 +68,7 @@ const CARDS_URL      = `${_RAW}/results/group_cards.json`;
 const _gamesParam = new URLSearchParams(window.location.search).get('games');
 const _gamesN     = _gamesParam !== null ? Math.max(0, Math.min(104, parseInt(_gamesParam, 10))) : null;
 const knockoutMode = (_gamesN !== null ? _gamesN >= 73 : false)
-  || new Date() >= new Date('2026-06-28T00:00:00Z');
+  || new Date() >= new Date('2026-06-28T17:00:00Z'); // 2 hrs before M73 (19:00 UTC)
 
 function _sliceCsv(csv, n) {
   const lines = csv.trim().split('\n');
