@@ -492,6 +492,8 @@ GitHub → Actions → "Clear simulation data" → Run workflow
 
 Names are stored as keys in the picks JSON and displayed on the leaderboard. Format: **"First L"** — first name(s) in full, last name abbreviated to initial (no period). Abbreviation is UI-only via `_abbrevName(name)` in the leaderboard JS — full names are stored in the picks JSON. Examples: stored as `Cole Mccarren`, displayed as `Cole M`. Numeric suffixes are not abbreviated (`Simulation 1` stays as-is). This sidesteps `.title()` mangling (McCarren → Mccarren) since the mangled last name is never visible.
 
+**macOS NFD filename bug (fixed):** macOS APFS/HFS+ stores all filenames in NFD Unicode normalization. Python's `.title()` treats NFD combining accent characters (e.g. U+0301) as word separators, so `víctor` (NFD: `vi` + combining-accent + `ctor`) would title-case to `VíCtor` instead of `Víctor`. Fixed in `aggregate_picks.py` (`name_from_filename` and `name_from_knockout_filename`) by NFC-normalizing before calling `.title()`: `unicodedata.normalize('NFC', name_part.replace('-', ' ')).title()`. Affects any participant with accented characters in their filename (Víctor, Jesús, Joaquín, etc.).
+
 ---
 
 ## Leaderboard data fetching
