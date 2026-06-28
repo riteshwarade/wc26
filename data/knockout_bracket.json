@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-06-28T01:30:23.570412Z",
+  "generated_at": "2026-06-28T01:35:16.229649Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 69,
+  "matches_played": 70,
   "source": "Wikipedia (canonical)",
-  "combination_key": "ABDEFGIL",
+  "combination_key": "BDEFGIKL",
   "combination_found": true,
   "groups": {
     "A": {
@@ -83,6 +83,13 @@
   },
   "qualified_thirds": [
     {
+      "group": "K",
+      "team": "DR Congo",
+      "pts": 4,
+      "gd": 1,
+      "gf": 4
+    },
+    {
       "group": "F",
       "team": "Sweden",
       "pts": 4,
@@ -130,13 +137,6 @@
       "pts": 3,
       "gd": 0,
       "gf": 3
-    },
-    {
-      "group": "A",
-      "team": "South Korea",
-      "pts": 3,
-      "gd": -1,
-      "gf": 2
     }
   ],
   "round_of_32": {
@@ -184,9 +184,9 @@
     },
     "80": {
       "home": "England",
-      "away": "Senegal",
+      "away": "DR Congo",
       "wiki_home": "England",
-      "wiki_away": null
+      "wiki_away": "DR Congo"
     },
     "81": {
       "home": "United States",
@@ -196,9 +196,9 @@
     },
     "82": {
       "home": "Belgium",
-      "away": "South Korea",
+      "away": "Senegal",
       "wiki_home": "Belgium",
-      "wiki_away": null
+      "wiki_away": "Senegal"
     },
     "83": {
       "home": "Portugal",
