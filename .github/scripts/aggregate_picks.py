@@ -12,6 +12,7 @@ import glob
 import json
 import os
 import sys
+import unicodedata
 
 # parse_results.py is in the same directory — import canonical match data from it.
 sys.path.insert(0, os.path.dirname(__file__))
@@ -26,7 +27,7 @@ def name_from_filename(filename):
     """
     base = os.path.basename(filename)
     name_part = base.replace('wc26_group_', '').replace('.csv', '')
-    return name_part.replace('-', ' ').title()
+    return unicodedata.normalize('NFC', name_part.replace('-', ' ')).title()
 
 
 def name_from_knockout_filename(filename):
@@ -35,7 +36,7 @@ def name_from_knockout_filename(filename):
     """
     base = os.path.basename(filename)
     name_part = base.replace('wc26_knockout_', '').replace('.csv', '')
-    return name_part.replace('-', ' ').title()
+    return unicodedata.normalize('NFC', name_part.replace('-', ' ')).title()
 
 
 def load_picks_csv(filepath, match_teams):
