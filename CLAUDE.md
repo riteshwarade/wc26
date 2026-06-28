@@ -459,6 +459,8 @@ python3 test_bracket.py         # bracket + standings (self-contained, no CSV ne
 
 **`--seed N`** — makes simulate.py output reproducible. Without it, results are random each run.
 
+**KO mode trigger:** `knockoutMode` is true when `?games=N` with N ≥ 73, OR when `new Date() >= new Date('2026-06-28T17:00:00Z')` — 2 hours before M73 (19:00 UTC). This is the live date-driven flip; update the timestamp for future tournaments.
+
 **URL params:**
 - `?games=N` — simulate tournament at match N (0–72 group, 73–104 KO); e.g. `?games=88` = R32 complete
 - `?ko=1` — force knockout mode without specifying a game count
