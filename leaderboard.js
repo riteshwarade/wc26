@@ -126,14 +126,25 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
       const [t1, t2] = bracketData ? getKoTeams(m, bracketData, koResults) : ['TBD','TBD'];
       const teamsStr = `${t1} v ${t2}`;
       const pickStr = pr.pick || '—';
-      const resultStr = pr.winner || 'Not played yet';
+      // Live overlay: if match is in-progress/bridge and not yet confirmed in CSV
+      const lm = koLiveData[m];
+      let resultStr;
+      if (pr.winner) {
+        resultStr = pr.winner;
+      } else if (lm) {
+        const leading = lm.homeScore > lm.awayScore ? t1 : lm.awayScore > lm.homeScore ? t2 : null;
+        const score = lm.homeScore > lm.awayScore
+          ? `${lm.homeScore}–${lm.awayScore}`
+          : `${lm.awayScore}–${lm.homeScore}`;
+        resultStr = leading ? `${score} (${leading} leading) · live` : `${lm.homeScore}–${lm.awayScore} · live`;
+      } else {
+        resultStr = 'Not played yet';
+      }
 
       // Contrarian detection: ✦ marker if ≤ 10% of participants got this pick correct
       const _kc = _lastKoCounts && _lastKoCounts[m];
       const _isKoContrarian = _kc && _kc.total > 0 && (_kc.correct / _kc.total) <= 0.10;
       let sqStatus = pr.status === 'correct' && _isKoContrarian ? 'correct-upset' : pr.status;
-      // Live overlay: if match is in-progress/bridge and not yet confirmed in CSV
-      const lm = koLiveData[m];
       if (lm && !koResults[m] && pr.pick) {
         const { homeScore: hs, awayScore: as_ } = lm;
         if (hs !== as_) {
