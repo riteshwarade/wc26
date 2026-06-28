@@ -165,8 +165,8 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
                      : champPr.status === 'wrong'    ? 'champ-wrong'
                      : champPr.status === 'cascaded' ? 'champ-cascaded'
                      : '';
-    const champIcon = ''; // emoji lives in column header only
-    const champLabel = `<span class="champ-pick ${champClass}">${champIcon}${_esc(champName)}</span>`;
+    const champFlag = champPr.pick ? (FLAGS[champPr.pick] || '') : '';
+    const champLabel = `<span class="champ-pick ${champClass}">${champFlag ? champFlag + ' ' : ''}${_esc(champName)}</span>`;
     const koOnlyWarn = p.koOnly
       ? ` <span class="ko-only-warn" title="No group picks found — possible name mismatch">⚠</span>`
       : '';
