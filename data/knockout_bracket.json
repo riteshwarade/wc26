@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-06-27T23:00:30.815666Z",
+  "generated_at": "2026-06-28T01:30:23.570412Z",
   "confirmed": false,
   "wikipedia_seen": true,
   "status": "provisional",
-  "matches_played": 68,
+  "matches_played": 69,
   "source": "Wikipedia (canonical)",
   "combination_key": "ABDEFGIL",
   "combination_found": true,
@@ -203,7 +203,7 @@
     "83": {
       "home": "Portugal",
       "away": "Croatia",
-      "wiki_home": null,
+      "wiki_home": "Portugal",
       "wiki_away": "Croatia"
     },
     "84": {
@@ -227,7 +227,7 @@
     "87": {
       "home": "Colombia",
       "away": "Ghana",
-      "wiki_home": null,
+      "wiki_home": "Colombia",
       "wiki_away": "Ghana"
     },
     "88": {
