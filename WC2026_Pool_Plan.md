@@ -3,6 +3,7 @@
 ## Changelog
 
 | Date | Change |
+| Jun 28, 2026 | **Mobile KO standings: Total breakdown + Max + flag-only champ; eliminated champ faded.** Mobile KO standings now show Total as `128 (72+56)` inline (breakdown in 0.65rem muted, `white-space: nowrap`). Max and Champion columns shown on mobile (champ is flag-only — `.champ-name` hidden). `.champ-wrong` and `.champ-cascaded` changed from red strikethrough to `opacity: 0.25` on both desktop and mobile — applies to the flag. `.mob-pts-breakdown` span hidden on desktop via CSS. `leaderboard.js` `champLabel` wraps name in `.champ-name` span; thead gets `th-champ-full`/`th-champ-mob` spans for responsive header. FandF regenerated, all tests pass. |
 | Jun 28, 2026 | **Add "Group Stage 2" row to scoring tooltip.** Prepended a `stt-row` for Group Stage / 2pts above Round of 32 in the "How scoring works" tooltip in `renderKoStandings`. FandF regenerated. |
 | Jun 28, 2026 | **Scoring tooltip converted to pill; both pills at 0.68rem.** Replaced `border-bottom: 1px dashed` on `.scoring-info-link` with full pill styles (border, border-radius, padding). Both `.scoring-info-link` and `.standings-count` set to `font-size: 0.68rem` (matching the section label). FandF regenerated. |
 | Jun 28, 2026 | **Add flag emoji to champion pick in KO standings.** `renderKoStandings` now prepends `FLAGS[champName]` before the team name in the champion pick cell — same pattern as `teamHtml()`. No-pick case (`'—'`) shows no flag. FandF regenerated. |

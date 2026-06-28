@@ -166,7 +166,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
                      : champPr.status === 'cascaded' ? 'champ-cascaded'
                      : '';
     const champFlag = champPr.pick ? (FLAGS[champPr.pick] || '') : '';
-    const champLabel = `<span class="champ-pick ${champClass}">${champFlag ? champFlag + ' ' : ''}${_esc(champName)}</span>`;
+    const champLabel = `<span class="champ-pick ${champClass}">${champFlag ? champFlag + '<span class="champ-name"> ' + _esc(champName) + '</span>' : _esc(champName)}</span>`;
     const koOnlyWarn = p.koOnly
       ? ` <span class="ko-only-warn" title="No group picks found — possible name mismatch">⚠</span>`
       : '';
@@ -179,7 +179,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
       <td class="td-name">${_esc(_abbrevName(p.name))}${koOnlyWarn}</td>
       <td class="td-grp-pts">${grpPtsCell}</td>
       <td class="td-ko-pts">${p.koPts}</td>
-      <td class="td-total-pts">${p.totalPts}</td>
+      <td class="td-total-pts">${p.totalPts}<span class="mob-pts-breakdown"> (${p.groupPts}+${p.koPts})</span></td>
       <td class="td-max-pts">${p.maxPts}</td>
       <td class="td-champ">${champLabel}</td>
       <td class="td-squares"><div class="squares-wrap nowrap">${koSquares}</div></td>
@@ -201,7 +201,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
               <th class="th-ko-pts">KO</th>
               <th class="th-total-pts">Total</th>
               <th class="th-max-pts">Max</th>
-              <th class="th-champ">Champion</th>
+              <th class="th-champ"><span class="th-champ-full">Champion</span><span class="th-champ-mob">🏆</span></th>
               <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · red italic = cascaded void · empty = pending)</span></th>
               <th class="th-mob-sq">Recent</th>
             </tr>

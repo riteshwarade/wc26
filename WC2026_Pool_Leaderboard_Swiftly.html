@@ -796,8 +796,10 @@
   .th-champ { font-size: 0.82rem; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--neutral-dark); }
   .champ-pick  { font-size: 0.82rem; color: var(--neutral-dark); white-space: nowrap; line-height: 1; }
   .champ-correct   { color: var(--swiftly-blue); font-weight: 600; }
-  .champ-wrong     { color: var(--swiftly-red); text-decoration: line-through; }
-  .champ-cascaded  { color: var(--swiftly-red); text-decoration: line-through; font-style: italic; }
+  .champ-wrong     { opacity: 0.25; }
+  .champ-cascaded  { opacity: 0.25; }
+  .mob-pts-breakdown { display: none; }
+  .th-champ-mob    { display: none; }
   .ko-only-warn    { color: #b45309; font-size: 0.78rem; cursor: help; margin-left: 3px; }
   .grp-floor       { color: #b45309; font-variant-numeric: tabular-nums; }
   .grp-floor-mark  { font-size: 0.65rem; color: #ba7517; vertical-align: baseline; position: relative; top: -0.4em; margin-left: 1px; cursor: help; }
@@ -817,12 +819,19 @@
     .side-right { order: 1; }
 
     /* Standings: hide per-match squares and max-pts — too wide for phones */
-    .th-squares, .td-squares,
-    .th-champ,   .td-champ     { display: none; }
-    .th-max-pts, .td-max-pts   { display: none; }
+    .th-squares, .td-squares   { display: none; }
     /* KO standings: hide split pts columns, keep total */
     .th-grp-pts, .td-grp-pts   { display: none; }
     .th-ko-pts,  .td-ko-pts    { display: none; }
+    /* KO standings: show max + champ (flag only) on mobile */
+    .th-max-pts, .td-max-pts   { display: table-cell; }
+    .th-champ, .td-champ       { display: table-cell; padding-left: 4px; padding-right: 4px; }
+    .th-champ-full             { display: none; }
+    .th-champ-mob              { display: inline; }
+    .champ-name                { display: none; }
+    /* Total column: show breakdown inline */
+    .mob-pts-breakdown         { display: inline; font-size: 0.65rem; color: var(--neutral-medium); }
+    .td-total-pts              { white-space: nowrap; }
     .td-name                   { white-space: normal; }
     /* Show recent-squares column on mobile */
     .th-mob-sq, .td-mob-sq     { display: table-cell; }
