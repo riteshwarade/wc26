@@ -346,15 +346,13 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts, koLiveData 
       hScTxt = String(lm.homeScore);
       aScTxt = String(lm.awayScore);
     }
-    const hHtml  = hTbd ? h : teamHtml(h);
-    const aHtml  = aTbd ? a : teamHtml(a);
     const hScHtml = hScTxt ? `<span class="bk-mob-sc">${hScTxt}</span>` : '';
     const aScHtml = aScTxt ? `<span class="bk-mob-sc">${aScTxt}</span>` : '';
     return `<div class="bk-mob-match">
       <div class="bk-mob-meta"><span>M${m}${date}</span><span class="bk-mob-meta-right">${liveMeta}${livePill}${pill}</span></div>
       <div class="bk-mob-teams">
-        <div class="bk-mob-team${hTbd ? ' tbd' : hCls}"><span class="bk-mob-team-name">${hHtml}</span>${hScHtml}</div>
-        <div class="bk-mob-team${aTbd ? ' tbd' : aCls}"><span class="bk-mob-team-name">${aHtml}</span>${aScHtml}</div>
+        <div class="bk-mob-team${hTbd ? ' tbd' : hCls}">${mobTeamHtml(h)}${hScHtml}</div>
+        <div class="bk-mob-team${aTbd ? ' tbd' : aCls}">${mobTeamHtml(a)}${aScHtml}</div>
       </div>
     </div>`;
   }
@@ -1553,8 +1551,6 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed, bracketData)
     const [h, a] = slotTeams(m);
     const date  = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
     const hTbd  = isTbd(h), aTbd = isTbd(a);
-    const hHtml = hTbd ? h : teamHtml(h);
-    const aHtml = aTbd ? a : teamHtml(a);
     // Wiki slot state for R32 only
     let hCls = hTbd ? ' tbd' : '';
     let aCls = aTbd ? ' tbd' : '';
@@ -1570,8 +1566,8 @@ function renderBracket(results, allGroupsStarted, bracketConfirmed, bracketData)
     return `<div class="bk-mob-match">
       <div class="bk-mob-meta">M${m}${date}</div>
       <div class="bk-mob-teams">
-        <div class="bk-mob-team${hCls}"><span class="bk-mob-team-name">${hHtml}</span></div>
-        <div class="bk-mob-team${aCls}"><span class="bk-mob-team-name">${aHtml}</span></div>
+        <div class="bk-mob-team${hCls}">${mobTeamHtml(h)}</div>
+        <div class="bk-mob-team${aCls}">${mobTeamHtml(a)}</div>
       </div>
     </div>`;
   }

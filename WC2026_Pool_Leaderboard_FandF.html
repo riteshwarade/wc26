@@ -624,7 +624,8 @@
   .bk-mob-team.live-lose { opacity: 0.5; animation: sq-pulse 1.8s ease-in-out infinite; }
   .bk-mob-team.live-tied { animation: sq-pulse 1.8s ease-in-out infinite; }
   .bk-mob-live-min { font-size: 0.72rem; color: var(--swiftly-blue); font-weight: 600; animation: sq-pulse 1.8s ease-in-out infinite; margin-left: 4px; }
-  .bk-mob-team .team-flag { font-size: 0.9em; line-height: 1; vertical-align: middle; }
+  .bk-mob-fl { flex-shrink: 0; line-height: 1; }
+  .bk-mob-tn { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* Wikipedia slot confirmation — R32 bracket (Variant 1) */
   .bk-team.slot-tbd      { animation: sq-pulse 1.8s ease-in-out infinite; }
   .bk-team.slot-mismatch { border-color: #e24b4a; color: #e24b4a; }
@@ -689,7 +690,7 @@
     border: 1.5px solid var(--blue-light);
     background: #ffffff;
   }
-  .bk-mob-team-name { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* .bk-mob-team-name removed — flag+name now in .bk-mob-fl + .bk-mob-tn flex children */
   .bk-mob-sc { flex-shrink: 0; font-weight: inherit; color: inherit; font-variant-numeric: tabular-nums; }
   .bk-mob-team.tbd {
     color: var(--neutral-medium);

@@ -194,6 +194,18 @@ function bkTeamRow(name, stateCls, score, extraAttrs='') {
   return `<div class="bk-team ${cls}"${extraAttrs ? ' ' + extraAttrs : ''}><span class="bk-fl">${flag}</span><span class="bk-tn">${label}</span>${sc}</div>`;
 }
 
+// ── Mobile team HTML: flag + name as separate flex children ──────────────
+// Mirrors bkTeamRow structure so flag emoji doesn't inflate the text line-box.
+// TBD placeholders (no flag) get just a .bk-mob-tn span.
+function mobTeamHtml(name) {
+  if (!name) return '';
+  if (isTbd(name)) return `<span class="bk-mob-tn">${name}</span>`;
+  const flag     = FLAGS[name] || '🏳';
+  const rank     = RANKINGS[name] ? RANKINGS[name] : null;
+  const rankHtml = rank ? ` <span class="team-rank">(${rank})</span>` : '';
+  return `<span class="bk-mob-fl">${flag}</span><span class="bk-mob-tn">${name}${rankHtml}</span>`;
+}
+
 // ── Round label for a given match number ─────────────────
 function roundLabel(num) {
   if (num >= 73 && num <= 88) return 'R32';

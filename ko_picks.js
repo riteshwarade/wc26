@@ -333,13 +333,11 @@ function mobPickCard(m) {
   const date   = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
   const hAttrs = bothPickable ? ` data-match="${m}" data-team="${h.replace(/"/g,'&quot;')}"` : '';
   const aAttrs = bothPickable ? ` data-match="${m}" data-team="${a.replace(/"/g,'&quot;')}"` : '';
-  const hHtml  = hTbd ? h : teamHtml(h);
-  const aHtml  = aTbd ? a : teamHtml(a);
   return `<div class="bk-mob-match" id="mob-card-${m}">
     <div class="bk-mob-meta">${roundLabel(m)} · M${m}${date}</div>
     <div class="bk-mob-teams">
-      <div class="bk-mob-pick-team${hTbd ? ' tbd' : hCls}"${hAttrs}><span class="bk-mob-team-name">${hHtml}</span></div>
-      <div class="bk-mob-pick-team${aTbd ? ' tbd' : aCls}"${aAttrs}><span class="bk-mob-team-name">${aHtml}</span></div>
+      <div class="bk-mob-pick-team${hTbd ? ' tbd' : hCls}"${hAttrs}>${mobTeamHtml(h)}</div>
+      <div class="bk-mob-pick-team${aTbd ? ' tbd' : aCls}"${aAttrs}>${mobTeamHtml(a)}</div>
     </div>
   </div>`;
 }

@@ -321,6 +321,8 @@ renderStandings(_lastStandings, _liveData);
 `.bk-mob-match` — grey background (`#f4f5f6`), `0.5px solid #dde3ea` border, `border-radius: 10px`. Individual match card nested inside the pair group.
 Team rows (`.bk-team`) remain white with `#cce8f4` border. Selected winner: solid Swiftly Blue. Loser: transparent/faded. Defined in each HTML file (not `bracket.js`).
 
+**Mobile team row flag separation:** `mobTeamHtml(name)` in `bracket.js` renders flag in `.bk-mob-fl` (separate flex child, `flex-shrink: 0`) and name+rank in `.bk-mob-tn` (flex: 1, overflow ellipsis) — same pattern as desktop `bkTeamRow`. This prevents flag emoji from inflating the line-box height for known-team rows vs TBD rows. TBD placeholders get just a `.bk-mob-tn` span (no flag). Used by all 3 mobile card builders: `mobMatchCard` (V1, `leaderboard.js`), `mobPickCard` (V2, `ko_picks.js`), `koMobMatchCard` (V3, `leaderboard.js`). CSS: `.bk-mob-fl` and `.bk-mob-tn` defined in both HTML files; `.bk-mob-team-name` removed.
+
 ---
 
 ## Mobile breakpoints (leaderboard)
