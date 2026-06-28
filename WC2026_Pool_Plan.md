@@ -3,6 +3,7 @@
 ## Changelog
 
 | Date | Change |
+| Jun 27, 2026 | **Fix: restore divider between 3rd place and Final squares.** `103` was dropped from `KO_ROUND_BREAKS` during the Tier 1 JS extraction refactor (`5f1fee3`) — the inline HTML had `[88, 96, 100, 102, 103]` but `leaderboard.js` was extracted with `[88, 96, 100, 102]`. Added `103` back. FandF regenerated. |
 | Jun 27, 2026 | **Increase KO standings squares to 14px.** `.sq` width/height increased from 12px → 14px; `.sq-divider` height matched. 14px is the safe maximum — text line-height (~15px) still drives row height so rows don't grow. No mobile impact: `.td-squares` is hidden on mobile and JS forces KO mobile squares to `sq-sm` (10px). `.sq-sm` (group stage + mobile) unchanged. FandF regenerated. |
 | Jun 27, 2026 | **Fix: KO mode flip time.** `knockoutMode` date threshold changed from `2026-06-28T00:00:00Z` (midnight UTC) to `2026-06-28T17:00:00Z` — 2 hours before M73 kicks off at 19:00 UTC. The midnight threshold was too early, flipping the leaderboard to KO mode ~19 hours before any KO results existed. |
 | Jun 26, 2026 | **Fix: scoring tooltip text wrapping.** `.scoring-tooltip-box` needed `white-space: normal` to override the inherited `nowrap` from `.scoring-info-anchor` — without it, the note line in the tooltip overflowed without wrapping. FandF regenerated. |
