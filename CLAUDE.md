@@ -558,6 +558,8 @@ Group `pickResults[num].status`: `correct` · `correct-upset` · `wrong` · `pen
 
 KO `koPickResults[num].status`: same five + `cascaded` (team already eliminated, pick voids)
 
+**`cascaded` visual:** `.sq-cascaded` renders as transparent fill with `1.5px solid var(--swiftly-red)` border — distinguishes voided-future picks from confirmed-wrong (solid red). Game hasn't been played yet so the outline signals "this will be wrong once played."
+
 ### Contrarian detection (`correct-upset`)
 
 A pick is promoted from `correct` to `correct-upset` when ≤ 10% of participants got that match correct (i.e., the match's correctness pill is in the Contrarian tier). `_isUpsetResult` has been removed — contrarian is pool-consensus-based, not FIFA-ranking-based. Applies to both group and KO squares.
