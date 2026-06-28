@@ -1998,15 +1998,19 @@ async function init() {
       // with a version missing the just-confirmed result, reverting points to old.
       const _newMatchCount = Object.keys(results).length;
       const _oldMatchCount = _lastResults ? Object.keys(_lastResults).length : -1;
-      // Freeze group standings once bracketConfirmed + all 72 results seen.
-      // After this point ESPN score corrections are ignored — group points are final.
-      if (!_groupFrozen && bracketConfirmed && _newMatchCount === 72) _groupFrozen = true;
+      // Update stored state BEFORE setting the freeze flag.
+      // If this is the first init() with 72 results + bracketConfirmed=true, the freeze
+      // must not block the update — otherwise _lastResults stays null and
+      // Object.keys(_lastResults) throws "Cannot convert undefined or null to object".
       if (!_groupFrozen && _newMatchCount >= _oldMatchCount) {
         // Store for live polling re-renders
         _lastStandings = standings;
         _lastResults   = results;
         _lastGrpCounts = grpCounts;
       }
+      // Freeze group standings once bracketConfirmed + all 72 results seen.
+      // After this point ESPN score corrections are ignored — group points are final.
+      if (!_groupFrozen && bracketConfirmed && _newMatchCount === 72) _groupFrozen = true;
       // Sticky bar — updated after stale guard so match count stays in sync with points
       const played = Object.keys(_lastResults).length;
       document.getElementById('matchesPlayed').textContent = `${played} / 72 matches played`;
