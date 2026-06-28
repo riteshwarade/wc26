@@ -282,13 +282,16 @@ renderKoBracket(_lastKoBracketData, _lastKoResults, _lastKoScores, _lastKoCounts
 ```js
 const _newMatchCount = Object.keys(results).length;
 const _oldMatchCount = _lastResults ? Object.keys(_lastResults).length : -1;
-if (!_groupFrozen && bracketConfirmed && _newMatchCount === 72) _groupFrozen = true;
+// Update BEFORE setting freeze — see order note below.
 if (!_groupFrozen && _newMatchCount >= _oldMatchCount) {
   _lastStandings = standings; _lastResults = results; _lastGrpCounts = grpCounts;
 }
+if (!_groupFrozen && bracketConfirmed && _newMatchCount === 72) _groupFrozen = true;
 renderStandings(_lastStandings, _liveData);
 ```
 `_groupFrozen` (module-scope, init: `false`) is set permanently the first time `bracketConfirmed && matchCount === 72`. Once frozen, `_lastResults`/`_lastStandings`/`_lastGrpCounts` are never overwritten — group points are locked even if ESPN later corrects a score. The stale-CSV match-count guard still runs for the non-frozen case (group stage in progress). All downstream renders (`renderResults`, `renderGroupTables`, `renderBracket`) and the sticky bar `played` count use `_lastResults`/`_lastGrpCounts` instead of local `results`/`grpCounts`, so match count and points always move in lockstep.
+
+**Order matters — update before freeze:** The update block must run before the freeze check. If `_lastResults` is `null` (first page load) and the first `init()` call already sees 72 results + `bracketConfirmed=true`, the old order set `_groupFrozen=true` first, then the update guard failed (`!_groupFrozen` = false), leaving `_lastResults=null`. `Object.keys(null)` then threw `"Cannot convert undefined or null to object"` — crashing every section. Fixed Jun 28 by swapping the two `if` blocks.
 
 **Bridge-period flash fix:** During the bridge, `fetchLiveScores` calls `init()` (to re-check the CSV), and `init()` was calling `fetchLiveScores()` again unconditionally — creating a rapid loop (~200–500ms per iteration) that re-rendered `renderBracket` on each pass, causing the bracket to flash between positioned and unpositioned states every ~1s. Two fixes: (1) `renderGroupTables` and `renderBracket` in `init()` are now gated on `freshData || bracketChanged` — `freshData = currentMatchCount > _lastRenderedMatchCount` (only true when the CSV gains a confirmed result); `bracketChanged = bracketConfirmed !== _lastBracketConfirmed` (only true when Provisional flips to Confirmed). Tracked by module-scope `_lastRenderedMatchCount` (init: -1) and `_lastBracketConfirmed` (init: `undefined`). (2) The inner `fetchLiveScores()` call in `init()` is guarded with `&& !_livePoller` — only fires on initial page load before the 60s interval is started.
 
