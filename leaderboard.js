@@ -112,7 +112,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
   const koPlayedNums = koChronoOrder.filter(m => koResults[m] || koLiveData[m]);
   const koMobMatchNums = new Set(koPlayedNums.slice(-KO_MOB_LAST));
 
-  const KO_ROUND_BREAKS = new Set([88, 96, 100, 102]); // dividers after R32/R16/QF/SF; 103 removed (trailing divider after 3rd-place)
+  const KO_ROUND_BREAKS = new Set([88, 96, 100, 102, 103]); // dividers after R32/R16/QF/SF/3rd-place
   let rank = 1, prevPts = null, rows = '';
   combinedStandings.forEach((p, i) => {
     if (p.totalPts !== prevPts) { rank = i + 1; prevPts = p.totalPts; }
