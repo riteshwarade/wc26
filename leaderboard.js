@@ -1992,9 +1992,7 @@ async function init() {
         renderKoBracket(_lastKoBracketData || bracketData, _lastKoResults || {}, _lastKoScores, _lastKoCounts, _koLiveData);
       }
       if (LIVE_SCORES_ENABLED && !_koLivePoller) {
-        fetchKoLiveScores().then(() => {
-          if (Object.keys(_koLiveData).length > 0 || _koPendingResults.size > 0) startKoLivePolling();
-        });
+        fetchKoLiveScores().then(() => startKoLivePolling());
       }
     } else {
       _buildAbbrevMap(standings.map(p => p.name));

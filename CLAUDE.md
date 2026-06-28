@@ -301,6 +301,8 @@ renderStandings(_lastStandings, _liveData);
 
 **KO bracket live treatment (built):** During a live KO match, both team rows pulse (1→0.3→1, 1.8s). Currently winning team: `.live-win` — pulsing solid blue. Currently losing team: `.live-lose` — pulsing muted/transparent. If tied (ET/pens): no win/lose class on either row — match number label pulses via `.bk-mnum-label.live`. Live minute shown in `.bk-mnum-live` span alongside the match number label. On FT (CSV confirmed), rows snap to solid `.w`/`.l` winner/loser state. Bridge period (ESPN post, CSV unconfirmed): `_koPendingResults` tracks; polling continues. 135 min threshold (vs 95 for group) to account for ET + pens.
 
+**KO live polling startup (fixed):** `startKoLivePolling()` is now called unconditionally after the first `fetchKoLiveScores()` on page load — same pattern as `stopKoLivePolling()` self-terminating when `anyIn = false && _koPendingResults.size === 0`. Previously the poller was only started if `_koLiveData` was non-empty after the first fetch; if the page loaded before ESPN marked the game `in`, the 60s poller never started and live scores would be missing for up to 5 minutes (until the next `init()` retry).
+
 **KO live — `_pendingResults` seeding (same two paths as group):**
 - **Score-based:** `_koBridgeScores[num]` set + CSV not confirmed → added to `_koPendingResults` each poll cycle.
 - **Time-based fallback:** elapsed > 135 min from kickoff and < 24 h → add to `_koPendingResults`.
