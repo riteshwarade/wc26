@@ -600,13 +600,13 @@ A participant who submitted KO picks but has no matching group picks (by name) i
 
 **`scoring.js`:** `minGroupPts = Math.min(...groupStandings.map(p => p.points))` — computed once before the KO-only loop; falls back to 0 if `groupStandings` is empty. KO-only row: `groupPts: minGroupPts, points: minGroupPts, totalPts: minGroupPts + koPts, maxPts: minGroupPts + koPossiblePts`.
 
-**`leaderboard.js`:** When `p.groupPtsIsFloor`, the Grp cell renders as `<span class="grp-floor">N<span class="grp-floor-mark" title="...">*</span></span>` — amber number + small amber superscript asterisk.
+**`leaderboard.js`:** When `p.groupPtsIsFloor`, the Grp cell renders as `<span class="grp-floor">N<span class="grp-floor-mark">*</span></span>` — amber number + small amber superscript asterisk. Hovering shows the custom `#sq-tooltip` ("Floor score / Minimum group pts — no group picks submitted") via `_showFloorTooltip()` wired into the mouseover/mouseout/touchstart handlers. No `title` attribute (avoids native ~1s delay and `?` cursor).
 
-**CSS:** `.grp-floor { color: #b45309 }` · `.grp-floor-mark { font-size: 0.65rem; color: #ba7517; vertical-align: baseline; position: relative; top: -0.4em }` (use `position: relative` not `vertical-align: super` — the latter expands the line box and adds ~1.6px to row height) · `.ko-only-warn { color: #b45309; font-size: 0.78rem; cursor: help; margin-left: 3px; }` — all in Swiftly HTML.
+**CSS:** `.grp-floor { color: #b45309 }` · `.grp-floor-mark { font-size: 0.65rem; color: #ba7517; vertical-align: baseline; position: relative; top: -0.4em }` (use `position: relative` not `vertical-align: super` — the latter expands the line box and adds ~1.6px to row height) — all in Swiftly HTML. No `cursor: help` (removed — was showing a `?` next to the cursor).
 
-**⚠ icon:** All KO-only rows (both legitimate joiners and name mismatches) show a `⚠` icon in the Name cell via `.ko-only-warn` span with `title="No group picks found — possible name mismatch"`. This is the signal to check for a name mismatch.
+**⚠ icon:** Removed. The amber `N*` in the Grp cell is sufficient signal for both legitimate KO-only joiners and name mismatches.
 
-**Name mismatch:** Both the orphaned KO row (showing floor pts + ⚠) and the real group-only row (group pts + 0 KO) appear simultaneously. Fix by renaming the KO picks file to match the group picks name.
+**Name mismatch:** Both the orphaned KO row (showing floor pts + amber `*`) and the real group-only row (group pts + 0 KO) appear simultaneously. Fix by renaming the KO picks file to match the group picks name.
 
 ---
 
