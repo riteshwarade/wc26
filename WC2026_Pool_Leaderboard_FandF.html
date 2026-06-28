@@ -618,6 +618,7 @@
   .bk-team.live-tied { animation: sq-pulse 1.8s ease-in-out infinite; }
   .bk-mnum-label.live { color: var(--swiftly-blue); animation: sq-pulse 1.8s ease-in-out infinite; }
   .bk-mnum-live { font-size: 0.68rem; color: var(--swiftly-blue); font-weight: 600; animation: sq-pulse 1.8s ease-in-out infinite; }
+  .bk-mnum-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
   /* Mobile live */
   .bk-mob-team.live-win { background: var(--swiftly-blue); color: #ffffff; animation: sq-pulse 1.8s ease-in-out infinite; }
   .bk-mob-team.live-lose { opacity: 0.5; animation: sq-pulse 1.8s ease-in-out infinite; }
@@ -668,7 +669,11 @@
     font-size: 0.70rem;
     color: var(--neutral-dark);
     margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
+  .bk-mob-meta-right { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
   .bk-mob-teams { display: flex; flex-direction: column; gap: 4px; }
   .bk-mob-team {
     display: flex;
@@ -795,7 +800,7 @@
     border-radius: 1px;
     flex-shrink: 0;
   }
-  .th-champ, .td-champ { white-space: nowrap; padding-left: 8px; padding-right: 12px; text-align: center; }
+  .th-champ, .td-champ { white-space: nowrap; padding-left: 8px; padding-right: 8px; text-align: center; }
   .th-champ { font-size: 0.82rem; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--neutral-dark); }
   .champ-pick  { font-size: 0.82rem; color: var(--neutral-dark); white-space: nowrap; line-height: 1; }
   .champ-correct   { color: var(--swiftly-blue); font-weight: 600; }
