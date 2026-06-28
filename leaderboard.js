@@ -309,8 +309,7 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts, koLiveData 
     const aHtml  = aTbd ? a : teamHtml(a);
     const hScHtml = hScTxt ? `<span class="bk-mob-sc">${hScTxt}</span>` : '';
     const aScHtml = aScTxt ? `<span class="bk-mob-sc">${aScTxt}</span>` : '';
-    const upCls  = (!winner && !lm) ? ' bk-mob-upcoming' : '';
-    return `<div class="bk-mob-match${upCls}">
+    return `<div class="bk-mob-match">
       <div class="bk-mob-meta">M${m}${date}${pill}${liveMeta}</div>
       <div class="bk-mob-teams">
         <div class="bk-mob-team${hTbd ? ' tbd' : hCls}"><span class="bk-mob-team-name">${hHtml}</span>${hScHtml}</div>
