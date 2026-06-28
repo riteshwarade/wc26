@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-06-28T04:05:18.845076Z",
-  "confirmed": false,
+  "generated_at": "2026-06-28T04:10:21.327245Z",
+  "confirmed": true,
   "wikipedia_seen": true,
-  "status": "provisional",
+  "status": "confirmed",
   "matches_played": 72,
   "source": "Wikipedia (canonical)",
   "combination_key": "BDEFIJKL",
