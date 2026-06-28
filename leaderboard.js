@@ -168,7 +168,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
     const champFlag = champPr.pick ? (FLAGS[champPr.pick] || '') : '';
     const champLabel = `<span class="champ-pick ${champClass}">${champFlag ? champFlag + '<span class="champ-name"> ' + _esc(champName) + '</span>' : _esc(champName)}</span>`;
     const grpPtsCell = p.groupPtsIsFloor
-      ? `<span class="grp-floor" title="Floor score — minimum group pts; no group picks found">${p.groupPts}<span class="grp-floor-mark">*</span></span>`
+      ? `<span class="grp-floor">${p.groupPts}<span class="grp-floor-mark">*</span></span>`
       : p.groupPts;
 
     rows += `<tr>
@@ -1600,6 +1600,12 @@ function _showSqTooltip(sq) {
   tooltip.style.display = 'block';
 }
 
+function _showFloorTooltip() {
+  tooltip.innerHTML = `<div class="tt-match">Floor score</div><div class="tt-result">Minimum group pts — no group picks submitted</div>`;
+  tooltip.style.maxWidth = '240px';
+  tooltip.style.display = 'block';
+}
+
 function _positionTooltipAtEl() {
   tooltip.style.maxWidth = (window.innerWidth - 32) + 'px';
   const colsEl = tooltip.querySelector('.tt-cols');
@@ -1629,17 +1635,21 @@ document.addEventListener('touchstart', e => {
   const openAnchor = document.querySelector('.scoring-info-anchor.tooltip-open');
   if (openAnchor) openAnchor.classList.remove('tooltip-open');
 
-  const pill = e.target.closest('.cp-pill');
-  const sq   = e.target.closest('.sq');
-  if (pill) { _showPillTooltip(pill); _positionTooltipAtEl(); }
-  else if (sq) { _showSqTooltip(sq); _positionTooltipAtEl(); }
+  const pill  = e.target.closest('.cp-pill');
+  const sq    = e.target.closest('.sq');
+  const floor = e.target.closest('.grp-floor');
+  if (pill)  { _showPillTooltip(pill); _positionTooltipAtEl(); }
+  else if (sq)    { _showSqTooltip(sq); _positionTooltipAtEl(); }
+  else if (floor) { _showFloorTooltip(); _positionTooltipAtEl(); }
   else { tooltip.style.display = 'none'; }
 }, { passive: true });
 
 document.addEventListener('mouseover', e => {
   if (_isTouchInteraction) return;
-  const pill = e.target.closest('.cp-pill');
+  const pill  = e.target.closest('.cp-pill');
   if (pill) { _showPillTooltip(pill); return; }
+  const floor = e.target.closest('.grp-floor');
+  if (floor) { _showFloorTooltip(); return; }
   const sq = e.target.closest('.sq');
   if (!sq) { tooltip.style.display = 'none'; return; }
   _showSqTooltip(sq);
@@ -1655,7 +1665,7 @@ document.addEventListener('mousemove', e => {
 
 document.addEventListener('mouseout', e => {
   if (_isTouchInteraction) return;
-  if (!e.target.closest('.sq') && !e.target.closest('.cp-pill')) tooltip.style.display = 'none';
+  if (!e.target.closest('.sq') && !e.target.closest('.cp-pill') && !e.target.closest('.grp-floor')) tooltip.style.display = 'none';
 });
 
 // ── Live scores fetch + polling ───────────────────────────
