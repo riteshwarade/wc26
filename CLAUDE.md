@@ -579,11 +579,11 @@ let sqStatus = pr.status === 'correct' && _isKoContrarian ? 'correct-upset' : pr
 
 **Columns:** `#` · Name · Grp · KO · **Total** · Max · Champ · Picks · Recent (mobile only)
 
-**Square sizing:** Group stage uses `sq-sm` (10px); KO stage uses `sq` (12px). Row height is driven by text cells (~0.78rem ≈ 15px line-height + 16px td padding = ~31px). Squares stay under this threshold only if `squares-wrap` has no extra padding — `.squares-wrap` has no `padding` (was `2px 0`; removing it keeps 12px squares from pushing td-squares above 31px).
+**Square sizing:** Group stage uses `sq-sm` (10px); KO stage uses `sq` (14px). Row height is driven by text cells (~0.78rem ≈ 15px line-height + 16px td padding = ~31px). 14px is the safe maximum — text line-height (~15px) still exceeds square height so text drives row height. 15px would be at the boundary and risky due to sub-pixel rounding. `.td-squares` is `display: none` on mobile so the larger size has no mobile impact; mobile KO squares are explicitly forced to `sq-sm` (10px) in JS.
 
 **Champion pick column (`.td-champ` / `.th-champ`):** Separate column to the right of the squares column. Contains the `champ-pick` span with `line-height: 1` and `white-space: nowrap`. Hidden on mobile alongside `.td-squares`. Previously the champ label was inside `.squares-wrap` without `nowrap`, causing it to wrap to a new flex row and double the row height.
 
-**`.squares-wrap` in KO mode:** Uses `nowrap` class (same as group stage). KO round breaks use `sq-divider` (12px, matching `sq` squares); group stage uses `sq-divider-sm` (10px, matching `sq-sm`).
+**`.squares-wrap` in KO mode:** Uses `nowrap` class (same as group stage). KO round breaks use `sq-divider` (14px, matching `sq` squares); group stage uses `sq-divider-sm` (10px, matching `sq-sm`).
 
 **Color:** `.td-total-pts` uses `var(--swiftly-blue)` + `font-weight: 700` — matches group stage `.td-points` style.
 
