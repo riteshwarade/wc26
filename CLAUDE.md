@@ -244,7 +244,7 @@ A `.td-mob-sq` / `.th-mob-sq` column is hidden on desktop and revealed at `max-w
 
 **Data:** Client-side ESPN fetch (`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=YYYYMMDD`). Polls every ~60s while any match is in-progress (`status.type.state === 'in'`). Stops polling when all today's matches are `post`. Uses existing ESPN name mapping (`ESPN_TEAM_MAP`). **ESPN indexes matches by ET date, not UTC** — fetches yesterday + today UTC to catch late ET games (e.g. 10 PM ET = 2 AM UTC next day).
 
-**Pick statuses (new):** `live-correct` and `live-wrong` — evaluated against current live score, same logic as `correct`/`wrong` but applied only while game is in progress. No `live-draw` — the current score implies exactly one of W1/Draw/W2; the pick either matches or doesn't. Squares pulse (opacity 1→0.3→1, 1.8s) in their full colors (blue for live-correct, red for live-wrong) — same animation as the results table time/score cells. Once final, squares snap to solid.
+**Pick statuses (new):** `live-correct`, `live-wrong`, and `live-draw` — evaluated against current live score, applied only while game is in progress. For group matches, `Draw` is a valid pick so `live-draw` isn't needed (tied score → `cur='Draw'` → `live-correct` if they picked Draw, `live-wrong` otherwise). For KO matches, picks are team names — if the score is tied, the outcome is unknown → `live-draw` (amber/orange pulse). Squares pulse (opacity 1→0.3→1, 1.8s): blue for `live-correct`, red for `live-wrong`, `--swiftly-orange` for `live-draw`. Tooltip: `🔴 Live · tied`. Once final, squares snap to solid.
 
 **Results table:** For in-progress matches (`state: 'in'`), the time cell shows the current minute (e.g. `67′`) and the score cell shows the live score — both pulsing (opacity 1→0.3→1, 1.8s) in default text color. During the bridge period (`state: 'post'`, CSV unconfirmed), the score and `FT` also pulse — same animation — so the results table stays consistent with the pulsing squares. `isBridge = lm.state === 'post'`; `pulse()` applies to both `isLive` and `isBridge`. Scheduled rows unchanged. Final rows (CSV confirmed) show `FT` + solid score. The Correct column also pulses during live and bridge; its count is computed on the fly from `_lastStandings` + current live score (not from `grpCounts`, which only tracks finalized `correct`/`wrong` statuses).
 
@@ -255,7 +255,7 @@ A `.td-mob-sq` / `.th-mob-sq` column is hidden on desktop and revealed at `max-w
 **Diagnostics (DevTools console):**
 ```js
 // Group stage
-document.querySelectorAll('.sq-live-correct, .sq-live-wrong').length  // should be > 0 while game is live
+document.querySelectorAll('.sq-live-correct, .sq-live-wrong, .sq-live-draw').length  // should be > 0 while game is live
 _liveData[matchNum]       // { homeScore, awayScore, state, minute }
 _lastResults?.[matchNum]  // undefined = CSV not updated yet
 _bridgeScores[matchNum]   // { homeScore, awayScore } — persists after ESPN drops event

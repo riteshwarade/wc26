@@ -140,8 +140,9 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
           // Determine which team is currently winning
           const leading = hs > as_ ? t1 : t2;
           sqStatus = pr.pick === leading ? 'live-correct' : 'live-wrong';
+        } else {
+          sqStatus = 'live-draw'; // tied — outcome still unknown
         }
-        // If tied (ET / pens in progress): leave as current status (pending/empty)
       }
 
       const koSqHtml = `<span class="sq sq-${sqStatus}"
@@ -1574,11 +1575,13 @@ function _showSqTooltip(sq) {
                    : status === 'pending'        ? '⏳ Pending'
                    : status === 'live-correct'   ? '🔴 Live · correct so far'
                    : status === 'live-wrong'     ? '🔴 Live · wrong so far'
+                   : status === 'live-draw'      ? '🔴 Live · tied'
                    : status === 'empty'         ? '— No pick'
                    : '—';
   const ttStatusCls = status === 'correct-upset' ? 'correct'
                     : status === 'live-correct'   ? 'correct'
                     : status === 'live-wrong'     ? 'wrong'
+                    : status === 'live-draw'      ? 'pending'
                     : status;
   tooltip.innerHTML = `
     <div class="tt-match"></div>
