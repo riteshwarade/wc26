@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-06-28T01:35:16.229649Z",
+  "generated_at": "2026-06-28T04:00:31.376243Z",
   "confirmed": false,
-  "wikipedia_seen": true,
+  "wikipedia_seen": false,
   "status": "provisional",
-  "matches_played": 70,
+  "matches_played": 72,
   "source": "Wikipedia (canonical)",
-  "combination_key": "BDEFGIKL",
+  "combination_key": "BDEFIJKL",
   "combination_found": true,
   "groups": {
     "A": {
@@ -118,6 +118,13 @@
       "gf": 5
     },
     {
+      "group": "J",
+      "team": "Algeria",
+      "pts": 4,
+      "gd": -2,
+      "gf": 5
+    },
+    {
       "group": "D",
       "team": "Paraguay",
       "pts": 4,
@@ -130,13 +137,6 @@
       "pts": 3,
       "gd": 2,
       "gf": 8
-    },
-    {
-      "group": "G",
-      "team": "Iran",
-      "pts": 3,
-      "gd": 0,
-      "gf": 3
     }
   ],
   "round_of_32": {
@@ -210,13 +210,13 @@
       "home": "Spain",
       "away": "Austria",
       "wiki_home": "Spain",
-      "wiki_away": null
+      "wiki_away": "Austria"
     },
     "85": {
       "home": "Switzerland",
-      "away": "Iran",
+      "away": "Algeria",
       "wiki_home": "Switzerland",
-      "wiki_away": null
+      "wiki_away": "Algeria"
     },
     "86": {
       "home": "Argentina",
