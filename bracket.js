@@ -212,9 +212,9 @@ function roundLabel(num) {
 //   — used by Variant 3 to inject correctness pills and live-minute spans without
 //     post-hoc regex surgery on the returned HTML string.
 function matchCard(num, home, away, label, homeScore, awayScore, homeCls, awayCls,
-                   homeAttrs='', awayAttrs='', mnumExtra='', mnumLabelCls='') {
+                   homeAttrs='', awayAttrs='', mnumExtra='', mnumLabelCls='', suppressDate=false) {
   const round = roundLabel(num);
-  const date = KO_SCHEDULE[num] ? ` · ${koDisplay(num)}` : '';
+  const date = (!suppressDate && KO_SCHEDULE[num]) ? ` · ${koDisplay(num)}` : '';
   const mnumText = `${round} · M${num}${date}${label ? ' · ' + label : ''}`;
   const mnumInner = mnumLabelCls
     ? `<span class="${mnumLabelCls}">${mnumText}</span>${mnumExtra}`

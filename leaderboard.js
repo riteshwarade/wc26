@@ -244,7 +244,7 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts, koLiveData 
       const { homeScore: hs, awayScore: as_ } = lm;
       if (hs > as_) { homeCls = 'live-win'; awayCls = 'live-lose'; }
       else if (as_ > hs) { homeCls = 'live-lose'; awayCls = 'live-win'; }
-      // tied (ET/pens): no class — both rows pulse via .bk-mnum.live parent
+      else { homeCls = 'live-tied'; awayCls = 'live-tied'; }
     }
     let hSc = sc ? sc.home : (lm ? lm.homeScore : undefined);
     let aSc = sc ? sc.away : (lm ? lm.awayScore : undefined);
@@ -254,14 +254,29 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts, koLiveData 
     }
     let mnumLabelCls = 'bk-mnum-label';
     let mnumExtra = '';
+    let suppressDate = false;
     if (winner) {
       const c = koCounts && koCounts[m];
       mnumExtra = c ? correctnessPill(c.correct, c.total, c.names) : '';
+      suppressDate = true;
     } else if (lm) {
       if (lm.homeScore === lm.awayScore) mnumLabelCls += ' live';
-      mnumExtra = lm.minute ? `<span class="bk-mnum-live">${lm.minute}</span>` : '';
+      // Compute live pill (who has the current leader picked)
+      const leader = lm.homeScore > lm.awayScore ? h : lm.awayScore > lm.homeScore ? a : null;
+      let liveC = { correct: 0, total: 0, names: [] };
+      for (const p of _lastKoCombined || []) {
+        const pr = p.koPickResults && p.koPickResults[m];
+        if (pr && pr.pick) {
+          liveC.total++;
+          if (leader && pr.pick === leader) { liveC.correct++; liveC.names.push(_abbrevName(p.name)); }
+        }
+      }
+      const pillHtml = (liveC.total > 0 && leader !== null) ? correctnessPill(liveC.correct, liveC.total, liveC.names) : '';
+      const minSpan = lm.minute ? `<span class="bk-mnum-live">${lm.minute}</span>` : '';
+      mnumExtra = minSpan + pillHtml;
+      suppressDate = true;
     }
-    return matchCard(m, h, a, '', hSc, aSc, homeCls, awayCls, '', '', mnumExtra, mnumLabelCls);
+    return matchCard(m, h, a, '', hSc, aSc, homeCls, awayCls, '', '', mnumExtra, mnumLabelCls, suppressDate);
   }
 
   // Determine podium teams
@@ -294,12 +309,29 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts, koLiveData 
       const { homeScore: hs, awayScore: as_ } = lm;
       if (hs > as_)       { hCls = ' live-win'; aCls = ' live-lose'; }
       else if (as_ > hs)  { hCls = ' live-lose'; aCls = ' live-win'; }
-      // tied: no class
+      else                 { hCls = ' live-tied'; aCls = ' live-tied'; }
     }
-    const date   = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
+    // Strip date/time once game has started or finished
+    const date   = (winner || lm) ? '' : (KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '');
     const c      = koCounts && koCounts[m];
-    const pill   = (winner && c) ? ' ' + correctnessPill(c.correct, c.total, c.names) : '';
+    // Final pill (confirmed result)
+    const finalPill = (winner && c) ? ' ' + correctnessPill(c.correct, c.total, c.names) : '';
+    // Live minute + pill (swap: minute first, then pill)
     const liveMeta = lm && lm.minute ? ` <span class="bk-mob-live-min">${lm.minute}</span>` : '';
+    let livePill = '';
+    if (lm) {
+      const leader = lm.homeScore > lm.awayScore ? h : lm.awayScore > lm.homeScore ? a : null;
+      let liveC = { correct: 0, total: 0, names: [] };
+      for (const p of _lastKoCombined || []) {
+        const pr = p.koPickResults && p.koPickResults[m];
+        if (pr && pr.pick) {
+          liveC.total++;
+          if (leader && pr.pick === leader) { liveC.correct++; liveC.names.push(_abbrevName(p.name)); }
+        }
+      }
+      livePill = (liveC.total > 0 && leader !== null) ? ' ' + correctnessPill(liveC.correct, liveC.total, liveC.names) : '';
+    }
+    const pill = finalPill;
     // Per-team score strings (shown on each row, not in meta)
     let hScTxt = '', aScTxt = '';
     if (sc) {
@@ -319,7 +351,7 @@ function renderKoBracket(bracketData, koResults, koScores, koCounts, koLiveData 
     const hScHtml = hScTxt ? `<span class="bk-mob-sc">${hScTxt}</span>` : '';
     const aScHtml = aScTxt ? `<span class="bk-mob-sc">${aScTxt}</span>` : '';
     return `<div class="bk-mob-match">
-      <div class="bk-mob-meta">M${m}${date}${pill}${liveMeta}</div>
+      <div class="bk-mob-meta">M${m}${date}${liveMeta}${livePill}${pill}</div>
       <div class="bk-mob-teams">
         <div class="bk-mob-team${hTbd ? ' tbd' : hCls}"><span class="bk-mob-team-name">${hHtml}</span>${hScHtml}</div>
         <div class="bk-mob-team${aTbd ? ' tbd' : aCls}"><span class="bk-mob-team-name">${aHtml}</span>${aScHtml}</div>
