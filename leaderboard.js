@@ -168,7 +168,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
     const champFlag = champPr.pick ? (FLAGS[champPr.pick] || '') : '';
     const champLabel = `<span class="champ-pick ${champClass}">${champFlag ? champFlag + '<span class="champ-name"> ' + _esc(champName) + '</span>' : _esc(champName)}</span>`;
     const grpPtsCell = p.groupPtsIsFloor
-      ? `<span class="grp-floor">${p.groupPts}<span class="grp-floor-mark" title="Floor score — minimum group pts; no group picks found">*</span></span>`
+      ? `<span class="grp-floor" title="Floor score — minimum group pts; no group picks found">${p.groupPts}<span class="grp-floor-mark">*</span></span>`
       : p.groupPts;
 
     rows += `<tr>
