@@ -592,7 +592,7 @@ let sqStatus = pr.status === 'correct' && _isKoContrarian ? 'correct-upset' : pr
 
 **Color:** `.td-total-pts` uses `var(--swiftly-blue)` + `font-weight: 700` — matches group stage `.td-points` style.
 
-**Mobile:** `.th-squares`, `.td-squares` hidden at `max-width: 640px`. Max and Champ columns shown. Total cell includes `<span class="mob-pts-breakdown"> (grp+ko)</span>` — hidden on desktop via `.mob-pts-breakdown { display: none }`, shown as `0.65rem` muted text on mobile. `.td-total-pts` gets `white-space: nowrap` on mobile. `.th-mob-sq` / `.td-mob-sq` revealed (last 5 KO squares, chronological order, `sq-sm` size). Mobile columns (matching desktop order): `#` · Name · Total (with breakdown) · Max · 🏆 · Recent.
+**Mobile:** `.th-squares`, `.td-squares` hidden at `max-width: 640px`. Max and Champ columns shown. Total cell shows plain `totalPts` number only (no breakdown). `.th-mob-sq` / `.td-mob-sq` revealed (last 5 KO squares, chronological order, `sq-sm` size). Mobile columns (matching desktop order): `#` · Name · Total · Max · 🏆 · Recent. Fit fix: `.standings-table td { padding: 8px 4px }`, `.td-rank { width: 24px }`, `.td-name { min-width: 64px }`, `.td-max-pts { min-width: 36px; width: 36px }` — keeps all 6 columns within ~343px without scrolling.
 
 ### KO-only participants
 

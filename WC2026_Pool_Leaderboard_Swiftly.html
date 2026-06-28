@@ -798,7 +798,6 @@
   .champ-correct   { color: var(--swiftly-blue); font-weight: 600; }
   .champ-wrong     { opacity: 0.25; }
   .champ-cascaded  { opacity: 0.25; }
-  .mob-pts-breakdown { display: none; }
   .th-champ-mob    { display: none; }
   .ko-only-warn    { color: #b45309; font-size: 0.78rem; cursor: help; margin-left: 3px; }
   .grp-floor       { color: #b45309; font-variant-numeric: tabular-nums; }
@@ -829,10 +828,11 @@
     .th-champ-full             { display: none; }
     .th-champ-mob              { display: inline; }
     .champ-name                { display: none; }
-    /* Total column: show breakdown inline */
-    .mob-pts-breakdown         { display: inline; font-size: 0.65rem; color: var(--neutral-medium); }
-    .td-total-pts              { white-space: nowrap; }
-    .td-name                   { white-space: normal; }
+    /* Tighten cell padding + column widths so all 6 cols fit in ~343px */
+    .standings-table td        { padding: 8px 4px; }
+    .td-rank                   { width: 24px; }
+    .td-name                   { min-width: 64px; white-space: normal; }
+    .td-max-pts                { min-width: 36px; width: 36px; }
     /* Show recent-squares column on mobile */
     .th-mob-sq, .td-mob-sq     { display: table-cell; }
 

@@ -179,7 +179,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
       <td class="td-name">${_esc(_abbrevName(p.name))}${koOnlyWarn}</td>
       <td class="td-grp-pts">${grpPtsCell}</td>
       <td class="td-ko-pts">${p.koPts}</td>
-      <td class="td-total-pts">${p.totalPts}<span class="mob-pts-breakdown"> (${p.groupPts}+${p.koPts})</span></td>
+      <td class="td-total-pts">${p.totalPts}</td>
       <td class="td-max-pts">${p.maxPts}</td>
       <td class="td-champ">${champLabel}</td>
       <td class="td-squares"><div class="squares-wrap nowrap">${koSquares}</div></td>
