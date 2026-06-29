@@ -135,10 +135,6 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
     return a.name.localeCompare(b.name);   // then name asc
   });
 
-  // Sort arrow helper
-  const _arrow = col => _koSortCol === col
-    ? `<span class="sort-arrow sort-arrow-active">${_koSortDir === 'desc' ? '▼' : '▲'}</span>`
-    : `<span class="sort-arrow sort-arrow-inactive">⇅</span>`;
 
   let rows = '';
   _sortedStandings.forEach((p) => {
@@ -251,10 +247,10 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
             <tr>
               <th>#</th>
               <th>Name</th>
-              <th class="th-grp-pts" data-sort="grp">Grp ${_arrow('grp')}</th>
-              <th class="th-ko-pts" data-sort="ko">KO ${_arrow('ko')}</th>
-              <th class="th-total-pts" data-sort="total">Total ${_arrow('total')}</th>
-              <th class="th-max-pts" data-sort="max">Max ${_arrow('max')}</th>
+              <th class="th-grp-pts" data-sort="grp">Grp</th>
+              <th class="th-ko-pts" data-sort="ko">KO</th>
+              <th class="th-total-pts" data-sort="total">Total</th>
+              <th class="th-max-pts" data-sort="max">Max</th>
               <th class="th-podium">1·2·3</th>
               <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · red italic = cascaded void · empty = pending)</span></th>
               <th class="th-mob-sq">Recent</th>
