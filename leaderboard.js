@@ -243,8 +243,8 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
 
   const _scoringTooltipHtml = `<div class="scoring-info-anchor" id="scoring-info-anchor"><span class="scoring-info-link">Scoring ⓘ</span><div class="scoring-tooltip-box"><div class="stt-row"><span>Group Stage</span><span class="stt-pts">2</span></div><div class="stt-row"><span>Round of 32</span><span class="stt-pts">4</span></div><div class="stt-row"><span>Round of 16</span><span class="stt-pts">8</span></div><div class="stt-row"><span>Quarterfinals</span><span class="stt-pts">12</span></div><div class="stt-row"><span>Semifinals</span><span class="stt-pts">16</span></div><div class="stt-row"><span>3rd place</span><span class="stt-pts">12</span></div><div class="stt-row"><span>Final</span><span class="stt-pts">24</span></div></div></div>`;
   document.getElementById('koStandingsSection').innerHTML = `
-    <div class="section-label section-label-row"><span>Knockout Standings <span class="standings-count">${combinedStandings.length} players</span></span>${_scoringTooltipHtml}</div>
-    <div class="section-body">
+    <div class="section-label section-label-row" style="visibility:visible"><span>Knockout Standings <span class="standings-count">${combinedStandings.length} players</span></span>${_scoringTooltipHtml}</div>
+    <div class="section-body" style="visibility:visible">
       <div class="card">
         <table class="standings-table">
           <thead>
