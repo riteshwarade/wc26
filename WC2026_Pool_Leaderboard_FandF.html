@@ -859,8 +859,9 @@
     .side-by-side-layout { flex-direction: column; }
     .side-left  { width: 100%; order: 2; }
     .side-right { order: 1; }
-    /* Standings: allow horizontal scroll instead of clipping */
-    #standings-body .card { overflow-x: auto; }
+    /* Standings: allow horizontal scroll instead of clipping (group + KO) */
+    #standings-body .card,
+    #koStandingsSection .card { overflow-x: auto; }
     /* Bracket: hide 5-column desktop layout, show tab view (same as portrait) */
     .bk-outer { display: none; }
     .bk-mobile-tabs { display: block; }

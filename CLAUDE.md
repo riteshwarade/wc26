@@ -330,7 +330,7 @@ Team rows (`.bk-team`) remain white with `#cce8f4` border. Selected winner: soli
 Two media queries govern mobile layout:
 
 - **Portrait** — `@media (max-width: 640px)`: stacks group tables/results, hides squares + max-pts columns, hides date/time/# in results table, shows mobile bracket tabs. Also reveals `.th-mob-sq` / `.td-mob-sq` — the last-5 recent squares column (see below).
-- **Landscape** — `@media (max-width: 896px) and (orientation: landscape)`: stacks group tables/results (same order as portrait); standings card is `overflow-x: auto` (horizontally scrollable); bracket switches to tab view (`.bk-outer` hidden, `.bk-mobile-tabs` shown — same as portrait). Landscape phones (~667–896px wide) miss the 640px portrait breakpoint entirely, hence the separate query. The KO Picks page has its own landscape block with just the bracket rules (no layout stacking needed there).
+- **Landscape** — `@media (max-width: 896px) and (orientation: landscape)`: stacks group tables/results (same order as portrait); both group standings (`#standings-body .card`) and KO standings (`#koStandingsSection .card`) are `overflow-x: auto` (horizontally scrollable); bracket switches to tab view (`.bk-outer` hidden, `.bk-mobile-tabs` shown — same as portrait). Landscape phones (~667–896px wide) miss the 640px portrait breakpoint entirely, hence the separate query. The KO Picks page has its own landscape block with just the bracket rules (no layout stacking needed there).
 
 ---
 
