@@ -37,6 +37,8 @@ let _koBridgeScores   = {};
 let _koLivePoller     = null;
 // KO render state — stored so fetchKoLiveScores can re-render without re-running init()
 let _lastKoCombined    = null;
+let _koSortCol = 'total';   // active sort column: 'total' | 'max' | 'grp' | 'ko'
+let _koSortDir = 'desc';    // 'asc' | 'desc'
 let _lastKoBracketData = null;
 let _lastKoResults     = null;
 let _lastKoScores      = null;
@@ -113,9 +115,34 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
   const koMobMatchNums = new Set(koPlayedNums.slice(-KO_MOB_LAST));
 
   const KO_ROUND_BREAKS = new Set([88, 96, 100, 102, 103]); // dividers after R32/R16/QF/SF/3rd-place
-  let rank = 1, prevPts = null, rows = '';
-  combinedStandings.forEach((p, i) => {
-    if (p.totalPts !== prevPts) { rank = i + 1; prevPts = p.totalPts; }
+
+  // Precompute Total-based rank from original order (frozen regardless of active sort)
+  const _rankMap = new Map();
+  { let _r = 1, _rPts = null;
+    combinedStandings.forEach((p, i) => {
+      if (p.totalPts !== _rPts) { _r = i + 1; _rPts = p.totalPts; }
+      _rankMap.set(p.name, _r);
+    }); }
+
+  // Sort a display copy; original order preserved for _rankMap
+  const _colKey = { total: 'totalPts', max: 'maxPts', grp: 'groupPts', ko: 'koPts' };
+  const _sortedStandings = [...combinedStandings].sort((a, b) => {
+    const col = _colKey[_koSortCol] || 'totalPts';
+    const diff = _koSortDir === 'desc' ? b[col] - a[col] : a[col] - b[col];
+    if (diff !== 0) return diff;
+    const tDiff = b.totalPts - a.totalPts; // tiebreak: total desc
+    if (tDiff !== 0) return tDiff;
+    return a.name.localeCompare(b.name);   // then name asc
+  });
+
+  // Sort arrow helper
+  const _arrow = col => _koSortCol === col
+    ? `<span class="sort-arrow sort-arrow-active">${_koSortDir === 'desc' ? '▼' : '▲'}</span>`
+    : `<span class="sort-arrow sort-arrow-inactive">⇅</span>`;
+
+  let rows = '';
+  _sortedStandings.forEach((p) => {
+    const rank = _rankMap.get(p.name) || 1;
     const topClass = rank <= 3 ? ' top3' : '';
 
     // KO squares (32 matches) with round dividers after R32/R16/QF/SF
@@ -224,10 +251,10 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
             <tr>
               <th>#</th>
               <th>Name</th>
-              <th class="th-grp-pts">Grp</th>
-              <th class="th-ko-pts">KO</th>
-              <th class="th-total-pts">Total</th>
-              <th class="th-max-pts">Max</th>
+              <th class="th-grp-pts" data-sort="grp">Grp ${_arrow('grp')}</th>
+              <th class="th-ko-pts" data-sort="ko">KO ${_arrow('ko')}</th>
+              <th class="th-total-pts" data-sort="total">Total ${_arrow('total')}</th>
+              <th class="th-max-pts" data-sort="max">Max ${_arrow('max')}</th>
               <th class="th-podium">1·2·3</th>
               <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · red italic = cascaded void · empty = pending)</span></th>
               <th class="th-mob-sq">Recent</th>
@@ -237,6 +264,18 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
         </table>
       </div>
     </div>`;
+  document.querySelectorAll('#koStandingsSection th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.sort;
+      if (_koSortCol === col) {
+        _koSortDir = _koSortDir === 'desc' ? 'asc' : 'desc';
+      } else {
+        _koSortCol = col;
+        _koSortDir = 'desc';
+      }
+      renderKoStandings(_lastKoCombined, _lastKoResults || {}, _lastKoBracketData, _koLiveData);
+    });
+  });
 }
 
 // ── Render KO bracket (KO mode) ───────────────────────────
