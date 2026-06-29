@@ -228,7 +228,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
               <th class="th-ko-pts">KO</th>
               <th class="th-total-pts">Total</th>
               <th class="th-max-pts">Max</th>
-              <th class="th-podium">Podium</th>
+              <th class="th-podium">1·2·3</th>
               <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · red italic = cascaded void · empty = pending)</span></th>
               <th class="th-mob-sq">Recent</th>
             </tr>
