@@ -171,14 +171,32 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
       .map(m => koSqByNum[m].replace('class="sq sq-', 'class="sq sq-sm sq-'))
       .join('');
 
-    const champPr = p.koPickResults[104] || { status: 'empty', pick: null };
-    const champName = champPr.pick || '—';
-    const champClass = champPr.status === 'correct'  ? 'champ-correct'
-                     : champPr.status === 'wrong'    ? 'champ-wrong'
-                     : champPr.status === 'cascaded' ? 'champ-cascaded'
-                     : '';
-    const champFlag = champPr.pick ? (FLAGS[champPr.pick] || '') : '';
-    const champLabel = `<span class="champ-pick ${champClass}">${champFlag ? champFlag + '<span class="champ-name"> ' + _esc(champName) + '</span>' : _esc(champName)}</span>`;
+    // Podium: gold = M104 pick, silver = other finalist (derived from SF picks), bronze = M103 pick
+    const _pr104 = p.koPickResults[104] || {};
+    const _pr103 = p.koPickResults[103] || {};
+    const _pr101 = p.koPickResults[101] || {};
+    const _pr102 = p.koPickResults[102] || {};
+    const goldPick   = _pr104.pick || null;
+    const bronzePick = _pr103.pick || null;
+    // Runner-up: the SF winner that isn't the champion pick
+    let silverPick = null, silverStatus = 'empty';
+    if (goldPick && _pr101.pick && _pr102.pick) {
+      if (goldPick === _pr101.pick) { silverPick = _pr102.pick; silverStatus = _pr102.status || 'empty'; }
+      else                          { silverPick = _pr101.pick; silverStatus = _pr101.status || 'empty'; }
+    } else if (!goldPick) {
+      // No champion pick — show one of the SF picks as placeholder if available
+      silverPick = _pr101.pick || _pr102.pick || null;
+      silverStatus = (_pr101.pick ? _pr101.status : _pr102.status) || 'empty';
+    }
+    const _isFaded = s => s === 'wrong' || s === 'cascaded';
+    const _podiumFlag = (pick, faded) => pick
+      ? `<span class="podium-fl${faded ? ' faded' : ''}">${FLAGS[pick] || '🏳'}</span>`
+      : `<span class="podium-fl faded" style="font-size:0.7rem;color:var(--neutral-medium)">—</span>`;
+    const podiumCell = `<span class="podium-flags">`
+      + _podiumFlag(goldPick,   _isFaded(_pr104.status))
+      + _podiumFlag(silverPick, _isFaded(silverStatus))
+      + _podiumFlag(bronzePick, _isFaded(_pr103.status))
+      + `</span>`;
     const grpPtsCell = p.groupPtsIsFloor
       ? `<span class="grp-floor">${p.groupPts}<span class="grp-floor-mark">*</span></span>`
       : p.groupPts;
@@ -190,7 +208,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
       <td class="td-ko-pts">${p.koPts}</td>
       <td class="td-total-pts">${p.totalPts}</td>
       <td class="td-max-pts">${p.maxPts}</td>
-      <td class="td-champ">${champLabel}</td>
+      <td class="td-podium">${podiumCell}</td>
       <td class="td-squares"><div class="squares-wrap nowrap">${koSquares}</div></td>
       <td class="td-mob-sq"><div class="sq-row-mob">${koMobSquares}</div></td>
     </tr>`;
@@ -210,7 +228,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
               <th class="th-ko-pts">KO</th>
               <th class="th-total-pts">Total</th>
               <th class="th-max-pts">Max</th>
-              <th class="th-champ"><span class="th-champ-full">Champion</span><span class="th-champ-mob">🏆</span></th>
+              <th class="th-podium">Podium</th>
               <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · red italic = cascaded void · empty = pending)</span></th>
               <th class="th-mob-sq">Recent</th>
             </tr>

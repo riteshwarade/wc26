@@ -592,15 +592,13 @@ let sqStatus = pr.status === 'correct' && _isKoContrarian ? 'correct-upset' : pr
 
 **Square sizing:** Group stage uses `sq-sm` (10px); KO stage uses `sq` (14px). Row height is driven by text cells (~0.78rem ≈ 15px line-height + 16px td padding = ~31px). 14px is the safe maximum — text line-height (~15px) still exceeds square height so text drives row height. 15px would be at the boundary and risky due to sub-pixel rounding. `.td-squares` is `display: none` on mobile so the larger size has no mobile impact; mobile KO squares are explicitly forced to `sq-sm` (10px) in JS.
 
-**Champion pick column (`.td-champ` / `.th-champ`):** Separate column to the right of the squares column. Contains the `champ-pick` span with `line-height: 1` and `white-space: nowrap`. On mobile (≤640px): shown but flag-only — `.champ-name` (wraps the team name text) is `display: none`. Header uses `th-champ-full` (hidden on mobile) / `th-champ-mob` (🏆 emoji, shown on mobile) spans. Previously the champ label was inside `.squares-wrap` without `nowrap`, causing it to wrap to a new flex row and double the row height.
-
-**`.champ-wrong` / `.champ-cascaded`:** Both use `opacity: 0.25` (faded flag). Previously red + strikethrough. Applies to both desktop and mobile.
+**Podium column (`.td-podium` / `.th-podium`):** Replaces the old Champion column. Shows three flags per user: 🥇 champion pick (M104), 🥈 runner-up (the SF pick — M101 or M102 — that isn't the champion pick), 🥉 3rd place pick (M103). Each flag fades (`opacity: 0.2`) when the team is eliminated (`status === 'wrong' || 'cascaded'`). Missing picks render as a faint `—`. Header text: `Podium` — same on desktop and mobile (no dual-span needed). Rendered via `.podium-flags` (inline-flex, gap 5px) + `.podium-fl` per flag. Silver derivation: if `champPick === pr101.pick` → silver = `pr102.pick` (and use `pr102.status` for fading); otherwise silver = `pr101.pick`.
 
 **`.squares-wrap` in KO mode:** Uses `nowrap` class (same as group stage). KO round breaks use `sq-divider` (14px, matching `sq` squares); group stage uses `sq-divider-sm` (10px, matching `sq-sm`).
 
 **Color:** `.td-total-pts` uses `var(--swiftly-blue)` + `font-weight: 700` — matches group stage `.td-points` style.
 
-**Mobile:** `.th-squares`, `.td-squares` hidden at `max-width: 640px`. Max and Champ columns shown. Total cell shows plain `totalPts` number only (no breakdown). `.th-mob-sq` / `.td-mob-sq` revealed (last 5 KO squares, chronological order, `sq-sm` size). Mobile columns (matching desktop order): `#` · Name · Total · Max · 🏆 · Recent. Fit fix: `.standings-table td { padding: 8px 4px }`, `.td-rank { width: 24px }`, `.td-name { min-width: 64px }`, `.td-max-pts { min-width: 36px; width: 36px }` — keeps all 6 columns within ~343px without scrolling.
+**Mobile:** `.th-squares`, `.td-squares` hidden at `max-width: 640px`. Max and Podium columns shown. Total cell shows plain `totalPts` number only (no breakdown). `.th-mob-sq` / `.td-mob-sq` revealed (last 5 KO squares, chronological order, `sq-sm` size). Mobile columns (matching desktop order): `#` · Name · Total · Max · Podium · Recent. Fit fix: `.standings-table td { padding: 8px 4px }`, `.td-rank { width: 24px }`, `.td-name { min-width: 64px }`, `.td-max-pts { min-width: 36px; width: 36px }` — keeps all 6 columns within ~343px without scrolling.
 
 ### KO-only participants
 

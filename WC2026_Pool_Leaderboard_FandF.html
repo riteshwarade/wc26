@@ -802,14 +802,11 @@
     border-radius: 1px;
     flex-shrink: 0;
   }
-  .th-champ, .td-champ { white-space: nowrap; padding-left: 8px; padding-right: 8px; text-align: center; }
-  .th-champ { font-size: 0.82rem; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--neutral-dark); text-align: center; }
-  .standings-table th.th-champ { text-align: center; }
-  .champ-pick  { font-size: 0.82rem; color: var(--neutral-dark); white-space: nowrap; line-height: 1; }
-  .champ-correct   { color: var(--swiftly-blue); font-weight: 600; }
-  .champ-wrong     { opacity: 0.25; }
-  .champ-cascaded  { opacity: 0.25; }
-  .th-champ-mob    { display: none; }
+  .th-podium, .td-podium { white-space: nowrap; padding-left: 8px; padding-right: 8px; text-align: center; }
+  .standings-table th.th-podium { text-align: center; }
+  .podium-flags { display: inline-flex; align-items: center; gap: 5px; line-height: 1; }
+  .podium-fl    { font-size: 1.05rem; line-height: 1; }
+  .podium-fl.faded { opacity: 0.2; }
   .ko-only-warn    { color: #b45309; font-size: 0.78rem; cursor: help; margin-left: 3px; }
   .grp-floor       { color: #b45309; font-variant-numeric: tabular-nums; }
   .grp-floor-mark  { font-size: 0.65rem; color: #ba7517; vertical-align: baseline; position: relative; top: -0.4em; margin-left: 1px; }
@@ -833,12 +830,10 @@
     /* KO standings: hide split pts columns, keep total */
     .th-grp-pts, .td-grp-pts   { display: none; }
     .th-ko-pts,  .td-ko-pts    { display: none; }
-    /* KO standings: show max + champ (flag only) on mobile */
+    /* KO standings: show max + podium on mobile */
     .th-max-pts, .td-max-pts   { display: table-cell; }
-    .th-champ, .td-champ       { display: table-cell; padding-left: 4px; padding-right: 4px; }
-    .th-champ-full             { display: none; }
-    .th-champ-mob              { display: inline; }
-    .champ-name                { display: none; }
+    .th-podium, .td-podium     { display: table-cell; padding-left: 4px; padding-right: 4px; }
+    .podium-fl                 { font-size: 0.92rem; }
     /* Tighten cell padding + column widths so all 6 cols fit in ~343px */
     .standings-table td        { padding: 8px 4px; }
     .td-rank                   { width: 24px; }
