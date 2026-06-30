@@ -839,10 +839,12 @@
     /* Tighten cell padding + column widths so all 6 cols fit in ~343px */
     .standings-table td        { padding: 8px 4px; }
     .td-rank                   { width: 24px; }
-    .td-name                   { min-width: 64px; white-space: normal; }
-    .td-max-pts                { min-width: 36px; width: 36px; }
+    .td-name                   { min-width: 0; max-width: 88px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .td-total-pts              { width: 40px; min-width: 40px; }
+    .td-max-pts                { width: 40px; min-width: 40px; }
+    .td-podium                 { width: 60px; min-width: 60px; }
     /* Show recent-squares column on mobile */
-    .th-mob-sq, .td-mob-sq     { display: table-cell; }
+    .th-mob-sq, .td-mob-sq     { display: table-cell; width: 80px; min-width: 80px; }
 
     /* Results table: hide # date & time columns; score stays pinned */
     .th-date, .td-date, .th-time, .td-time { display: none; }
