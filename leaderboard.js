@@ -1,0 +1,2201 @@
+// leaderboard.js — WC2026 Pool leaderboard logic
+// Depends on: bracket.js, scoring.js
+// Config (set inline in HTML before this script): POOL_ID, LIVE_SCORES_ENABLED
+// ── MATCHES sorted by UTC kickoff time (tiebreak: match #) ─
+// Used for mobile recent-squares selection — match numbers are not chronological.
+const _MATCHES_CHRONO = [...MATCHES].sort((a, b) =>
+  a[3] < b[3] ? -1 : a[3] > b[3] ? 1 : a[0] - b[0]
+);
+// ──────────────────────────────────────────────────────────
+
+
+// ── ESPN team name map (5 names differ from internal) ─────
+const ESPN_TEAM_MAP_JS = {
+  'Czechia':             'Czech Republic',
+  'Türkiye':             'Turkey',
+  'Bosnia-Herzegovina':  'Bosnia and Herzegovina',
+  'Congo DR':            'DR Congo',
+  'Curacao':             'Curaçao',
+};
+// ──────────────────────────────────────────────────────────
+
+// ── Live scores state — group stage ──────────────────────
+let _liveData       = {};   // { matchNum: { minute, homeScore, awayScore, state } }
+let _lastStandings  = null;
+let _lastResults    = null;
+let _inInit         = false; // guard: prevents fetchLiveScores from re-entering init()
+let _pendingResults = new Set(); // matches where ESPN said game ended but CSV not yet confirmed
+let _bridgeScores  = {};         // last known score per match — keeps squares pulsing after ESPN drops the event
+let _lastGrpCounts  = null;
+let _livePoller     = null;
+let _groupFrozen    = false; // true once bracketConfirmed+72 results seen — group standings locked
+
+// ── Live scores state — KO stage ─────────────────────────
+let _koLiveData       = {};  // { matchNum: { minute, homeScore, awayScore, state } }
+let _koPendingResults = new Set();
+let _koBridgeScores   = {};
+let _koLivePoller     = null;
+// KO render state — stored so fetchKoLiveScores can re-render without re-running init()
+let _lastKoCombined    = null;
+let _koSortCol = 'total';   // active sort column: 'total' | 'max' | 'grp' | 'ko'
+let _koSortDir = 'desc';    // 'asc' | 'desc'
+let _lastKoBracketData = null;
+let _lastKoResults     = null;
+let _lastKoScores      = null;
+let _lastKoCounts      = null;
+let _lastUpdated    = null;
+let _cardData       = null;  // { matchNum: { teamName: {Y, IR, DR} } } from group_cards.json
+let _lastRenderedMatchCount = -1;   // tracks last match count renderGroupTables/renderBracket ran with
+let _lastBracketConfirmed   = undefined; // tracks last bracketConfirmed value renderBracket ran with
+let _lastBracketWikiKey     = '';         // serialized wiki slot data — triggers re-render when Wikipedia confirms a new slot
+let _lastRenderedKoMatchCount = -1;   // tracks last KO match count renderKoBracket ran with (flash guard)
+let _lastKoLiveStr  = '{}';           // serialized _koLiveData — skip re-render when unchanged; init to '{}' so first empty-live fetch doesn't trigger a redundant renderKoBracket
+// ──────────────────────────────────────────────────────────
+
+
+// All data files → raw.githubusercontent.com with cache: 'no-store' (always fresh, no CDN)
+const _RAW = 'https://raw.githubusercontent.com/riteshwarade/wc26/main';
+const PICKS_URL      = `${_RAW}/data/group_${POOL_ID}_picks.json`;
+const RESULTS_URL    = `${_RAW}/results/group_results.csv`;
+const BRACKET_URL    = `${_RAW}/data/knockout_bracket.json`;
+const KO_PICKS_URL   = `${_RAW}/data/knockout_${POOL_ID}_picks.json`;
+const KO_RESULTS_URL = `${_RAW}/results/knockout_results.csv`;
+const CARDS_URL      = `${_RAW}/results/group_cards.json`;
+
+// ── Mode detection ────────────────────────────────────────
+// ?games=N  simulates the leaderboard at match N (0–104):
+//   0–72  → group stage, first N results shown
+//   73–104 → knockout stage, all 72 group + first (N-72) KO results shown
+// Omit for normal date-driven behaviour.
+const _gamesParam = new URLSearchParams(window.location.search).get('games');
+const _gamesN     = _gamesParam !== null ? Math.max(0, Math.min(104, parseInt(_gamesParam, 10))) : null;
+const knockoutMode = (_gamesN !== null ? _gamesN >= 73 : false)
+  || new Date() >= new Date('2026-06-28T17:00:00Z'); // 2 hrs before M73 (19:00 UTC)
+
+function _sliceCsv(csv, n) {
+  const lines = csv.trim().split('\n');
+  return [lines[0], ...lines.slice(1, n + 1)].join('\n');
+}
+
+
+// ── Render KO teaser (group mode) ────────────────────────
+function renderKoTeaser() {
+  document.getElementById('koTeaserSection').innerHTML = `
+    <div class="ko-teaser card">
+      <div class="ko-teaser-icon">🏆</div>
+      <div class="ko-teaser-title">Knockout Stage</div>
+      <div class="ko-teaser-msg">Knockout picks will be collected after Jun 27. Once submitted, the combined standings will appear here.</div>
+    </div>`;
+}
+
+// ── Rendering helpers ─────────────────────────────────────
+function pickLabel(outcome, t1, t2) {
+  if (outcome === 'W1')   return `${t1} win`;
+  if (outcome === 'W2')   return `${t2} win`;
+  if (outcome === 'Draw') return 'Draw';
+  return '—';
+}
+
+// ── Render KO standings (KO mode) ────────────────────────
+function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData = {}) {
+  if (!combinedStandings || !combinedStandings.length) {
+    document.getElementById('koStandingsSection').innerHTML =
+      '<div class="state-msg"><span class="emoji">📭</span>No standings available yet.</div>';
+    return;
+  }
+
+  const KO_MATCH_ORDER = [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,
+                           89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104];
+  const KO_MOB_LAST = 5;
+  const koChronoOrder = [...KO_MATCH_ORDER].sort((a, b) =>
+    (KO_SCHEDULE[a] || '9999') < (KO_SCHEDULE[b] || '9999') ? -1 :
+    (KO_SCHEDULE[a] || '9999') > (KO_SCHEDULE[b] || '9999') ? 1 : a - b
+  );
+  const koPlayedNums = koChronoOrder.filter(m => koResults[m] || koLiveData[m]);
+  const koMobMatchNums = new Set(koPlayedNums.slice(-KO_MOB_LAST));
+
+  const KO_ROUND_BREAKS = new Set([88, 96, 100, 102, 103]); // dividers after R32/R16/QF/SF/3rd-place
+
+  // Precompute Total-based rank from original order (frozen regardless of active sort)
+  const _rankMap = new Map();
+  { let _r = 1, _rPts = null;
+    combinedStandings.forEach((p, i) => {
+      if (p.totalPts !== _rPts) { _r = i + 1; _rPts = p.totalPts; }
+      _rankMap.set(p.name, _r);
+    }); }
+
+  // Sort a display copy; original order preserved for _rankMap
+  const _colKey = { total: 'totalPts', max: 'maxPts', grp: 'groupPts', ko: 'koPts' };
+  const _sortedStandings = [...combinedStandings].sort((a, b) => {
+    const col = _colKey[_koSortCol] || 'totalPts';
+    const diff = _koSortDir === 'desc' ? b[col] - a[col] : a[col] - b[col];
+    if (diff !== 0) return diff;
+    const tDiff = b.totalPts - a.totalPts; // tiebreak: total desc
+    if (tDiff !== 0) return tDiff;
+    return a.name.localeCompare(b.name);   // then name asc
+  });
+
+
+  let rows = '';
+  _sortedStandings.forEach((p) => {
+    const rank = _rankMap.get(p.name) || 1;
+    const topClass = rank <= 3 ? ' top3' : '';
+
+    // KO squares (32 matches) with round dividers after R32/R16/QF/SF
+    const koSquareParts = [];
+    const koSqByNum = {};
+    for (const m of KO_MATCH_ORDER) {
+      const pr = p.koPickResults[m] || { status: 'empty', pick: null, winner: null };
+      const [t1, t2] = bracketData ? getKoTeams(m, bracketData, koResults) : ['TBD','TBD'];
+      const teamsStr = `${t1} v ${t2}`;
+      const pickStr = pr.pick || '—';
+      // Live overlay: if match is in-progress/bridge and not yet confirmed in CSV
+      const lm = koLiveData[m];
+      let resultStr;
+      if (pr.winner) {
+        resultStr = pr.winner;
+      } else if (lm) {
+        const leading = lm.homeScore > lm.awayScore ? t1 : lm.awayScore > lm.homeScore ? t2 : null;
+        const score = lm.homeScore > lm.awayScore
+          ? `${lm.homeScore}–${lm.awayScore}`
+          : `${lm.awayScore}–${lm.homeScore}`;
+        resultStr = leading ? `${score} (${leading} leading) · live` : `${lm.homeScore}–${lm.awayScore} · live`;
+      } else {
+        resultStr = 'Not played yet';
+      }
+
+      // Contrarian detection: ✦ marker if ≤ 10% of participants got this pick correct
+      const _kc = _lastKoCounts && _lastKoCounts[m];
+      const _isKoContrarian = _kc && _kc.total > 0 && (_kc.correct / _kc.total) <= 0.10;
+      let sqStatus = pr.status === 'correct' && _isKoContrarian ? 'correct-upset' : pr.status;
+      if (lm && !koResults[m] && pr.pick) {
+        const { homeScore: hs, awayScore: as_ } = lm;
+        if (hs !== as_) {
+          // Determine which team is currently winning
+          const leading = hs > as_ ? t1 : t2;
+          sqStatus = pr.pick === leading ? 'live-correct' : 'live-wrong';
+        } else {
+          sqStatus = 'live-draw'; // tied — outcome still unknown
+        }
+      }
+
+      const koSqHtml = `<span class="sq sq-${sqStatus}"
+        data-match="${m}" data-teams="${_esc(teamsStr)}"
+        data-pick="${_esc(pickStr)}" data-result="${_esc(resultStr)}" data-status="${sqStatus}"
+        data-name="${_esc(_abbrevName(p.name))}"></span>`;
+      koSquareParts.push(koSqHtml);
+      koSqByNum[m] = koSqHtml;
+      if (KO_ROUND_BREAKS.has(m)) koSquareParts.push('<span class="sq-divider"></span>');
+    }
+    const koSquares = koSquareParts.join('');
+    // Mobile: render the 5 selected squares in chronological kickoff order
+    const koMobSquares = koChronoOrder
+      .filter(m => koMobMatchNums.has(m))
+      .map(m => koSqByNum[m].replace('class="sq sq-', 'class="sq sq-sm sq-'))
+      .join('');
+
+    // Podium: gold = M104 pick, silver = other finalist (derived from SF picks), bronze = M103 pick
+    const _pr104 = p.koPickResults[104] || {};
+    const _pr103 = p.koPickResults[103] || {};
+    const _pr101 = p.koPickResults[101] || {};
+    const _pr102 = p.koPickResults[102] || {};
+    const goldPick   = _pr104.pick || null;
+    const bronzePick = _pr103.pick || null;
+    // Runner-up: the SF winner that isn't the champion pick
+    let silverPick = null, silverStatus = 'empty';
+    if (goldPick && _pr101.pick && _pr102.pick) {
+      if (goldPick === _pr101.pick) { silverPick = _pr102.pick; silverStatus = _pr102.status || 'empty'; }
+      else                          { silverPick = _pr101.pick; silverStatus = _pr101.status || 'empty'; }
+    } else if (!goldPick) {
+      // No champion pick — show one of the SF picks as placeholder if available
+      silverPick = _pr101.pick || _pr102.pick || null;
+      silverStatus = (_pr101.pick ? _pr101.status : _pr102.status) || 'empty';
+    }
+    const _isFaded = s => s === 'wrong' || s === 'cascaded';
+    const _podiumFlag = (pick, faded) => pick
+      ? `<span class="podium-fl${faded ? ' faded' : ''}">${FLAGS[pick] || '🏳'}</span>`
+      : `<span class="podium-fl faded" style="font-size:0.7rem;color:var(--neutral-medium)">—</span>`;
+    const podiumCell = `<span class="podium-flags">`
+      + _podiumFlag(goldPick,   _isFaded(_pr104.status))
+      + _podiumFlag(silverPick, _isFaded(silverStatus))
+      + _podiumFlag(bronzePick, _isFaded(_pr103.status))
+      + `</span>`;
+    const grpPtsCell = p.groupPtsIsFloor
+      ? `<span class="grp-floor">${p.groupPts}<span class="grp-floor-mark">*</span></span>`
+      : p.groupPts;
+
+    rows += `<tr>
+      <td class="td-rank${topClass}">${rank}</td>
+      <td class="td-name">${_esc(_abbrevName(p.name))}</td>
+      <td class="td-grp-pts">${grpPtsCell}</td>
+      <td class="td-ko-pts">${p.koPts}</td>
+      <td class="td-total-pts">${p.totalPts}</td>
+      <td class="td-max-pts">${p.maxPts}</td>
+      <td class="td-podium">${podiumCell}</td>
+      <td class="td-squares"><div class="squares-wrap nowrap">${koSquares}</div></td>
+      <td class="td-mob-sq"><div class="sq-row-mob">${koMobSquares}</div></td>
+    </tr>`;
+  });
+
+  const _scoringTooltipHtml = `<div class="scoring-info-anchor" id="scoring-info-anchor"><span class="scoring-info-link">Scoring ⓘ</span><div class="scoring-tooltip-box"><div class="stt-row"><span>Group Stage</span><span class="stt-pts">2</span></div><div class="stt-row"><span>Round of 32</span><span class="stt-pts">4</span></div><div class="stt-row"><span>Round of 16</span><span class="stt-pts">8</span></div><div class="stt-row"><span>Quarterfinals</span><span class="stt-pts">12</span></div><div class="stt-row"><span>Semifinals</span><span class="stt-pts">16</span></div><div class="stt-row"><span>3rd place</span><span class="stt-pts">12</span></div><div class="stt-row"><span>Final</span><span class="stt-pts">24</span></div></div></div>`;
+  document.getElementById('koStandingsSection').innerHTML = `
+    <div class="section-label section-label-row" style="visibility:visible"><span>Knockout Standings <span class="standings-count">${combinedStandings.length} players</span></span>${_scoringTooltipHtml}</div>
+    <div class="section-body" style="visibility:visible">
+      <div class="card">
+        <table class="standings-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th class="th-grp-pts" data-sort="grp">Grp</th>
+              <th class="th-ko-pts" data-sort="ko">KO</th>
+              <th class="th-total-pts" data-sort="total">Total</th>
+              <th class="th-max-pts" data-sort="max">Max</th>
+              <th class="th-podium">1·2·3</th>
+              <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · red outline = cascaded void · empty = pending)</span></th>
+              <th class="th-mob-sq">Recent</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  document.querySelectorAll('#koStandingsSection th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.sort;
+      if (_koSortCol === col) {
+        _koSortDir = _koSortDir === 'desc' ? 'asc' : 'desc';
+      } else {
+        _koSortCol = col;
+        _koSortDir = 'desc';
+      }
+      renderKoStandings(_lastKoCombined, _lastKoResults || {}, _lastKoBracketData, _koLiveData);
+    });
+  });
+}
+
+// ── Render KO bracket (KO mode) ───────────────────────────
+function renderKoBracket(bracketData, koResults, koScores, koCounts, koLiveData = {}) {
+  const el = document.getElementById('koBracketCard');
+  if (!el) return;
+
+  if (!bracketData) {
+    el.innerHTML = '<div class="bracket-pending">Bracket data not available yet.</div>';
+    return;
+  }
+
+  function mkCard(m) {
+    const [h, a] = getKoTeams(m, bracketData, koResults);
+    const winner = koResults[m];
+    const lm     = !winner ? koLiveData[m] : null;
+    const sc     = koScores ? koScores[m] : null;
+    let homeCls = '', awayCls = '';
+    if (winner) {
+      homeCls = winner === h ? 'w' : 'l';
+      awayCls = winner === a ? 'w' : 'l';
+    } else if (lm) {
+      const { homeScore: hs, awayScore: as_ } = lm;
+      if (hs > as_) { homeCls = 'live-win'; awayCls = 'live-lose'; }
+      else if (as_ > hs) { homeCls = 'live-lose'; awayCls = 'live-win'; }
+      else { homeCls = 'live-tied'; awayCls = 'live-tied'; }
+    }
+    let hSc = sc ? sc.home : (lm ? lm.homeScore : undefined);
+    let aSc = sc ? sc.away : (lm ? lm.awayScore : undefined);
+    if (sc && sc.homePen != null) {
+      hSc = `${sc.home} (${sc.homePen})`;
+      aSc = `${sc.away} (${sc.awayPen})`;
+    }
+    let mnumLabelCls = 'bk-mnum-label';
+    let mnumExtra = '';
+    let suppressDate = false;
+    if (winner) {
+      const c = koCounts && koCounts[m];
+      mnumExtra = c ? correctnessPill(c.correct, c.total, c.names) : '';
+      suppressDate = true;
+    } else if (lm) {
+      if (lm.homeScore === lm.awayScore) mnumLabelCls += ' live';
+      // Compute live pill (who has the current leader picked)
+      const leader = lm.homeScore > lm.awayScore ? h : lm.awayScore > lm.homeScore ? a : null;
+      let liveC = { correct: 0, total: 0, names: [] };
+      for (const p of _lastKoCombined || []) {
+        const pr = p.koPickResults && p.koPickResults[m];
+        if (pr && pr.pick) {
+          liveC.total++;
+          if (leader && pr.pick === leader) { liveC.correct++; liveC.names.push(_abbrevName(p.name)); }
+        }
+      }
+      const pillHtml = (liveC.total > 0 && leader !== null) ? correctnessPill(liveC.correct, liveC.total, liveC.names) : '';
+      const minSpan = lm.minute ? `<span class="bk-mnum-live">${lm.minute}</span>` : '';
+      mnumExtra = `<span class="bk-mnum-right">${minSpan}${pillHtml}</span>`;
+      suppressDate = true;
+    }
+    return matchCard(m, h, a, '', hSc, aSc, homeCls, awayCls, '', '', mnumExtra, mnumLabelCls, suppressDate);
+  }
+
+  // Determine podium teams
+  const champion  = koResults[104] || null;
+  let runnerUp = null;
+  if (champion) {
+    const [f1, f2] = getKoTeams(104, bracketData, koResults);
+    runnerUp = champion === f1 ? f2 : f1;
+  }
+  const thirdPlace = koResults[103] || null;
+  const podiumHtml = buildPodiumHtml(champion, runnerUp, thirdPlace);
+
+  // ── Mobile tab view (Variant 3) ─────────────────────────
+  // Auto-open the first round with any unplayed matches
+  let koActiveRound = MOB_ROUNDS[MOB_ROUNDS.length - 1].id;
+  for (const r of MOB_ROUNDS) {
+    if (r.matches.some(m => !koResults[m])) { koActiveRound = r.id; break; }
+  }
+  function koMobMatchCard(m) {
+    const [h, a] = getKoTeams(m, bracketData, koResults);
+    const winner = koResults[m];
+    const lm     = !winner ? koLiveData[m] : null;
+    const sc     = koScores ? koScores[m] : null;
+    const hTbd   = isTbd(h), aTbd = isTbd(a);
+    let hCls = '', aCls = '';
+    if (winner) {
+      hCls = winner === h ? ' bk-mob-win' : ' bk-mob-los';
+      aCls = winner === a ? ' bk-mob-win' : ' bk-mob-los';
+    } else if (lm) {
+      const { homeScore: hs, awayScore: as_ } = lm;
+      if (hs > as_)       { hCls = ' live-win'; aCls = ' live-lose'; }
+      else if (as_ > hs)  { hCls = ' live-lose'; aCls = ' live-win'; }
+      else                 { hCls = ' live-tied'; aCls = ' live-tied'; }
+    }
+    // Strip date/time once game has started or finished
+    const date   = (winner || lm) ? '' : (KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '');
+    const c      = koCounts && koCounts[m];
+    // Final pill (confirmed result)
+    const finalPill = (winner && c) ? correctnessPill(c.correct, c.total, c.names) : '';
+    // Live minute + pill (minute first, then pill)
+    const liveMeta = lm && lm.minute ? `<span class="bk-mob-live-min">${lm.minute}</span>` : '';
+    let livePill = '';
+    if (lm) {
+      const leader = lm.homeScore > lm.awayScore ? h : lm.awayScore > lm.homeScore ? a : null;
+      let liveC = { correct: 0, total: 0, names: [] };
+      for (const p of _lastKoCombined || []) {
+        const pr = p.koPickResults && p.koPickResults[m];
+        if (pr && pr.pick) {
+          liveC.total++;
+          if (leader && pr.pick === leader) { liveC.correct++; liveC.names.push(_abbrevName(p.name)); }
+        }
+      }
+      livePill = (liveC.total > 0 && leader !== null) ? correctnessPill(liveC.correct, liveC.total, liveC.names) : '';
+    }
+    const pill = finalPill;
+    // Per-team score strings (shown on each row, not in meta)
+    let hScTxt = '', aScTxt = '';
+    if (sc) {
+      if (sc.homePen != null) {
+        hScTxt = `${sc.home} (${sc.homePen})`;
+        aScTxt = `${sc.away} (${sc.awayPen})`;
+      } else {
+        hScTxt = String(sc.home);
+        aScTxt = String(sc.away);
+      }
+    } else if (lm) {
+      hScTxt = String(lm.homeScore);
+      aScTxt = String(lm.awayScore);
+    }
+    const hScHtml = hScTxt ? `<span class="bk-mob-sc">${hScTxt}</span>` : '';
+    const aScHtml = aScTxt ? `<span class="bk-mob-sc">${aScTxt}</span>` : '';
+    return `<div class="bk-mob-match">
+      <div class="bk-mob-meta"><span>M${m}${date}</span><span class="bk-mob-meta-right">${liveMeta}${livePill}${pill}</span></div>
+      <div class="bk-mob-teams">
+        <div class="bk-mob-team${hTbd ? ' tbd' : hCls}">${mobTeamHtml(h)}${hScHtml}</div>
+        <div class="bk-mob-team${aTbd ? ' tbd' : aCls}">${mobTeamHtml(a)}${aScHtml}</div>
+      </div>
+    </div>`;
+  }
+  const koMobTabHtml = buildMobTabHtml(MOB_ROUNDS, koActiveRound, koMobMatchCard);
+
+  el.innerHTML = buildBracketHtml(mkCard, { podiumHtml }) + koMobTabHtml;
+  requestAnimationFrame(() => requestAnimationFrame(positionAndConnectBracket));
+}
+
+// ── Setup layout based on mode ────────────────────────────
+function setupLayout() {
+  if (knockoutMode) {
+    // Show KO bracket section only; hide everything group-stage related
+    document.getElementById('koBracketSection').style.display = '';
+    document.getElementById('groupSection').style.display = 'none';
+    // Update sticky bar label
+    document.getElementById('stageLabel').textContent = 'Knockout stage';
+  } else {
+    // Group mode: render teaser below the bracket
+    renderKoTeaser();
+  }
+}
+
+
+// ── Render standings ──────────────────────────────────────
+function renderStandings(standings, liveData = {}) {
+  if (!standings.length) {
+    document.getElementById('standingsCard').innerHTML =
+      '<div class="state-msg"><span class="emoji">📭</span>No picks submitted yet.</div>';
+    return;
+  }
+
+  // Update standings label with participant count pill
+  const lbl = document.getElementById('groupStandingsLabel');
+  if (lbl) lbl.innerHTML = `Standings <span class="standings-count">${standings.length} players</span>`;
+
+  const GRP_ROUND_BREAKS = new Set([24, 48]);
+  const MOB_LAST = 5;
+  const mobMatchNums = new Set(
+    _MATCHES_CHRONO.map(([num]) => num)
+      .filter(num => (_lastResults && _lastResults[num]) || (liveData && liveData[num]))
+      .slice(-MOB_LAST)
+  );
+  let rank = 1, prevPts = null, rows = '';
+  standings.forEach((p, i) => {
+    if (p.points !== prevPts) { rank = i + 1; prevPts = p.points; }
+    const topClass = rank <= 3 ? ' top3' : '';
+    const squareParts = [];
+    const sqByNum = {};
+    for (const [num, , , , t1, t2] of MATCHES) {
+      const pr = p.pickResults[num] || { status: 'empty', pick: null, result: null };
+      const myPick = pr.pick ? pickLabel(pr.pick, t1, t2) : '—';
+      // lm must be set before res so bridge/live score can populate the tooltip
+      const lm = liveData && liveData[num];
+      let res;
+      if (pr.result) {
+        res = `${pr.result.home}–${pr.result.away} (${pickLabel(pr.result.outcome, t1, t2)})`;
+      } else if (lm) {
+        // Bridge or live: ESPN has a score but CSV not yet confirmed
+        const cur = lm.homeScore > lm.awayScore ? 'W1' : lm.awayScore > lm.homeScore ? 'W2' : 'Draw';
+        const s = cur === 'W2' ? `${lm.awayScore}–${lm.homeScore}` : `${lm.homeScore}–${lm.awayScore}`;
+        res = `${s} (${pickLabel(cur, t1, t2)}) · live`;
+      } else {
+        res = 'Not played yet';
+      }
+      const _c = _lastGrpCounts && _lastGrpCounts[num];
+      const _isContrarian = _c && _c.total > 0 && (_c.correct / _c.total) <= 0.10;
+      let sqStatus = pr.status === 'correct' && _isContrarian ? 'correct-upset' : pr.status;
+      // Override with live status if match is in-progress and pick is still pending
+      if (lm && pr.status === 'pending' && pr.pick) {
+        const cur = lm.homeScore > lm.awayScore ? 'W1' : lm.awayScore > lm.homeScore ? 'W2' : 'Draw';
+        sqStatus = pr.pick === cur ? 'live-correct' : 'live-wrong';
+      }
+      const sqHtml = `<span class="sq sq-sm sq-${sqStatus}"
+        data-match="${num}" data-teams="${_esc(`${t1} v ${t2}`)}"
+        data-pick="${_esc(myPick)}" data-result="${_esc(res)}" data-status="${sqStatus}"
+        data-name="${_esc(_abbrevName(p.name))}"></span>`;
+      squareParts.push(sqHtml);
+      sqByNum[num] = sqHtml;
+      if (GRP_ROUND_BREAKS.has(num)) squareParts.push('<span class="sq-divider-sm"></span>');
+    }
+    const squares = squareParts.join('');
+    // Mobile: render the 5 selected squares in chronological kickoff order
+    const mobSquares = _MATCHES_CHRONO
+      .map(([num]) => num)
+      .filter(num => mobMatchNums.has(num))
+      .map(num => sqByNum[num])
+      .join('');
+    rows += `<tr>
+      <td class="td-rank${topClass}">${rank}</td>
+      <td class="td-name">${_esc(_abbrevName(p.name))}</td>
+      <td class="td-points">${p.points}</td>
+      <td class="td-squares"><div class="squares-wrap nowrap">${squares}</div></td>
+      <td class="td-mob-sq"><div class="sq-row-mob">${mobSquares}</div></td>
+    </tr>`;
+  });
+
+  document.getElementById('standingsCard').innerHTML = `
+    <table class="standings-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Pts</th>
+          <th class="th-squares">Picks <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--neutral-medium);font-size:0.68rem">(blue = correct · red = wrong · empty = pending)</span></th>
+          <th class="th-mob-sq">Recent</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── Local match time (converts UTC ISO → user's local timezone) ──────────────
+// TZ abbreviation for column header (e.g. 'EDT', 'PDT', 'BST')
+const _tzAbbr = new Date().toLocaleTimeString('en-US', { timeZoneName: 'short' }).split(' ').pop();
+
+function localMatchTime(utcStr) {
+  try {
+    const dt = new Date(utcStr);
+    const t = dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return `${t}<span class="cell-tz"> ${_tzAbbr}</span>`;
+  } catch (e) { return utcStr; }
+}
+
+// ── Render match results ──────────────────────────────────
+// ── Correctness pill helpers ──────────────────────────────
+function correctnessPill(correct, total, names = []) {
+  if (!total) return '';
+  const pct = correct / total;
+  const cls = pct <= 0.10 ? 'cp-lo' : pct >= 0.90 ? 'cp-hi' : 'cp-mid';
+  const nameAttr = names.length ? ` data-cp-names="${_esc(names.join('|'))}"` : '';
+  return `<span class="cp-pill ${cls}"${nameAttr}>${correct}/${total}</span>`;
+}
+
+// Count correct/wrong per group match across all participants.
+// Excludes 'pending' and 'empty' (no result yet or no pick made).
+function buildGrpCounts(standings) {
+  const counts = {};
+  for (const p of standings) {
+    for (const [numStr, pr] of Object.entries(p.pickResults || {})) {
+      const num = Number(numStr);
+      if (pr.status === 'correct' || pr.status === 'wrong') {
+        if (!counts[num]) counts[num] = { correct: 0, total: 0, names: [] };
+        counts[num].total++;
+        if (pr.status === 'correct') { counts[num].correct++; counts[num].names.push(_abbrevName(p.name)); }
+      }
+    }
+  }
+  return counts;
+}
+
+// Count correct/wrong per KO match across all participants.
+// Excludes 'cascaded' (invalid pick) and 'pending'/'empty'.
+function buildKoCounts(combined) {
+  const counts = {};
+  for (const p of combined) {
+    for (const [numStr, pr] of Object.entries(p.koPickResults || {})) {
+      const num = Number(numStr);
+      if (pr.status === 'correct' || pr.status === 'wrong') {
+        if (!counts[num]) counts[num] = { correct: 0, total: 0, names: [] };
+        counts[num].total++;
+        if (pr.status === 'correct') { counts[num].correct++; counts[num].names.push(_abbrevName(p.name)); }
+      }
+    }
+  }
+  return counts;
+}
+
+function renderResults(results, grpCounts, liveData = {}) {
+  const rows = MATCHES.map(([num, grp, date, time, t1, t2]) => {
+    const r = results[num];
+    const lm = r ? null : liveData[num]; // ignore live data once CSV confirms result
+    let resultCell, scoreCell, timeCell, correctCell = '';
+    if (lm) {
+      // Live or post-bridge: compute correct count from standings + current score
+      const cur = lm.homeScore > lm.awayScore ? 'W1' : lm.awayScore > lm.homeScore ? 'W2' : 'Draw';
+      let liveCorrect = 0, liveTotal = 0, liveNames = [];
+      if (_lastStandings) {
+        for (const p of _lastStandings) {
+          const pr = p.pickResults && p.pickResults[num];
+          if (pr && pr.pick) { liveTotal++; if (pr.pick === cur) { liveCorrect++; liveNames.push(_abbrevName(p.name)); } }
+        }
+      }
+      const isLive   = lm.state === 'in';
+      const isBridge = lm.state === 'post'; // game ended, CSV not yet confirmed
+      const pulse    = s => (isLive || isBridge) ? `<span class="live-pulse">${s}</span>` : s;
+      if (cur === 'Draw') {
+        resultCell = `<span class="res-loser">${teamHtml(t1)}</span>`
+                   + `<span class="res-verb">${isLive ? 'drawing' : 'drew'}</span>`
+                   + `<span class="res-loser">${teamHtml(t2)}</span>`;
+      } else {
+        const [liveWinner, liveLoser] = cur === 'W1' ? [t1, t2] : [t2, t1];
+        resultCell = `<span class="res-winner">${teamHtml(liveWinner)}</span>`
+                   + `<span class="res-verb">${isLive ? 'leading' : 'beat'}</span>`
+                   + `<span class="res-loser">${teamHtml(liveLoser)}</span>`;
+      }
+      const liveScore = cur === 'W2'
+        ? `${lm.awayScore} – ${lm.homeScore}`
+        : `${lm.homeScore} – ${lm.awayScore}`;
+      scoreCell   = pulse(liveScore);
+      timeCell    = isLive ? `<span class="live-pulse">${lm.minute}′</span>` : pulse('FT');
+      correctCell = liveTotal ? pulse(correctnessPill(liveCorrect, liveTotal, liveNames)) : '';
+    } else if (!r) {
+      resultCell = `${teamHtml(t1)} v ${teamHtml(t2)}`;
+      scoreCell  = `–`;
+      timeCell   = localMatchTime(time);
+    } else if (r.outcome === 'Draw') {
+      resultCell = `<span class="res-loser">${teamHtml(t1)}</span>`
+                 + `<span class="res-verb">drew</span>`
+                 + `<span class="res-loser">${teamHtml(t2)}</span>`;
+      const c = grpCounts && grpCounts[num];
+      scoreCell   = `${r.home} – ${r.away}`;
+      correctCell = c ? correctnessPill(c.correct, c.total, c.names) : '';
+      timeCell    = 'FT';
+    } else {
+      const [winner, loser] = r.outcome === 'W1' ? [t1, t2] : [t2, t1];
+      resultCell = `<span class="res-winner">${teamHtml(winner)}</span>`
+                 + `<span class="res-verb">beat</span>`
+                 + `<span class="res-loser">${teamHtml(loser)}</span>`;
+      const score = r.outcome === 'W2' ? `${r.away} – ${r.home}` : `${r.home} – ${r.away}`;
+      const c = grpCounts && grpCounts[num];
+      scoreCell   = score;
+      correctCell = c ? correctnessPill(c.correct, c.total, c.names) : '';
+      timeCell    = 'FT';
+    }
+    return `<tr class="${r || lm ? '' : 'res-row-upcoming'}">
+      <td class="td-match-num">${num}</td>
+      <td class="td-grp">${grp}</td>
+      <td class="td-date">${date}</td>
+      <td class="td-time">${timeCell}</td>
+      <td class="td-result-cell">${resultCell}</td>
+      <td class="td-score">${scoreCell}</td>
+      <td class="td-correct">${correctCell}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('resultsCard').innerHTML = `
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Grp</th>
+          <th class="th-date">Date</th>
+          <th class="th-time">Time (${_tzAbbr})</th>
+          <th>Result</th>
+          <th style="text-align:center">Score</th>
+          <th style="text-align:center">Correct</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── Fixed group order (per Wikipedia) ────────────────────
+const GROUP_ORDER = {
+  A: ['Mexico','South Africa','South Korea','Czech Republic'],
+  B: ['Canada','Bosnia and Herzegovina','Qatar','Switzerland'],
+  C: ['Brazil','Morocco','Haiti','Scotland'],
+  D: ['United States','Paraguay','Australia','Turkey'],
+  E: ['Germany','Curaçao','Ivory Coast','Ecuador'],
+  F: ['Netherlands','Japan','Sweden','Tunisia'],
+  G: ['Belgium','Egypt','Iran','New Zealand'],
+  H: ['Spain','Cape Verde','Saudi Arabia','Uruguay'],
+  I: ['France','Senegal','Iraq','Norway'],
+  J: ['Argentina','Algeria','Austria','Jordan'],
+  K: ['Portugal','DR Congo','Uzbekistan','Colombia'],
+  L: ['England','Croatia','Ghana','Panama'],
+};
+
+// ── Group tables ─────────────────────────────────────────
+// Shortened display names for group table team cells (mirrors picks page SHORT_NAMES)
+const _GRP_SHORT_NAMES = {
+  'Bosnia and Herzegovina': 'Bosnia…',
+  'Czech Republic':         'Czech…',
+};
+
+// ── Group table card template (reusable across leaderboard + picks) ──
+// teams: ordered array of team names
+// stats: { teamName: {P,W,D,L,GF,GA,Pts} }
+// opts.rowClassFn(team, index): returns CSS class string for each row
+// opts.showGD: include GF/GA/GD columns (default false)
+function renderGroupTableCard(grp, teams, stats, opts={}) {
+  const { rowClassFn = () => '', showGD = false } = opts;
+  const rows = teams.map((t, i) => {
+    const s = stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0};
+    const rc = rowClassFn(t, i);
+    const gdCell = showGD ? `<td>${s.GF}</td><td>${s.GA}</td><td>${(s.GF-s.GA)>=0?'+':''}${s.GF-s.GA}</td>` : '';
+    const display = _GRP_SHORT_NAMES[t] || t;
+    return `<tr${rc ? ` class="${rc}"` : ''}><td class="td-team">${teamHtml(t, true, display)}</td><td>${s.P}</td><td>${s.W}</td><td>${s.D}</td><td>${s.L}</td>${gdCell}<td class="td-pts">${s.Pts}</td></tr>`;
+  }).join('');
+  const gdHeaders = showGD ? `<th title="Goals for">GF</th><th title="Goals against">GA</th><th title="Goal difference">GD</th>` : '';
+  return `<div class="group-table-card"><div class="group-table-header">Group ${grp}</div><div class="group-table"><table><thead><tr><th class="th-team">Team</th><th title="Played">P</th><th title="Won">W</th><th title="Drawn">D</th><th title="Lost">L</th>${gdHeaders}<th title="Points">Pts</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+// ── HTML attribute escape helper ──────────────────────────
+function _esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+
+
+// ── Display name: "First L" (last name abbreviated to initial, UI-only) ──
+// Full name is stored in the JSON; abbreviation is only for display.
+const _abbrevMap = new Map();
+function _buildAbbrevMap(names) {
+  _abbrevMap.clear();
+  const _short = (name, len) => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length <= 1 || !parts[parts.length - 1][0].match(/[a-zA-ZÀ-ɏ]/)) return name;
+    return parts.slice(0, -1).join(' ') + ' ' + parts[parts.length - 1].slice(0, len);
+  };
+  // Group names by their 1-char abbreviation to find collisions
+  const byAbbrev = new Map();
+  for (const name of names) {
+    const ab = _short(name, 1);
+    if (!byAbbrev.has(ab)) byAbbrev.set(ab, []);
+    byAbbrev.get(ab).push(name);
+  }
+  for (const [, group] of byAbbrev) {
+    if (group.length === 1) { _abbrevMap.set(group[0], _short(group[0], 1)); continue; }
+    // Collision: expand last name until all unique
+    for (let len = 2; len <= 20; len++) {
+      const expanded = group.map(n => _short(n, len));
+      if (new Set(expanded).size === group.length) {
+        group.forEach((n, i) => _abbrevMap.set(n, expanded[i]));
+        break;
+      }
+    }
+  }
+}
+function _abbrevName(name) {
+  return _abbrevMap.get(name) || name;
+}
+
+// ── Group standings utilities (module-scope — used by renderGroupTables + computeGroupStandings) ──
+
+// H2H stats for `team` from matches where BOTH participants are in `allTeams`
+function _h2hMiniStats(team, allTeams, grpMatches, results) {
+  let Pts = 0, GF = 0, GA = 0;
+  grpMatches.forEach(([num, , , , t1, t2]) => {
+    if (!allTeams.includes(t1) || !allTeams.includes(t2)) return;
+    const r = results[num]; if (!r) return;
+    if (t1 === team) {
+      GF += r.home; GA += r.away;
+      if (r.outcome === 'W1') Pts += 3; else if (r.outcome === 'Draw') Pts += 1;
+    } else if (t2 === team) {
+      GF += r.away; GA += r.home;
+      if (r.outcome === 'W2') Pts += 3; else if (r.outcome === 'Draw') Pts += 1;
+    }
+  });
+  return { Pts, GD: GF - GA, GF };
+}
+
+// Fair-play deduction for `team` across `matchNums` from cardData.
+// Y=−1, IR=−3, DR=−4. Returns 0 if cardData is null/unavailable.
+function fairPlayScore(team, matchNums, cardData) {
+  if (!cardData) return 0;
+  let score = 0;
+  matchNums.forEach(num => {
+    const mc = cardData[num]?.[team]; if (!mc) return;
+    score -= (mc.Y || 0) * 1;
+    score -= (mc.IR || 0) * 3;
+    score -= (mc.DR || 0) * 4;
+  });
+  return score;
+}
+
+// Sort a pts-tied group by H2H (multi-pass) then fall through to overall + fair play + ranking.
+// Called once per same-pts partition; returns sorted array of team names.
+function _applyH2HTiebreak(group, stats, grpMatches, results, cardData) {
+  if (group.length <= 1) return group;
+  const matchNums = grpMatches.map(([n]) => n);
+
+  // First pass: H2H among the full group
+  const h1 = {};
+  group.forEach(t => { h1[t] = _h2hMiniStats(t, group, grpMatches, results); });
+  const pass1 = [...group].sort((a, b) => {
+    if (h1[b].Pts !== h1[a].Pts) return h1[b].Pts - h1[a].Pts;
+    if (h1[b].GD  !== h1[a].GD)  return h1[b].GD  - h1[a].GD;
+    return h1[b].GF - h1[a].GF;
+  });
+
+  // Identify segments still tied after first pass (same H2H Pts+GD+GF)
+  const final = [];
+  let seg = [pass1[0]];
+  const pushSeg = () => {
+    if (seg.length <= 1) { final.push(...seg); return; }
+    // Second pass: re-compute H2H exclusively within this smaller subset
+    const h2 = {};
+    seg.forEach(t => { h2[t] = _h2hMiniStats(t, seg, grpMatches, results); });
+    const pass2 = [...seg].sort((a, b) => {
+      if (h2[b].Pts !== h2[a].Pts) return h2[b].Pts - h2[a].Pts;
+      if (h2[b].GD  !== h2[a].GD)  return h2[b].GD  - h2[a].GD;
+      if (h2[b].GF  !== h2[a].GF)  return h2[b].GF  - h2[a].GF;
+      // Still level → criteria d (overall GD), e (overall GF), f (fair play), g (FIFA ranking)
+      const sa = stats[a] || {}, sb = stats[b] || {};
+      const gdA = (sa.GF||0)-(sa.GA||0), gdB = (sb.GF||0)-(sb.GA||0);
+      if (gdB !== gdA) return gdB - gdA;
+      if ((sb.GF||0) !== (sa.GF||0)) return (sb.GF||0) - (sa.GF||0);
+      const fpA = fairPlayScore(a, matchNums, cardData);
+      const fpB = fairPlayScore(b, matchNums, cardData);
+      if (fpB !== fpA) return fpB - fpA;  // higher (less negative) = better fair play
+      return (RANKINGS[a] ?? 999) - (RANKINGS[b] ?? 999);
+    });
+    final.push(...pass2);
+  };
+
+  for (let i = 1; i < pass1.length; i++) {
+    const prev = h1[pass1[i-1]], cur = h1[pass1[i]];
+    if (prev.Pts === cur.Pts && prev.GD === cur.GD && prev.GF === cur.GF) {
+      seg.push(pass1[i]);
+    } else {
+      pushSeg(); seg = [pass1[i]];
+    }
+  }
+  pushSeg();
+  return final;
+}
+
+// Full within-group sort implementing FIFA tiebreaker chain (criteria a–g).
+// teams: array of names; stats: {team: {P,W,D,L,GF,GA,Pts}}
+// grpMatches: array of [num, grp, *, *, t1, t2] (same format as MATCHES)
+// cardData: _cardData global (null = fair play skipped gracefully)
+function groupSort(teams, stats, grpMatches, results, cardData) {
+  if (teams.length <= 1) return [...teams];
+  // Partition by points (descending)
+  const byPts = new Map();
+  teams.forEach(t => {
+    const p = (stats[t] || {}).Pts || 0;
+    if (!byPts.has(p)) byPts.set(p, []);
+    byPts.get(p).push(t);
+  });
+  const sorted = [];
+  [...byPts.keys()].sort((a, b) => b - a).forEach(pts => {
+    const group = byPts.get(pts);
+    sorted.push(...(group.length === 1 ? group : _applyH2HTiebreak(group, stats, grpMatches, results, cardData)));
+  });
+  return sorted;
+}
+
+function renderGroupTables(results) {
+  // Build team stats from MATCHES + results
+  const groups = {};
+  const stats  = {};
+
+  MATCHES.forEach(([num, grp, , , t1, t2]) => {
+    if (!groups[grp]) groups[grp] = [];
+    if (!groups[grp].includes(t1)) groups[grp].push(t1);
+    if (!groups[grp].includes(t2)) groups[grp].push(t2);
+
+    [t1, t2].forEach(t => {
+      if (!stats[t]) stats[t] = { P:0, W:0, D:0, L:0, GF:0, GA:0, Pts:0 };
+    });
+
+    const r = results[num];
+    if (!r) return;
+
+    stats[t1].P++; stats[t2].P++;
+    stats[t1].GF += r.home; stats[t1].GA += r.away;
+    stats[t2].GF += r.away; stats[t2].GA += r.home;
+
+    if (r.outcome === 'W1') {
+      stats[t1].W++; stats[t1].Pts += 3;
+      stats[t2].L++;
+    } else if (r.outcome === 'W2') {
+      stats[t2].W++; stats[t2].Pts += 3;
+      stats[t1].L++;
+    } else {
+      stats[t1].D++; stats[t1].Pts++;
+      stats[t2].D++; stats[t2].Pts++;
+    }
+  });
+
+  const completedGroups = Object.keys(groups).sort();
+
+  // groupSort, fairPlayScore, _applyH2HTiebreak, _h2hMiniStats defined at module scope above
+
+  // ── Pass 1: compute sorted standings for all completed groups ──
+  function sortedStandings(grp) {
+    const order = GROUP_ORDER[grp] || groups[grp];
+    const grpMatches = MATCHES.filter(([, g]) => g === grp);
+    return groupSort(order, stats, grpMatches, results, _cardData);
+  }
+
+  // Is a group fully played? (all 6 matches have results)
+  const isGroupDone    = grp => MATCHES.filter(([, g]) => g === grp).every(([n]) => results[n]);
+  const isGroupStarted = grp => MATCHES.filter(([, g]) => g === grp).some(([n])  => results[n]);
+
+  // Collect 3rd-place teams from all completed groups
+  const thirdPlaceTeams = completedGroups.map(grp => {
+    const s = sortedStandings(grp);
+    const t = s[2];
+    if (!t) return null;
+    const st = stats[t];
+    if (!st || st.P === 0) return null; // skip groups with no matches played yet
+    return { team: t, grp, stats: st };
+  }).filter(Boolean);
+
+  // Sort 3rd-place teams (cross-group: overall stats only, then fair play, then FIFA ranking)
+  const sortedThirds = [...thirdPlaceTeams].sort((a, b) => {
+    const sa = a.stats, sb = b.stats;
+    if (sb.Pts !== sa.Pts) return sb.Pts - sa.Pts;
+    if ((sb.GF-sb.GA) !== (sa.GF-sa.GA)) return (sb.GF-sb.GA) - (sa.GF-sa.GA);
+    if (sb.GF !== sa.GF) return sb.GF - sa.GF;
+    const mnA = MATCHES.filter(([,g]) => g===a.grp).map(([n]) => n);
+    const mnB = MATCHES.filter(([,g]) => g===b.grp).map(([n]) => n);
+    const fpDiff = fairPlayScore(b.team, mnB, _cardData) - fairPlayScore(a.team, mnA, _cardData);
+    if (fpDiff !== 0) return fpDiff;
+    return (RANKINGS[a.team]??999) - (RANKINGS[b.team]??999);
+  });
+
+  const allGroupsStarted = completedGroups.length === 12 && completedGroups.every(isGroupDone);
+  const qualifiedThirds = new Set(sortedThirds.slice(0, 8).map(t => t.team));
+
+  // ── Pass 2: render each group ──────────────────────────────
+  const cards = completedGroups.map(grp => {
+    const grpStarted = isGroupStarted(grp);
+    const teams = grpStarted ? sortedStandings(grp) : (GROUP_ORDER[grp] || groups[grp]);
+
+    const rowClassFn = (t, i) => {
+      if (!grpStarted) return '';
+      if (i < 2) return 'qualified';
+      if (i === 2) {
+        if (allGroupsStarted) return qualifiedThirds.has(t) ? 'third-qual' : 'eliminated';
+        return 'third-pending';
+      }
+      return 'eliminated';
+    };
+
+    return renderGroupTableCard(grp, teams, stats, { rowClassFn, showGD: true });
+  }).join('');
+
+  const legend = `<div style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 12px 10px;font-size:0.72rem;color:var(--neutral-dark)">
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:2px;background:var(--swiftly-blue);display:inline-block;flex-shrink:0"></span>Qualified (top 2)</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:2px;background:#22863a;display:inline-block;flex-shrink:0"></span>3rd — qualified</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:2px;background:#ff9e16;display:inline-block;flex-shrink:0"></span>3rd — pending</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:2px;background:#e24b4a;display:inline-block;flex-shrink:0"></span>Eliminated</span>
+  </div>`;
+
+  document.getElementById('groupTablesCard').innerHTML =
+    `<div class="group-tables-grid">${cards}</div>${legend}`;
+}
+
+// ── Knockout bracket ─────────────────────────────────────
+// 495 combinations: key = sorted 8 qualifying group letters
+// value = [1A-opp, 1B-opp, 1D-opp, 1E-opp, 1G-opp, 1I-opp, 1K-opp, 1L-opp]
+// These map to matches: [M79, M85, M81, M74, M82, M77, M87, M80]
+const THIRD_COMBOS = (function() {
+  const raw = `
+ABCDEFGH:H G B C A F D E
+ABCDEFGI:C G B D A F E I
+ABCDEFGJ:C G B D A F E J
+ABCDEFGK:C G B D A F E K
+ABCDEFGL:C G B D A F L E
+ABCDEFHI:H E B C A F D I
+ABCDEFHJ:H J B C A F D E
+ABCDEFHK:H E B C A F D K
+ABCDEFHL:H F B C A D L E
+ABCDEFIJ:C J B D A F E I
+ABCDEFIK:C E B D A F I K
+ABCDEFIL:C E B D A F L I
+ABCDEFJK:C J B D A F E K
+ABCDEFJL:C J B D A F L E
+ABCDEFKL:C E B D A F L K
+ABCDEGHI:H G B C A D E I
+ABCDEGHJ:H G B C A D E J
+ABCDEGHK:H G B C A D E K
+ABCDEGHL:H G B C A D L E
+ABCDEGIJ:E G B C A D I J
+ABCDEGIK:E G B C A D I K
+ABCDEGIL:E G B C A D L I
+ABCDEGJK:E G B C A D J K
+ABCDEGJL:E G B C A D L J
+ABCDEGKL:E G B C A D L K
+ABCDEHIJ:H J B C A D E I
+ABCDEHIK:H E B C A D I K
+ABCDEHIL:H E B C A D L I
+ABCDEHJK:H J B C A D E K
+ABCDEHJL:H J B C A D L E
+ABCDEHKL:H E B C A D L K
+ABCDEIJK:E J B C A D I K
+ABCDEIJL:E J B C A D L I
+ABCDEIKL:E I B C A D L K
+ABCDEJKL:E J B C A D L K
+ABCDFGHI:H G B C A F D I
+ABCDFGHJ:H G B C A F D J
+ABCDFGHK:H G B C A F D K
+ABCDFGHL:C G B D A F L H
+ABCDFGIJ:C G B D A F I J
+ABCDFGIK:C G B D A F I K
+ABCDFGIL:C G B D A F L I
+ABCDFGJK:C G B D A F J K
+ABCDFGJL:C G B D A F L J
+ABCDFGKL:C G B D A F L K
+ABCDFHIJ:H J B C A F D I
+ABCDFHIK:H F B C A D I K
+ABCDFHIL:H F B C A D L I
+ABCDFHJK:H J B C A F D K
+ABCDFHJL:C J B D A F L H
+ABCDFHKL:H F B C A D L K
+ABCDFIJK:C J B D A F I K
+ABCDFIJL:C J B D A F L I
+ABCDFIKL:C I B D A F L K
+ABCDFJKL:C J B D A F L K
+ABCDGHIJ:H G B C A D I J
+ABCDGHIK:H G B C A D I K
+ABCDGHIL:H G B C A D L I
+ABCDGHJK:H G B C A D J K
+ABCDGHJL:H G B C A D L J
+ABCDGHKL:H G B C A D L K
+ABCDGIJK:C J B D A G I K
+ABCDGIJL:C J B D A G L I
+ABCDGIKL:I G B C A D L K
+ABCDGJKL:C J B D A G L K
+ABCDHIJK:H J B C A D I K
+ABCDHIJL:H J B C A D L I
+ABCDHIKL:H I B C A D L K
+ABCDHJKL:H J B C A D L K
+ABCDIJKL:I J B C A D L K
+ABCEFGHI:H G B C A F E I
+ABCEFGHJ:H G B C A F E J
+ABCEFGHK:H G B C A F E K
+ABCEFGHL:H G B C A F L E
+ABCEFGIJ:E G B C A F I J
+ABCEFGIK:E G B C A F I K
+ABCEFGIL:E G B C A F L I
+ABCEFGJK:E G B C A F J K
+ABCEFGJL:E G B C A F L J
+ABCEFGKL:E G B C A F L K
+ABCEFHIJ:H J B C A F E I
+ABCEFHIK:H E B C A F I K
+ABCEFHIL:H E B C A F L I
+ABCEFHJK:H J B C A F E K
+ABCEFHJL:H J B C A F L E
+ABCEFHKL:H E B C A F L K
+ABCEFIJK:E J B C A F I K
+ABCEFIJL:E J B C A F L I
+ABCEFIKL:E I B C A F L K
+ABCEFJKL:E J B C A F L K
+ABCEGHIJ:H J B C A G E I
+ABCEGHIK:E G B C A H I K
+ABCEGHIL:E G B C A H L I
+ABCEGHJK:H J B C A G E K
+ABCEGHJL:H J B C A G L E
+ABCEGHKL:E G B C A H L K
+ABCEGIJK:E J B C A G I K
+ABCEGIJL:E J B C A G L I
+ABCEGIKL:E G B A I C L K
+ABCEGJKL:E J B C A G L K
+ABCEHIJK:E J B C A H I K
+ABCEHIJL:E J B C A H L I
+ABCEHIKL:E I B C A H L K
+ABCEHJKL:E J B C A H L K
+ABCEIJKL:E J B A I C L K
+ABCFGHIJ:H G B C A F I J
+ABCFGHIK:H G B C A F I K
+ABCFGHIL:H G B C A F L I
+ABCFGHJK:H G B C A F J K
+ABCFGHJL:H G B C A F L J
+ABCFGHKL:H G B C A F L K
+ABCFGIJK:C J B F A G I K
+ABCFGIJL:C J B F A G L I
+ABCFGIKL:I G B C A F L K
+ABCFGJKL:C J B F A G L K
+ABCFHIJK:H J B C A F I K
+ABCFHIJL:H J B C A F L I
+ABCFHIKL:H I B C A F L K
+ABCFHJKL:H J B C A F L K
+ABCFIJKL:I J B C A F L K
+ABCGHIJK:H J B C A G I K
+ABCGHIJL:H J B C A G L I
+ABCGHIKL:I G B C A H L K
+ABCGHJKL:H J B C A G L K
+ABCGIJKL:I J B C A G L K
+ABCHIJKL:I J B C A H L K
+ABDEFGHI:H G B D A F E I
+ABDEFGHJ:H G B D A F E J
+ABDEFGHK:H G B D A F E K
+ABDEFGHL:H G B D A F L E
+ABDEFGIJ:E G B D A F I J
+ABDEFGIK:E G B D A F I K
+ABDEFGIL:E G B D A F L I
+ABDEFGJK:E G B D A F J K
+ABDEFGJL:E G B D A F L J
+ABDEFGKL:E G B D A F L K
+ABDEFHIJ:H J B D A F E I
+ABDEFHIK:H E B D A F I K
+ABDEFHIL:H E B D A F L I
+ABDEFHJK:H J B D A F E K
+ABDEFHJL:H J B D A F L E
+ABDEFHKL:H E B D A F L K
+ABDEFIJK:E J B D A F I K
+ABDEFIJL:E J B D A F L I
+ABDEFIKL:E I B D A F L K
+ABDEFJKL:E J B D A F L K
+ABDEGHIJ:H J B D A G E I
+ABDEGHIK:E G B D A H I K
+ABDEGHIL:E G B D A H L I
+ABDEGHJK:H J B D A G E K
+ABDEGHJL:H J B D A G L E
+ABDEGHKL:E G B D A H L K
+ABDEGIJK:E J B D A G I K
+ABDEGIJL:E J B D A G L I
+ABDEGIKL:E G B A I D L K
+ABDEGJKL:E J B D A G L K
+ABDEHIJK:E J B D A H I K
+ABDEHIJL:E J B D A H L I
+ABDEHIKL:E I B D A H L K
+ABDEHJKL:E J B D A H L K
+ABDEIJKL:E J B A I D L K
+ABDFGHIJ:H G B D A F I J
+ABDFGHIK:H G B D A F I K
+ABDFGHIL:H G B D A F L I
+ABDFGHJK:H G B D A F J K
+ABDFGHJL:H G B D A F L J
+ABDFGHKL:H G B D A F L K
+ABDFGIJK:F J B D A G I K
+ABDFGIJL:F J B D A G L I
+ABDFGIKL:I G B D A F L K
+ABDFGJKL:F J B D A G L K
+ABDFHIJK:H J B D A F I K
+ABDFHIJL:H J B D A F L I
+ABDFHIKL:H I B D A F L K
+ABDFHJKL:H J B D A F L K
+ABDFIJKL:I J B D A F L K
+ABDGHIJK:H J B D A G I K
+ABDGHIJL:H J B D A G L I
+ABDGHIKL:I G B D A H L K
+ABDGHJKL:H J B D A G L K
+ABDGIJKL:I J B D A G L K
+ABDHIJKL:I J B D A H L K
+ABEFGHIJ:H J B F A G E I
+ABEFGHIK:E G B F A H I K
+ABEFGHIL:E G B F A H L I
+ABEFGHJK:H J B F A G E K
+ABEFGHJL:H J B F A G L E
+ABEFGHKL:E G B F A H L K
+ABEFGIJK:E J B F A G I K
+ABEFGIJL:E J B F A G L I
+ABEFGIKL:E G B A I F L K
+ABEFGJKL:E J B F A G L K
+ABEFHIJK:E J B F A H I K
+ABEFHIJL:E J B F A H L I
+ABEFHIKL:E I B F A H L K
+ABEFHJKL:E J B F A H L K
+ABEFIJKL:E J B A I F L K
+ABEGHIJK:E J B A H G I K
+ABEGHIJL:E J B A H G L I
+ABEGHIKL:E G B A I H L K
+ABEGHJKL:E J B A H G L K
+ABEGIJKL:E J B A I G L K
+ABEHIJKL:E J B A I H L K
+ABFGHIJK:H J B F A G I K
+ABFGHIJL:H J B F A G L I
+ABFGHIKL:H G B A I F L K
+ABFGHJKL:H J B F A G L K
+ABFGIJKL:I J B F A G L K
+ABFHIJKL:H J B A I F L K
+ABGHIJKL:H J B A I G L K
+ACDEFGHI:H G E C A F D I
+ACDEFGHJ:H G J C A F D E
+ACDEFGHK:H G E C A F D K
+ACDEFGHL:H G F C A D L E
+ACDEFGIJ:C G J D A F E I
+ACDEFGIK:C G E D A F I K
+ACDEFGIL:C G E D A F L I
+ACDEFGJK:C G J D A F E K
+ACDEFGJL:C G J D A F L E
+ACDEFGKL:C G E D A F L K
+ACDEFHIJ:H J E C A F D I
+ACDEFHIK:H E F C A D I K
+ACDEFHIL:H E F C A D L I
+ACDEFHJK:H J E C A F D K
+ACDEFHJL:H J F C A D L E
+ACDEFHKL:H E F C A D L K
+ACDEFIJK:C J E D A F I K
+ACDEFIJL:C J E D A F L I
+ACDEFIKL:C E I D A F L K
+ACDEFJKL:C J E D A F L K
+ACDEGHIJ:H G J C A D E I
+ACDEGHIK:H G E C A D I K
+ACDEGHIL:H G E C A D L I
+ACDEGHJK:H G J C A D E K
+ACDEGHJL:H G J C A D L E
+ACDEGHKL:H G E C A D L K
+ACDEGIJK:E G J C A D I K
+ACDEGIJL:E G J C A D L I
+ACDEGIKL:E G I C A D L K
+ACDEGJKL:E G J C A D L K
+ACDEHIJK:H J E C A D I K
+ACDEHIJL:H J E C A D L I
+ACDEHIKL:H E I C A D L K
+ACDEHJKL:H J E C A D L K
+ACDEIJKL:E J I C A D L K
+ACDFGHIJ:H G J C A F D I
+ACDFGHIK:H G F C A D I K
+ACDFGHIL:H G F C A D L I
+ACDFGHJK:H G J C A F D K
+ACDFGHJL:C G J D A F L H
+ACDFGHKL:H G F C A D L K
+ACDFGIJK:C G J D A F I K
+ACDFGIJL:C G J D A F L I
+ACDFGIKL:C G I D A F L K
+ACDFGJKL:C G J D A F L K
+ACDFHIJK:H J F C A D I K
+ACDFHIJL:H J F C A D L I
+ACDFHIKL:H F I C A D L K
+ACDFHJKL:H J F C A D L K
+ACDFIJKL:C J I D A F L K
+ACDGHIJK:H G J C A D I K
+ACDGHIJL:H G J C A D L I
+ACDGHIKL:H G I C A D L K
+ACDGHJKL:H G J C A D L K
+ACDGIJKL:I G J C A D L K
+ACDHIJKL:H J I C A D L K
+ACEFGHIJ:H G J C A F E I
+ACEFGHIK:H G E C A F I K
+ACEFGHIL:H G E C A F L I
+ACEFGHJK:H G J C A F E K
+ACEFGHJL:H G J C A F L E
+ACEFGHKL:H G E C A F L K
+ACEFGIJK:E G J C A F I K
+ACEFGIJL:E G J C A F L I
+ACEFGIKL:E G I C A F L K
+ACEFGJKL:E G J C A F L K
+ACEFHIJK:H J E C A F I K
+ACEFHIJL:H J E C A F L I
+ACEFHIKL:H E I C A F L K
+ACEFHJKL:H J E C A F L K
+ACEFIJKL:E J I C A F L K
+ACEGHIJK:E G J C A H I K
+ACEGHIJL:E G J C A H L I
+ACEGHIKL:E G I C A H L K
+ACEGHJKL:E G J C A H L K
+ACEGIJKL:E J I C A G L K
+ACEHIJKL:E J I C A H L K
+ACFGHIJK:H G J C A F I K
+ACFGHIJL:H G J C A F L I
+ACFGHIKL:H G I C A F L K
+ACFGHJKL:H G J C A F L K
+ACFGIJKL:I G J C A F L K
+ACFHIJKL:H J I C A F L K
+ACGHIJKL:H J I C A G L K
+ADEFGHIJ:H G J D A F E I
+ADEFGHIK:H G E D A F I K
+ADEFGHIL:H G E D A F L I
+ADEFGHJK:H G J D A F E K
+ADEFGHJL:H G J D A F L E
+ADEFGHKL:H G E D A F L K
+ADEFGIJK:E G J D A F I K
+ADEFGIJL:E G J D A F L I
+ADEFGIKL:E G I D A F L K
+ADEFGJKL:E G J D A F L K
+ADEFHIJK:H J E D A F I K
+ADEFHIJL:H J E D A F L I
+ADEFHIKL:H E I D A F L K
+ADEFHJKL:H J E D A F L K
+ADEFIJKL:E J I D A F L K
+ADEGHIJK:E G J D A H I K
+ADEGHIJL:E G J D A H L I
+ADEGHIKL:E G I D A H L K
+ADEGHJKL:E G J D A H L K
+ADEGIJKL:E J I D A G L K
+ADEHIJKL:E J I D A H L K
+ADFGHIJK:H G J D A F I K
+ADFGHIJL:H G J D A F L I
+ADFGHIKL:H G I D A F L K
+ADFGHJKL:H G J D A F L K
+ADFGIJKL:I G J D A F L K
+ADFHIJKL:H J I D A F L K
+ADGHIJKL:H J I D A G L K
+AEFGHIJK:E G J F A H I K
+AEFGHIJL:E G J F A H L I
+AEFGHIKL:E G I F A H L K
+AEFGHJKL:E G J F A H L K
+AEFGIJKL:E J I F A G L K
+AEFHIJKL:E J I F A H L K
+AEGHIJKL:E J I A H G L K
+AFGHIJKL:H J I F A G L K
+BCDEFGHI:C G B D H F E I
+BCDEFGHJ:H G B C J F D E
+BCDEFGHK:H G B C H F D K
+BCDEFGHL:C G B D H F L E
+BCDEFGIJ:C E B D J F E I
+BCDEFGIK:C E B D E F I K
+BCDEFGIL:C E B D E F L I
+BCDEFGJK:C J B D J F E K
+BCDEFGJL:C J B D J F L E
+BCDEFGKL:C E B D E F L K
+BCDEFHIJ:C J B D H F E I
+BCDEFHIK:C E B D H F I K
+BCDEFHIL:C E B D H F L I
+BCDEFHJK:C J B D H F E K
+BCDEFHJL:C J B D H F L E
+BCDEFHKL:C E B D H F L K
+BCDEFIJK:C J B D E F I K
+BCDEFIJL:C J B D E F L I
+BCDEFIKL:C E B D I F L K
+BCDEFJKL:C J B D E F L K
+BCDEGHIJ:H G B C J D E I
+BCDEGHIK:E G B C H D I K
+BCDEGHIL:E G B C H D L I
+BCDEGHJK:H G B C J D E K
+BCDEGHJL:H G B C J D L E
+BCDEGHKL:E G B C H D L K
+BCDEGIJK:E G B C J D I K
+BCDEGIJL:E G B C J D L I
+BCDEGIKL:E G B C I D L K
+BCDEGJKL:E G B C J D L K
+BCDEHIJK:E J B C H D I K
+BCDEHIJL:E J B C H D L I
+BCDEHIKL:E I B C H D L K
+BCDEHJKL:E J B C H D L K
+BCDEIJKL:E J B C I D L K
+BCDFGHIJ:H G B C J F D I
+BCDFGHIK:C G B D H F I K
+BCDFGHIL:C G B D H F L I
+BCDFGHJK:H G B C J F D K
+BCDFGHJL:C G B D H F L J
+BCDFGHKL:C G B D H F L K
+BCDFGIJK:C G B D J F I K
+BCDFGIJL:C G B D J F L I
+BCDFGIKL:C G B D I F L K
+BCDFGJKL:C G B D J F L K
+BCDFHIJK:C J B D H F I K
+BCDFHIJL:C J B D H F L I
+BCDFHIKL:C I B D H F L K
+BCDFHJKL:C J B D H F L K
+BCDFIJKL:C J B D I F L K
+BCDGHIJK:H G B C J D I K
+BCDGHIJL:H G B C J D L I
+BCDGHIKL:H G B C I D L K
+BCDGHJKL:H G B C J D L K
+BCDGIJKL:I G B C J D L K
+BCDHIJKL:H J B C I D L K
+BCEFGHIJ:H G B C J F E I
+BCEFGHIK:E G B C H F I K
+BCEFGHIL:E G B C H F L I
+BCEFGHJK:H G B C J F E K
+BCEFGHJL:H G B C J F L E
+BCEFGHKL:E G B C H F L K
+BCEFGIJK:E G B C J F I K
+BCEFGIJL:E G B C J F L I
+BCEFGIKL:E G B C I F L K
+BCEFGJKL:E G B C J F L K
+BCEFHIJK:E J B C H F I K
+BCEFHIJL:E J B C H F L I
+BCEFHIKL:E I B C H F L K
+BCEFHJKL:E J B C H F L K
+BCEFIJKL:E J B C I F L K
+BCEGHIJK:E J B C H G I K
+BCEGHIJL:E J B C H G L I
+BCEGHIKL:E G B C I H L K
+BCEGHJKL:E J B C H G L K
+BCEGIJKL:E J B C I G L K
+BCEHIJKL:E J B C I H L K
+BCFGHIJK:H G B C J F I K
+BCFGHIJL:H G B C J F L I
+BCFGHIKL:H G B C I F L K
+BCFGHJKL:H G B C J F L K
+BCFGIJKL:I G B C J F L K
+BCFHIJKL:H J B C I F L K
+BCGHIJKL:H J B C I G L K
+BDEFGHIJ:H G B D J F E I
+BDEFGHIK:E G B D H F I K
+BDEFGHIL:E G B D H F L I
+BDEFGHJK:H G B D J F E K
+BDEFGHJL:H G B D J F L E
+BDEFGHKL:E G B D H F L K
+BDEFGIJK:E G B D J F I K
+BDEFGIJL:E G B D J F L I
+BDEFGIKL:E G B D I F L K
+BDEFGJKL:E G B D J F L K
+BDEFHIJK:E J B D H F I K
+BDEFHIJL:E J B D H F L I
+BDEFHIKL:E I B D H F L K
+BDEFHJKL:E J B D H F L K
+BDEFIJKL:E J B D I F L K
+BDEGHIJK:E J B D H G I K
+BDEGHIJL:E J B D H G L I
+BDEGHIKL:E G B D I H L K
+BDEGHJKL:E J B D H G L K
+BDEGIJKL:E J B D I G L K
+BDEHIJKL:E J B D I H L K
+BDFGHIJK:H G B D J F I K
+BDFGHIJL:H G B D J F L I
+BDFGHIKL:H G B D I F L K
+BDFGHJKL:H G B D J F L K
+BDFGIJKL:I G B D J F L K
+BDFHIJKL:H J B D I F L K
+BDGHIJKL:H J B D I G L K
+BEFGHIJK:E J B F H G I K
+BEFGHIJL:E J B F H G L I
+BEFGHIKL:E G B F I H L K
+BEFGHJKL:E J B F H G L K
+BEFGIJKL:E J B F I G L K
+BEFHIJKL:E J B F I H L K
+BEGHIJKL:E J I B H G L K
+BFGHIJKL:H J B F I G L K
+CDEFGHIJ:C G J D H F E I
+CDEFGHIK:C G E D H F I K
+CDEFGHIL:C G E D H F L I
+CDEFGHJK:C G J D H F E K
+CDEFGHJL:C G J D H F L E
+CDEFGHKL:C G E D H F L K
+CDEFGIJK:C G E D J F I K
+CDEFGIJL:C G E D J F L I
+CDEFGIKL:C G E D I F L K
+CDEFGJKL:C G E D J F L K
+CDEFHIJK:C J E D H F I K
+CDEFHIJL:C J E D H F L I
+CDEFHIKL:C E I D H F L K
+CDEFHJKL:C J E D H F L K
+CDEFIJKL:C J E D I F L K
+CDEGHIJK:E G J C H D I K
+CDEGHIJL:E G J C H D L I
+CDEGHIKL:E G I C H D L K
+CDEGHJKL:E G J C H D L K
+CDEGIJKL:E G I C J D L K
+CDEHIJKL:E J I C H D L K
+CDFGHIJK:C G J D H F I K
+CDFGHIJL:C G J D H F L I
+CDFGHIKL:C G I D H F L K
+CDFGHJKL:C G J D H F L K
+CDFGIJKL:C G I D J F L K
+CDFHIJKL:C J I D H F L K
+CDGHIJKL:H G I C J D L K
+CEFGHIJK:E G J C H F I K
+CEFGHIJL:E G J C H F L I
+CEFGHIKL:E G I C H F L K
+CEFGHJKL:E G J C H F L K
+CEFGIJKL:E G I C J F L K
+CEFHIJKL:E J I C H F L K
+CEGHIJKL:E J I C H G L K
+CFGHIJKL:H G I C J F L K
+DEFGHIJK:E G J D H F I K
+DEFGHIJL:E G J D H F L I
+DEFGHIKL:E G I D H F L K
+DEFGHJKL:E G J D H F L K
+DEFGIJKL:E G I D J F L K
+DEFHIJKL:E J I D H F L K
+DEGHIJKL:E J I D H G L K
+DFGHIJKL:H G I D J F L K
+EFGHIJKL:E J I F H G L K
+`;
+  const t = {};
+  raw.split('\n').forEach(line => {
+    const [k, v] = line.split(':');
+    const key = k.trim().split('').filter(c => c !== ' ').sort().join('');
+    if (key.length === 8) t[key] = v.trim().split(' ');
+  });
+  return t;
+})();
+
+// R32_SLOTS, THIRD_MATCH_COL, R16/QF/SF bracket topology come from bracket.js
+
+function computeBracket(grpStandings, qualifiedThirds) {
+  // Build position lookup
+  const pos = {};
+  Object.entries(grpStandings).forEach(([grp, teams]) => {
+    if (teams[0]) pos[`1${grp}`] = teams[0][0];
+    if (teams[1]) pos[`2${grp}`] = teams[1][0];
+    if (teams[2]) pos[`3${grp}`] = teams[2][0];
+  });
+
+  // 3rd place combination lookup
+  const qualGroups = qualifiedThirds.slice(0,8).map(([g]) => g).sort().join('');
+  const combo = THIRD_COMBOS[qualGroups];
+  const thirdSlot = {}; // match → team
+  if (combo) {
+    [79,85,81,74,82,77,87,80].forEach((m,i) => {
+      const grp = combo[i];
+      thirdSlot[m] = pos[`3${grp}`] || `3${grp}`;
+    });
+  } else {
+    [79,85,81,74,82,77,87,80].forEach(m => { thirdSlot[m] = 'TBD'; });
+  }
+
+  // Resolve team for a slot string
+  function slotTeam(slot) {
+    if (slot.startsWith('3M')) {
+      const m = parseInt(slot.slice(2));
+      return thirdSlot[m] || 'TBD';
+    }
+    return pos[slot] || slot;
+  }
+
+  // Build R32 matchups
+  const r32teams = {};
+  Object.entries(R32_SLOTS).forEach(([m, [h, a]]) => {
+    r32teams[+m] = [slotTeam(h), slotTeam(a)];
+  });
+
+  return { pos, thirdSlot, r32teams, combo: !!combo, qualGroups };
+}
+
+// FLAGS, RANKINGS, KO_SCHEDULE, teamHtml, isTbd, bkTeamRow, matchCard → bracket.js
+
+// Compute group standings from results.
+// Depends on module-level MATCHES, GROUP_ORDER, groupSort.
+function computeGroupStandings(results, cardData) {
+  // Derive [num, grp, t1, t2] from the canonical MATCHES array (fields 0,1,4,5)
+  const GRP_MATCHES = MATCHES.map(([num, grp, , , t1, t2]) => [num, grp, t1, t2]);
+  const stats = {}, grpMatches = {};
+  GRP_MATCHES.forEach(([num,grp,t1,t2]) => {
+    [t1,t2].forEach(t => { if (!stats[t]) stats[t] = {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0}; });
+    if (!grpMatches[grp]) grpMatches[grp] = [];
+    grpMatches[grp].push([num,grp,null,null,t1,t2]); // positions 4&5 = t1,t2 for groupSort destructuring
+    const r = results[num]; if (!r) return;
+    stats[t1].P++; stats[t2].P++;
+    stats[t1].GF += r.home; stats[t1].GA += r.away;
+    stats[t2].GF += r.away; stats[t2].GA += r.home;
+    if (r.outcome==='W1') { stats[t1].W++; stats[t1].Pts+=3; stats[t2].L++; }
+    else if (r.outcome==='W2') { stats[t2].W++; stats[t2].Pts+=3; stats[t1].L++; }
+    else { stats[t1].D++; stats[t1].Pts++; stats[t2].D++; stats[t2].Pts++; }
+  });
+  const grpStandings = {};
+  Object.keys(GROUP_ORDER).forEach(grp => {
+    const gm = grpMatches[grp] || [];
+    grpStandings[grp] = groupSort(GROUP_ORDER[grp], stats, gm, results, cardData)
+      .map(t => [t, stats[t] || {P:0,W:0,D:0,L:0,GF:0,GA:0,Pts:0}]);
+  });
+  // Best 8 thirds (cross-group: Pts → GD → GF → fair play → FIFA ranking)
+  const thirds = Object.entries(grpStandings)
+    .filter(([,ts]) => ts.length>=3 && ts[2][1].P>0)
+    .map(([grp,ts]) => [grp, ts[2][0], ts[2][1]])
+    .sort((a,b) => {
+      if (b[2].Pts !== a[2].Pts) return b[2].Pts - a[2].Pts;
+      const gdA = a[2].GF-a[2].GA, gdB = b[2].GF-b[2].GA;
+      if (gdB !== gdA) return gdB - gdA;
+      if (b[2].GF !== a[2].GF) return b[2].GF - a[2].GF;
+      const mnA = (grpMatches[a[0]] || []).map(([n]) => n);
+      const mnB = (grpMatches[b[0]] || []).map(([n]) => n);
+      const fpDiff = fairPlayScore(b[1], mnB, cardData) - fairPlayScore(a[1], mnA, cardData);
+      if (fpDiff !== 0) return fpDiff;
+      return (RANKINGS[a[1]]??999) - (RANKINGS[b[1]]??999);
+    });
+  return { grpStandings, thirds };
+}
+
+// ── Bracket rendering (Variant 1 — read-only, group-results-derived) ──────────
+// buildBracketHtml, positionAndConnectBracket, drawBracketConnectors → bracket.js
+function renderBracket(results, allGroupsStarted, bracketConfirmed, bracketData) {
+  const el = document.getElementById('bracketCard');
+
+  if (!allGroupsStarted) {
+    el.innerHTML = '<div class="bracket-pending">Bracket appears once every team has played.</div>';
+    const bb = document.getElementById('bracket-body');
+    if (bb) bb.style.visibility = 'visible'; // no positioning needed
+    return;
+  }
+
+  // confirmed=true only when parse_results.py has cross-checked R32 against Wikipedia
+  const isConfirmed = bracketConfirmed === true;
+  const statusBadge = isConfirmed
+    ? '<span style="margin-left:8px;font-size:0.6rem;background:#22863a;color:#fff;padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:0">Confirmed ✓</span>'
+    : '<span style="margin-left:8px;font-size:0.6rem;background:#ff9e16;color:#131e27;padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:0">Provisional</span>';
+  const bracketLabel = document.getElementById('bracketSectionLabel');
+  if (bracketLabel && !bracketLabel.querySelector('.bracket-badge')) {
+    const span = document.createElement('span');
+    span.className = 'bracket-badge';
+    span.innerHTML = statusBadge;
+    bracketLabel.appendChild(span);
+  }
+
+  const { grpStandings, thirds } = computeGroupStandings(results, _cardData);
+  const { r32teams } = computeBracket(grpStandings, thirds);
+
+  // Resolve teams for a match slot — returns [home, away]
+  function slotTeams(m) {
+    if (r32teams[m]) return r32teams[m];
+    if (R16[m])  return [`W${R16[m][0]}`, `W${R16[m][1]}`];
+    if (QF[m])   return [`W${QF[m][0]}`,  `W${QF[m][1]}`];
+    if (SF[m])   return [`W${SF[m][0]}`,  `W${SF[m][1]}`];
+    if (m===103) return ['L101','L102'];
+    if (m===104) return ['W101','W102'];
+    return ['TBD','TBD'];
+  }
+
+  // mkCard: builds a read-only match card using shared matchCard() from bracket.js
+  // slotCls() is a shared primitive in bracket.js (used by Variant 1 + 2).
+  function mkCard(m) {
+    const [h, a] = slotTeams(m);
+    // Only apply wiki slot state for R32 matches (73–88)
+    if (m >= 73 && m <= 88) {
+      const slot = bracketData?.round_of_32?.[m];
+      const wh = slot?.wiki_home ?? null;
+      const wa = slot?.wiki_away ?? null;
+      const hCls = isTbd(h) ? '' : slotCls(wh, h, a);
+      const aCls = isTbd(a) ? '' : slotCls(wa, h, a);
+      return matchCard(m, h, a, '', undefined, undefined, hCls, aCls);
+    }
+    return matchCard(m, h, a, '');
+  }
+
+  // ── Mobile tab view ──────────────────────────────────────
+  // Match order mirrors desktop bracket (buildBracketHtml top-to-bottom layout)
+  function mobMatchCard(m) {
+    const [h, a] = slotTeams(m);
+    const date  = KO_SCHEDULE[m] ? ` · ${koDisplay(m)}` : '';
+    const hTbd  = isTbd(h), aTbd = isTbd(a);
+    // Wiki slot state for R32 only
+    let hCls = hTbd ? ' tbd' : '';
+    let aCls = aTbd ? ' tbd' : '';
+    if (m >= 73 && m <= 88 && !hTbd && !aTbd) {
+      const slot = bracketData?.round_of_32?.[m];
+      const wh = slot?.wiki_home ?? null;
+      const wa = slot?.wiki_away ?? null;
+      const hState = slotCls(wh, h, a);
+      const aState = slotCls(wa, h, a);
+      if (hState) hCls = ' ' + hState;
+      if (aState) aCls = ' ' + aState;
+    }
+    return `<div class="bk-mob-match">
+      <div class="bk-mob-meta">M${m}${date}</div>
+      <div class="bk-mob-teams">
+        <div class="bk-mob-team${hCls}">${mobTeamHtml(h)}</div>
+        <div class="bk-mob-team${aCls}">${mobTeamHtml(a)}</div>
+      </div>
+    </div>`;
+  }
+  const mobTabHtml = buildMobTabHtml(MOB_ROUNDS, 'r32', mobMatchCard);
+
+  // Variant 1 only renders during group stage — no KO results exist yet.
+  // Podium shows TBD; Variant 3 (renderKoBracket) handles the live KO podium.
+  const podiumHtml = buildPodiumHtml(null, null, null);
+
+  el.innerHTML = buildBracketHtml(mkCard, { podiumHtml }) + mobTabHtml;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    positionAndConnectBracket();
+    const bb = document.getElementById('bracket-body');
+    if (bb) bb.style.visibility = 'visible';
+  }));
+}
+
+// ── Mobile bracket tab switcher ───────────────────────────
+// ── Tooltip ───────────────────────────────────────────────
+const tooltip = document.getElementById('sq-tooltip');
+
+function _showPillTooltip(pill) {
+  const raw   = pill.dataset.cpNames || '';
+  const names = raw ? raw.split('|') : [];
+  tooltip.style.maxWidth = 'none';
+  const nameRows = names.length
+    ? `<div class="tt-cols" style="column-count:2">${names.map(n => `<div class="tt-result">✓ ${_esc(n)}</div>`).join('')}</div>`
+    : `<div class="tt-result">— nobody</div>`;
+  tooltip.innerHTML = `<div class="tt-match">Picked correctly:</div>${nameRows}`;
+  tooltip.style.display = 'block';
+}
+
+function _showSqTooltip(sq) {
+  const match  = sq.dataset.match;
+  const teams  = sq.dataset.teams;
+  const pick   = sq.dataset.pick;
+  const result = sq.dataset.result;
+  const status = sq.dataset.status;
+  const name   = sq.dataset.name || 'Their';
+  const statusText = status === 'correct'        ? '✓ Correct'
+                   : status === 'correct-upset'  ? '✓ Correct ✦ Contrarian'
+                   : status === 'wrong'          ? '✗ Wrong'
+                   : status === 'cascaded'       ? '⚡ Void — team eliminated earlier'
+                   : status === 'pending'        ? '⏳ Pending'
+                   : status === 'live-correct'   ? '🔴 Live · correct so far'
+                   : status === 'live-wrong'     ? '🔴 Live · wrong so far'
+                   : status === 'live-draw'      ? '🔴 Live · tied'
+                   : status === 'empty'         ? '— No pick'
+                   : '—';
+  const ttStatusCls = status === 'correct-upset' ? 'correct'
+                    : status === 'live-correct'   ? 'correct'
+                    : status === 'live-wrong'     ? 'wrong'
+                    : status === 'live-draw'      ? 'pending'
+                    : status;
+  tooltip.innerHTML = `
+    <div class="tt-match"></div>
+    <div class="tt-pick">${_esc(name)}'s pick: <strong></strong></div>
+    <div class="tt-result"></div>
+    <div class="tt-status ${ttStatusCls}"></div>
+  `;
+  tooltip.querySelector('.tt-match').textContent  = `Match ${match} · ${teams}`;
+  const pickEl = tooltip.querySelector('.tt-pick');
+  if (status === 'empty') {
+    pickEl.style.display = 'none';
+  } else {
+    pickEl.style.display = '';
+    pickEl.querySelector('strong').textContent = pick;
+  }
+  tooltip.querySelector('.tt-result').textContent = `Result: ${result}`;
+  tooltip.querySelector('.tt-status').textContent = statusText;
+  tooltip.style.maxWidth = '320px';
+  tooltip.style.display = 'block';
+}
+
+function _showFloorTooltip() {
+  tooltip.innerHTML = `<div class="tt-match">Floor score</div><div class="tt-result">Minimum group pts — no group picks submitted</div>`;
+  tooltip.style.maxWidth = '240px';
+  tooltip.style.display = 'block';
+}
+
+function _positionTooltipAtEl() {
+  tooltip.style.maxWidth = (window.innerWidth - 32) + 'px';
+  const colsEl = tooltip.querySelector('.tt-cols');
+  if (colsEl) colsEl.style.columnCount = Math.min(parseInt(colsEl.style.columnCount) || 1, 2);
+  requestAnimationFrame(() => {
+    const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+    tooltip.style.left = Math.round((window.innerWidth  - tw) / 2) + 'px';
+    tooltip.style.top  = Math.round((window.innerHeight - th) / 2) + 'px';
+  });
+}
+
+// Suppress synthesized mouse events that fire after touchstart
+let _isTouchInteraction = false, _touchTimer = null;
+document.addEventListener('touchstart', e => {
+  _isTouchInteraction = true;
+  clearTimeout(_touchTimer);
+  _touchTimer = setTimeout(() => { _isTouchInteraction = false; }, 600);
+
+  // Scoring info anchor — toggle inline tooltip on tap
+  const scoringLink = e.target.closest('.scoring-info-link');
+  if (scoringLink) {
+    const anchor = scoringLink.closest('.scoring-info-anchor');
+    if (anchor) anchor.classList.toggle('tooltip-open');
+    return;
+  }
+  // Close scoring tooltip if open and tapping elsewhere
+  const openAnchor = document.querySelector('.scoring-info-anchor.tooltip-open');
+  if (openAnchor) openAnchor.classList.remove('tooltip-open');
+
+  const pill  = e.target.closest('.cp-pill');
+  const sq    = e.target.closest('.sq');
+  const floor = e.target.closest('.grp-floor');
+  if (pill)  { _showPillTooltip(pill); _positionTooltipAtEl(); }
+  else if (sq)    { _showSqTooltip(sq); _positionTooltipAtEl(); }
+  else if (floor) { _showFloorTooltip(); _positionTooltipAtEl(); }
+  else { tooltip.style.display = 'none'; }
+}, { passive: true });
+
+document.addEventListener('mouseover', e => {
+  if (_isTouchInteraction) return;
+  const pill  = e.target.closest('.cp-pill');
+  if (pill) { _showPillTooltip(pill); return; }
+  const floor = e.target.closest('.grp-floor');
+  if (floor) { _showFloorTooltip(); return; }
+  const sq = e.target.closest('.sq');
+  if (!sq) { tooltip.style.display = 'none'; return; }
+  _showSqTooltip(sq);
+});
+
+document.addEventListener('mousemove', e => {
+  if (_isTouchInteraction || tooltip.style.display === 'none') return;
+  const x = e.clientX + 14, y = e.clientY + 14;
+  const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+  tooltip.style.left = (x + tw > window.innerWidth  ? x - tw - 28 : x) + 'px';
+  tooltip.style.top  = (y + th > window.innerHeight ? y - th - 28 : y) + 'px';
+});
+
+document.addEventListener('mouseout', e => {
+  if (_isTouchInteraction) return;
+  if (!e.target.closest('.sq') && !e.target.closest('.cp-pill') && !e.target.closest('.grp-floor')) tooltip.style.display = 'none';
+});
+
+// ── Live scores fetch + polling ───────────────────────────
+const ESPN_SCOREBOARD = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard';
+
+// ESPN indexes matches by ET date, not UTC — a 10 PM ET match = 2 AM UTC next day.
+// Fetch yesterday + today UTC to catch any match currently live.
+async function _fetchEspnEvents() {
+  const now  = new Date();
+  const yest = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const d1   = yest.toISOString().slice(0, 10).replace(/-/g, '');
+  const d2   = now.toISOString().slice(0, 10).replace(/-/g, '');
+  const [r1, r2] = await Promise.all([
+    fetch(`${ESPN_SCOREBOARD}?dates=${d1}`),
+    fetch(`${ESPN_SCOREBOARD}?dates=${d2}`),
+  ]);
+  return [
+    ...((r1.ok ? await r1.json() : {}).events || []),
+    ...((r2.ok ? await r2.json() : {}).events || []),
+  ];
+}
+
+async function fetchLiveScores() {
+  if (!LIVE_SCORES_ENABLED || knockoutMode) return;
+  try {
+    const allEvents = await _fetchEspnEvents();
+
+    const newLive = {};
+    let anyIn = false;
+
+    // Seed _pendingResults for matches that need bridging. Two paths:
+    // (a) Score-based: we saw live ESPN data (_bridgeScores set) but ESPN dropped the
+    //     event without a 'post' transition (ESPN sometimes goes 'in' → gone with no
+    //     intermediate 'post'). Bridge immediately — no time threshold needed.
+    // (b) Time-based: match is past expected end time and we never saw live data
+    //     (page reload after ESPN already dropped the event). 95 min covers 90 min +
+    //     normal stoppage; 24 h cap prevents indefinite polling if CSV never arrives.
+    const nowMs = Date.now();
+    for (const [mNum,,, utcKick] of MATCHES) {
+      if (_lastResults?.[mNum]) continue;       // already confirmed in CSV
+      if (_pendingResults.has(mNum)) continue;  // already tracked
+      const sawLive = !!_bridgeScores[mNum];    // we saw ESPN data for this match
+      const kickMs = new Date(utcKick).getTime();
+      const elapsed = nowMs - kickMs;
+      const pastEnd = elapsed > 95 * 60 * 1000 && elapsed < 24 * 60 * 60 * 1000;
+      if (sawLive || pastEnd) _pendingResults.add(mNum);
+    }
+
+    for (const event of allEvents) {
+      const state = event.status?.type?.state;
+      if (state !== 'in' && state !== 'post') continue;
+      const comp = event.competitions?.[0];
+      const home = comp?.competitors?.find(c => c.homeAway === 'home');
+      const away = comp?.competitors?.find(c => c.homeAway === 'away');
+      if (!home || !away) continue;
+
+      const hn = ESPN_TEAM_MAP_JS[home.team.displayName] || home.team.displayName;
+      const an = ESPN_TEAM_MAP_JS[away.team.displayName] || away.team.displayName;
+      const match = MATCHES.find(([,,,, t1, t2]) =>
+        (t1 === hn && t2 === an) || (t2 === hn && t1 === an));
+      if (!match) continue;
+
+      const [num,,,, t1] = match;
+      const hs = parseInt(home.score) || 0;
+      const as_ = parseInt(away.score) || 0;
+      // If ESPN reversed home/away vs our MATCHES ordering, swap scores
+      const [h, a] = t1 === hn ? [hs, as_] : [as_, hs];
+
+      const clock = event.status?.displayClock || '';
+      const minute = clock === 'HT' ? 'HT' : (clock.split(':')[0] || '');
+
+      newLive[num] = { minute, homeScore: h, awayScore: a, state };
+      if (state === 'in') anyIn = true;
+      // Track games ESPN says are finished but CSV hasn't confirmed yet
+      if (state === 'post' && (!_lastResults || !_lastResults[num])) _pendingResults.add(num);
+      // Always persist latest score so we can keep squares pulsing after ESPN drops the event
+      _bridgeScores[num] = { homeScore: h, awayScore: a };
+    }
+
+    // For pending matches ESPN has already dropped, re-inject last known score into newLive
+    // so _liveData stays populated and squares keep pulsing through the bridge period.
+    for (const num of _pendingResults) {
+      if (!newLive[num] && _bridgeScores[num] && (!_lastResults || !_lastResults[num])) {
+        newLive[num] = { ..._bridgeScores[num], state: 'post', minute: '' };
+      }
+    }
+
+    // Drop post-game entries already confirmed by CSV — no need to bridge anymore
+    if (_lastResults) {
+      for (const num of Object.keys(newLive)) {
+        if (_lastResults[Number(num)]) delete newLive[Number(num)];
+      }
+      // Also clear any pending matches that CSV has now confirmed
+      for (const num of _pendingResults) {
+        if (_lastResults[num]) { _pendingResults.delete(num); delete _bridgeScores[num]; }
+      }
+    }
+
+    _liveData = newLive;
+
+    // Re-render affected sections with live overlay
+    if (_lastStandings && _lastResults !== null) {
+      renderStandings(_lastStandings, _liveData);
+      renderResults(_lastResults, _lastGrpCounts, _liveData);
+    }
+
+    // Stop polling once nothing is live and all results are CSV-confirmed.
+    // During the bridge period (_pendingResults > 0), keep the interval running so
+    // squares continue pulsing every 60 s. Also call init() each cycle to re-fetch
+    // the CSV; once all pending results are confirmed, _pendingResults empties and
+    // polling stops normally.
+    if (!anyIn) {
+      if (_pendingResults.size === 0) {
+        stopLivePolling();
+      } else if (!_inInit) {
+        init();  // re-fetch CSV to confirm results; polling continues
+      }
+    }
+
+  } catch (e) { /* silent — live scores are best-effort */ }
+}
+
+function startLivePolling() {
+  if (_livePoller) return;
+  _livePoller = setInterval(fetchLiveScores, 60 * 1000);
+}
+
+function stopLivePolling() {
+  if (_livePoller) { clearInterval(_livePoller); _livePoller = null; }
+}
+
+// ── KO live scores ────────────────────────────────────────
+async function fetchKoLiveScores() {
+  if (!LIVE_SCORES_ENABLED || !knockoutMode) return;
+  if (!_lastKoBracketData) return;
+  try {
+    const allEvents = await _fetchEspnEvents();
+
+    const newLive = {};
+    let anyIn = false;
+    const nowMs = Date.now();
+
+    // Seed _koPendingResults — same two paths as group stage but 135 min threshold
+    // (KO games can go to 120 min ET + pens buffer).
+    for (const [mNum, utcKick] of Object.entries(KO_SCHEDULE)) {
+      const num = Number(mNum);
+      if (_lastKoResults?.[num]) continue;
+      if (_koPendingResults.has(num)) continue;
+      const sawLive = !!_koBridgeScores[num];
+      const elapsed = nowMs - new Date(utcKick).getTime();
+      const pastEnd = elapsed > 135 * 60 * 1000 && elapsed < 24 * 60 * 60 * 1000;
+      if (sawLive || pastEnd) _koPendingResults.add(num);
+    }
+
+    // Build set of KO match numbers with known teams for faster lookup
+    const koMatchTeams = {};
+    for (const mNum of Object.keys(KO_SCHEDULE)) {
+      const m = Number(mNum);
+      if (_lastKoResults?.[m]) continue; // already confirmed
+      const [t1, t2] = getKoTeams(m, _lastKoBracketData, _lastKoResults || {});
+      if (!isTbd(t1) && !isTbd(t2)) koMatchTeams[m] = [t1, t2];
+    }
+
+    for (const event of allEvents) {
+      const state = event.status?.type?.state;
+      if (state !== 'in' && state !== 'post') continue;
+      const comp = event.competitions?.[0];
+      const home = comp?.competitors?.find(c => c.homeAway === 'home');
+      const away = comp?.competitors?.find(c => c.homeAway === 'away');
+      if (!home || !away) continue;
+
+      const hn = ESPN_TEAM_MAP_JS[home.team.displayName] || home.team.displayName;
+      const an = ESPN_TEAM_MAP_JS[away.team.displayName] || away.team.displayName;
+
+      // Find which KO match this event belongs to
+      let matchNum = null;
+      for (const [m, [t1, t2]] of Object.entries(koMatchTeams)) {
+        if ((t1 === hn && t2 === an) || (t2 === hn && t1 === an)) {
+          matchNum = Number(m); break;
+        }
+      }
+      if (matchNum === null) continue;
+
+      const [t1] = koMatchTeams[matchNum];
+      const hs = parseInt(home.score) || 0;
+      const as_ = parseInt(away.score) || 0;
+      const [h, a] = t1 === hn ? [hs, as_] : [as_, hs];
+
+      // Clock — handle penalty display
+      const rawClock = event.status?.displayClock || '';
+      const periodType = event.status?.type?.shortDetail || '';
+      const isPen = /pen/i.test(periodType) || /pen/i.test(rawClock);
+      const isAet = /ET|AET|extra/i.test(periodType);
+      let minute;
+      if (isPen)      minute = 'PEN';
+      else if (isAet) minute = 'AET';
+      else            minute = rawClock === 'HT' ? 'HT' : (rawClock.split(':')[0] || '');
+
+      newLive[matchNum] = { minute, homeScore: h, awayScore: a, state };
+      if (state === 'in') anyIn = true;
+      if (state === 'post' && !_lastKoResults?.[matchNum]) _koPendingResults.add(matchNum);
+      _koBridgeScores[matchNum] = { homeScore: h, awayScore: a };
+    }
+
+    // Re-inject bridge scores for matches ESPN has dropped
+    for (const num of _koPendingResults) {
+      if (!newLive[num] && _koBridgeScores[num] && !_lastKoResults?.[num]) {
+        newLive[num] = { ..._koBridgeScores[num], state: 'post', minute: '' };
+      }
+    }
+
+    // Clear confirmed matches
+    if (_lastKoResults) {
+      for (const num of Object.keys(newLive)) {
+        if (_lastKoResults[Number(num)]) delete newLive[Number(num)];
+      }
+      for (const num of _koPendingResults) {
+        if (_lastKoResults[num]) { _koPendingResults.delete(num); delete _koBridgeScores[num]; }
+      }
+    }
+
+    const newLiveStr = JSON.stringify(newLive);
+    const liveChanged = newLiveStr !== _lastKoLiveStr;
+    _koLiveData   = newLive;
+    _lastKoLiveStr = newLiveStr;
+
+    if (_lastKoCombined) {
+      renderKoStandings(_lastKoCombined, _lastKoResults || {}, _lastKoBracketData, _koLiveData);
+      _revealSections(); // re-reveal after async re-render replaces section wrappers
+      if (liveChanged) {
+        renderKoBracket(_lastKoBracketData, _lastKoResults || {}, _lastKoScores, _lastKoCounts, _koLiveData);
+      }
+    }
+
+    if (!anyIn) {
+      if (_koPendingResults.size === 0) {
+        stopKoLivePolling();
+      } else if (!_inInit) {
+        init();
+      }
+    }
+  } catch (e) { /* silent — live scores are best-effort */ }
+}
+
+function startKoLivePolling() {
+  if (_koLivePoller) return;
+  _koLivePoller = setInterval(fetchKoLiveScores, 60 * 1000);
+}
+
+function stopKoLivePolling() {
+  if (_koLivePoller) { clearInterval(_koLivePoller); _koLivePoller = null; }
+}
+// ──────────────────────────────────────────────────────────
+
+// ── Main ──────────────────────────────────────────────────
+async function init() {
+  if (_inInit) return;
+  _inInit = true;
+  try {
+    let picksData, resultsCSV, koPicksData = {}, koResultsCSV = '';
+    let bracketData = null;
+
+    const _nc = { cache: 'no-store' };
+    const _bust = `?t=${Date.now()}`;
+      const [picksResp, resultsResp, bracketResp, koPicksResp, koResultsResp, cardsResp] = await Promise.all([
+        fetch(PICKS_URL    + _bust, _nc),
+        fetch(RESULTS_URL  + _bust, _nc),
+        fetch(BRACKET_URL  + _bust, _nc).catch(() => null),
+        fetch(KO_PICKS_URL + _bust, _nc).catch(() => null),
+        fetch(KO_RESULTS_URL + _bust, _nc).catch(() => null),
+        fetch(CARDS_URL    + _bust, _nc).catch(() => null),
+      ]);
+      if (!picksResp.ok) throw new Error('Could not load picks');
+      if (!resultsResp.ok) throw new Error('Could not load results');
+      picksData  = await picksResp.json();
+      resultsCSV = await resultsResp.text();
+      if (bracketResp?.ok) bracketData = await bracketResp.json();
+      if (koPicksResp?.ok) koPicksData = await koPicksResp.json();
+      if (koResultsResp?.ok) koResultsCSV = await koResultsResp.text();
+      if (cardsResp?.ok) _cardData = await cardsResp.json();
+
+    // Apply ?games=N slicing
+    if (_gamesN !== null) {
+      resultsCSV   = _sliceCsv(resultsCSV, Math.min(_gamesN, 72));
+      koResultsCSV = _gamesN >= 73 ? _sliceCsv(koResultsCSV, _gamesN - 72) : '';
+    }
+
+    const results   = parseResults(resultsCSV);
+    const koResults = parseKoResults(koResultsCSV);
+    const koScores  = parseKoScores(koResultsCSV);
+    const standings = computeStandings(picksData, results);
+    const grpCounts = buildGrpCounts(standings);
+    const koPlayed  = Object.keys(koResults).length;
+
+    // All 24 matchday-1 games (M1–M24 = 2 per group × 12 groups). Bracket shows once every team has played.
+    const bracketConfirmed = bracketData ? bracketData.confirmed === true : false;
+
+    if (knockoutMode) {
+      // Sticky bar
+      document.getElementById('matchesPlayed').textContent = `${koPlayed} / 32 knockout matches played`;
+      document.getElementById('progressFill').style.width = `${(koPlayed / 32) * 100}%`;
+      _lastUpdated = new Date();
+      _updateTimestamp();
+      const combined = computeCombinedStandings(standings, koPicksData, koResults, bracketData);
+      _buildAbbrevMap(combined.map(p => p.name));
+      const koCounts = buildKoCounts(combined);
+      // Stale-CSV regression guard: only update stored state if CSV has >= confirmed results
+      const _newKoMatchCount = Object.keys(koResults).length;
+      const _oldKoMatchCount = _lastKoResults ? Object.keys(_lastKoResults).length : -1;
+      if (_newKoMatchCount >= _oldKoMatchCount) {
+        _lastKoCombined    = combined;
+        _lastKoBracketData = bracketData;
+        _lastKoResults     = koResults;
+        _lastKoScores      = koScores;
+        _lastKoCounts      = koCounts;
+      }
+      // Always render standings with best-known data
+      renderKoStandings(_lastKoCombined, _lastKoResults || {}, _lastKoBracketData || bracketData, _koLiveData);
+      // Only re-render KO bracket when new confirmed matches arrive (flash guard — bracket
+      // re-renders trigger positionAndConnectBracket via rAF which flashes cards at top:0)
+      const freshKoData = _newKoMatchCount > _lastRenderedKoMatchCount;
+      if (freshKoData) {
+        _lastRenderedKoMatchCount = _newKoMatchCount;
+        renderKoBracket(_lastKoBracketData || bracketData, _lastKoResults || {}, _lastKoScores, _lastKoCounts, _koLiveData);
+      }
+      if (LIVE_SCORES_ENABLED && !_koLivePoller) {
+        fetchKoLiveScores().then(() => startKoLivePolling());
+      }
+    } else {
+      _buildAbbrevMap(standings.map(p => p.name));
+      // Guard against Fastly CDN stale CSV regressing confirmed results.
+      // Fastly caches raw.githubusercontent.com for up to 5 min; if init() runs
+      // just after the bridge resolves, a stale CSV could overwrite _lastResults
+      // with a version missing the just-confirmed result, reverting points to old.
+      const _newMatchCount = Object.keys(results).length;
+      const _oldMatchCount = _lastResults ? Object.keys(_lastResults).length : -1;
+      // Update stored state BEFORE setting the freeze flag.
+      // If this is the first init() with 72 results + bracketConfirmed=true, the freeze
+      // must not block the update — otherwise _lastResults stays null and
+      // Object.keys(_lastResults) throws "Cannot convert undefined or null to object".
+      if (!_groupFrozen && _newMatchCount >= _oldMatchCount) {
+        // Store for live polling re-renders
+        _lastStandings = standings;
+        _lastResults   = results;
+        _lastGrpCounts = grpCounts;
+      }
+      // Freeze group standings once bracketConfirmed + all 72 results seen.
+      // After this point ESPN score corrections are ignored — group points are final.
+      if (!_groupFrozen && bracketConfirmed && _newMatchCount === 72) _groupFrozen = true;
+      // Sticky bar — updated after stale guard so match count stays in sync with points
+      const played = Object.keys(_lastResults).length;
+      document.getElementById('matchesPlayed').textContent = `${played} / 72 matches played`;
+      document.getElementById('progressFill').style.width = `${(played / 72) * 100}%`;
+      _lastUpdated = new Date();
+      _updateTimestamp();
+      renderStandings(_lastStandings, _liveData);
+    }
+
+    if (!knockoutMode) {
+      renderResults(_lastResults, _lastGrpCounts, _liveData);
+      // Only re-render group tables and bracket when actual match data changed or
+      // bracket confirmation status flipped — not on every bridge polling cycle.
+      const currentMatchCount = Object.keys(_lastResults).length;
+      const freshData = currentMatchCount > _lastRenderedMatchCount;
+      const bracketChanged = bracketConfirmed !== _lastBracketConfirmed;
+      const wikiKey = JSON.stringify(
+        Object.values(bracketData?.round_of_32 || {}).map(s => [s.wiki_home, s.wiki_away])
+      );
+      const wikiChanged = wikiKey !== _lastBracketWikiKey;
+      if (freshData || bracketChanged || wikiChanged) {
+        renderGroupTables(_lastResults);
+        const allTeamsPlayed = Array.from({length: 24}, (_, i) => i + 1).every(m => _lastResults[m]);
+        renderBracket(_lastResults, allTeamsPlayed, bracketConfirmed, bracketData);
+        _lastRenderedMatchCount = currentMatchCount;
+        _lastBracketConfirmed   = bracketConfirmed;
+        _lastBracketWikiKey     = wikiKey;
+      }
+      // Kick off live polling on page load only — skip if poller is already running
+      // (avoids a redundant fetchLiveScores → renderStandings/renderResults on every
+      // bridge cycle when init() is called from inside fetchLiveScores itself).
+      if (LIVE_SCORES_ENABLED && !_livePoller) {
+        fetchLiveScores().then(() => {
+          if (Object.keys(_liveData).length > 0 || _pendingResults.size > 0) startLivePolling();
+        });
+      }
+    }
+    _revealSections();
+
+  } catch (err) {
+    const errDiv = document.createElement('div');
+    errDiv.className = 'state-msg';
+    errDiv.innerHTML = '<span class="emoji">⚠️</span>';
+    errDiv.appendChild(document.createTextNode(err.message));
+    const msgHtml = errDiv.outerHTML;
+    ['standingsCard','resultsCard','groupTablesCard','bracketCard','koBracketCard'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = msgHtml;
+    });
+    document.getElementById('koStandingsSection').innerHTML = msgHtml;
+    document.getElementById('matchesPlayed').textContent = 'Could not load data';
+    _revealSections();
+  } finally {
+    _inInit = false;
+  }
+}
+
+function _revealSections() {
+  // Reveal all section labels and bodies except #bracket-body — that is revealed
+  // inside positionAndConnectBracket's rAF callback to avoid a flash where the
+  // absolutely-positioned R16/QF/SF/Final cards are visible before being placed.
+  document.querySelectorAll('.section-label, .section-body:not(#bracket-body)').forEach(el => el.style.visibility = 'visible');
+  document.getElementById('bracketSectionLabel').style.visibility = 'visible';
+  if (window.location.hash === '#provisional_bracket') {
+    document.getElementById('bracketSectionLabel').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+setupLayout();
+
+// ── Auto-refresh every 5 minutes ────────────────────────
+const REFRESH_MS = 5 * 60 * 1000;
+
+function _updateTimestamp() {
+  const el = document.getElementById('updatedAt');
+  if (!el || !_lastUpdated) return;
+  el.textContent = `Updated ${_lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+setInterval(() => { init(); }, REFRESH_MS);
+
+function _revealChrome() {
+  document.querySelector('header').style.visibility = 'visible';
+  document.querySelector('.sticky-bar').style.visibility = 'visible';
+}
+document.fonts.ready.then(_revealChrome);
+setTimeout(_revealChrome, 3000); // fallback if fonts never load
+
+init();
