@@ -3,6 +3,7 @@
 ## Changelog
 
 | Date | Change |
+| Jun 30, 2026 | **Fix "1·2·3" header centering regression.** Cleanup incorrectly removed `.standings-table th.th-podium { text-align: center }` — needed to override the higher-specificity `.standings-table th { text-align: left }` base rule. Restored by adding `th.th-podium` to the existing centered-header group alongside th-grp-pts/ko-pts/max-pts/total-pts. FandF regenerated. |
 | Jun 30, 2026 | **Mobile KO standings column width fixes.** Total overridden to 40px (was inheriting 64px desktop width). Max set to 40px. Podium fixed at 60px (was auto). Recent (mob-sq) fixed at 80px (was auto ~62px). Name capped at 88px max-width with nowrap + ellipsis (was uncapped, taking all leftover ~119px). All six columns now fit predictably within ~343px with Name getting ~99px. FandF regenerated. |
 | Jun 30, 2026 | **Increase square gap and fix `.squares-wrap.nowrap` override.** `.squares-wrap.nowrap` had its own `gap: 1.5px` that was silently overriding the base `.squares-wrap` gap — previous attempts to increase spacing had no effect. Fixed by aligning both rules to `gap: 3px`. Divider margin also tuned to `0 3px` (from `0 5px`). FandF regenerated. |
 | Jun 29, 2026 | **Remove sort arrow icons from KO standings headers.** Sort arrows (`_arrow()` helper, `.sort-arrow` CSS) removed — columns remain clickable but show no visual indicator. Cursor still changes to pointer on hover. FandF regenerated. |
