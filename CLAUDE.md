@@ -549,10 +549,18 @@ Each piece of shared data has exactly one canonical source. All other copies mus
 | KO bracket topology (R16/QF/SF) | `bracket.js` `R16`/`QF`/`SF` | `scoring.js` `_R16`/`_QF`/`_SF` (+ runtime assertion); `sim_core.js` `R16`/`QF`/`SF`; `simulate.py` `R16_FEEDS` etc. |
 | Group match list | `parse_results.py` `GROUP_MATCHES` | `simulate.py` and `aggregate_picks.py` import it; `test_bracket.py` imports it |
 | ESPN name mapping | `parse_results.py` `ESPN_TEAM_MAP` | `CLAUDE.md` table above |
+| KO kickoff times | `bracket.js` `const KO_SCHEDULE` | No copies — single source, but no automated cross-check exists (see below) |
 
 **Rankings update process:** edit `data/rankings.json` first, then update `bracket.js` `const RANKINGS` to match.
 
 **Topology update process:** edit `bracket.js` `R16`/`QF`/`SF` first, then mirror changes to `scoring.js`, `sim_core.js`, and `simulate.py`. The `scoring.js` runtime assertion (`_assertEq`) will log a `console.error` in the browser if the copies drift.
+
+**`KO_SCHEDULE` verification process (manual only — no CI check):** Ground truth is the ESPN scoreboard API (`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=YYYYMMDD`, same endpoint `parse_results.py` uses for results) — it returns the real `date` (kickoff, UTC) and `venue` for every match, keyed by generic slot labels (`Round of 32 N` = match `72+N`, `Round of 16 N` = match `88+N`, `Quarterfinal N` = match `96+N`, `Semifinal N` = match `100+N`), which lets you match a slot to an internal match number even before real teams are confirmed. Wikipedia's knockout-stage page (`2026_FIFA_World_Cup_knockout_stage`) confirms bracket topology and venue-to-date pairing but does not expose a parseable per-match kickoff-time table, so it's a topology cross-check, not a time cross-check.
+
+**Fixed Jul 4, 2026 — two `KO_SCHEDULE` bugs found via full ESPN audit (all 32 KO slots):**
+- **M89/M90 swapped at data entry.** Match 89 (Paraguay v France, Philadelphia) was listed as `17:00Z`; Match 90 (Canada v Morocco, Houston) was listed as `21:00Z` — backwards. ESPN confirms M90 = `17:00Z` (Houston), M89 = `21:00Z` (Philadelphia). Root cause was traced from a leaderboard bug report: the mobile "Recent" squares column (chronological by kickoff, see below) showed M90 as more recent than M89, when in reality M89 kicked off (and finished) later that day.
+- **M79 stale after a live schedule change.** Match 79 (Mexico v Ecuador) was hardcoded to the originally-announced `01:00Z`, but the game was delayed an hour by thunderstorms in Mexico City — actual kickoff was `02:00Z`, which is what ESPN reflects. `KO_SCHEDULE` is a static hardcoded table with no live-update mechanism, so it can only ever hold the announced time, not weather/broadcast-driven changes — ESPN is authoritative for what actually happened.
+- All other 29 R32–Final slots matched ESPN exactly on both time and venue.
 
 ## Pick status values
 
