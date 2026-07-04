@@ -168,7 +168,7 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
       const _kc = _lastKoCounts && _lastKoCounts[m];
       const _isKoContrarian = _kc && _kc.total > 0 && (_kc.correct / _kc.total) <= 0.10;
       let sqStatus = pr.status === 'correct' && _isKoContrarian ? 'correct-upset' : pr.status;
-      if (lm && !koResults[m] && pr.pick) {
+      if (lm && !koResults[m] && pr.pick && pr.status !== 'cascaded') {
         const { homeScore: hs, awayScore: as_ } = lm;
         if (hs !== as_) {
           // Determine which team is currently winning
