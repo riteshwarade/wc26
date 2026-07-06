@@ -557,18 +557,16 @@ function buildGrpCounts(standings) {
   return counts;
 }
 
-// Count correct/wrong per KO match across all participants.
-// Excludes 'cascaded' (invalid pick) and 'pending'/'empty'.
+// Count correct per KO match, out of everyone who submitted KO picks.
+// Cascaded/wrong/empty-on-this-match all count against the total but never as correct.
 function buildKoCounts(combined) {
   const counts = {};
+  const total = combined.filter(p => p.koParticipant).length;
   for (const p of combined) {
     for (const [numStr, pr] of Object.entries(p.koPickResults || {})) {
       const num = Number(numStr);
-      if (pr.status === 'correct' || pr.status === 'wrong') {
-        if (!counts[num]) counts[num] = { correct: 0, total: 0, names: [] };
-        counts[num].total++;
-        if (pr.status === 'correct') { counts[num].correct++; counts[num].names.push(_abbrevName(p.name)); }
-      }
+      if (!counts[num]) counts[num] = { correct: 0, total, names: [] };
+      if (pr.status === 'correct') { counts[num].correct++; counts[num].names.push(_abbrevName(p.name)); }
     }
   }
   return counts;

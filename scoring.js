@@ -341,6 +341,7 @@ function computeCombinedStandings(groupStandings, koPicksData, koResults, bracke
       correctChampion,
       totalCorrect: grpCorrect + koCorrect,
       koPickResults,
+      koParticipant: Object.keys(koPicksData[p.name] || {}).length > 0,
     };
   });
 
@@ -357,7 +358,8 @@ function computeCombinedStandings(groupStandings, koPicksData, koResults, bracke
       combined.push({ name, points: minGroupPts, groupPts: minGroupPts, pickResults: {}, koPts,
         totalPts: minGroupPts + koPts, maxPts: minGroupPts + koPossiblePts,
         correctChampion, totalCorrect, koPickResults,
-        koOnly: true, groupPtsIsFloor: true });
+        koOnly: true, groupPtsIsFloor: true,
+        koParticipant: Object.keys(koPicksData[name] || {}).length > 0 });
     }
   });
 
