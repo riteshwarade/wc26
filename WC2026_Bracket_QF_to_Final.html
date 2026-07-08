@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Cup 2026 Pool · Bracket (QF–Final)</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Inter:wght@400;700&display=block" rel="stylesheet">
+<style>
+  /* ── Copied verbatim from WC2026_Pool_Leaderboard_Swiftly.html ── */
+  :root {
+    --swiftly-blue:    #009edf;
+    --swiftly-orange:  #ff9e16;
+    --swiftly-red:     #ee0e51;
+    --neutral-lightest:#f7f7f7;
+    --neutral-light:   #ebebeb;
+    --neutral-medium:  #c4c4c4;
+    --neutral-dark:    #525f66;
+    --neutral-darkest: #131e27;
+    --blue-lightest:   #ebf9ff;
+    --blue-light:      #ccecf9;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--neutral-lightest);
+    color: var(--neutral-darkest);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--swiftly-blue);
+    padding: 28px 0 24px;
+  }
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .header-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #ffffff;
+  }
+  .header-sub {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 16px 64px;
+  }
+
+  .section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 10px;
+  }
+
+  /* ── Knockout bracket (verbatim from live leaderboard) ── */
+  .bk-wrap {
+    overflow-x: auto;
+    padding: 14px 4px 18px;
+  }
+  .bk-bracket {
+    display: flex;
+    gap: 0;
+    width: 100%;
+    align-items: flex-start;
+    position: relative;
+  }
+  .bk-col {
+    flex: 1;
+    min-width: 120px;
+    padding: 0 10px;
+  }
+  .bk-col-hdr {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-align: center;
+    padding-bottom: 6px;
+    border-bottom: 2px solid;
+    margin-bottom: 10px;
+  }
+  .bk-col.qf  .bk-col-hdr { border-color: #378ADD; color: #185FA5; }
+  .bk-col.sf  .bk-col-hdr { border-color: #185FA5; color: #0C447C; }
+  .bk-col.fin .bk-col-hdr { border-color: #0C447C; color: #0C447C; }
+  .bk-matches, .bk-half, .bk-quarter, .bk-pair { display: flex; flex-direction: column; gap: 16px; }
+  .bk-float    { position: relative; }
+  .bk-float .bk-card { position: absolute; left: 0; right: 0; }
+  .bk-card { }
+  .bk-mnum {
+    font-size: 0.70rem;
+    color: var(--neutral-dark);
+    text-align: left;
+    padding: 2px 8px;
+    letter-spacing: 0.2px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 3px;
+  }
+  .bk-team {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 5px 9px;
+    font-size: 0.92rem;
+    font-weight: 400;
+    margin: 0 4px;
+    border-radius: 5px;
+    border: 1.5px solid #cce8f4;
+    background: #ffffff;
+  }
+  .bk-mnum + .bk-team { margin-top: 4px; }
+  .bk-team + .bk-team { margin-top: 4px; }
+  .bk-team:last-child { margin-bottom: 4px; }
+  .bk-fl { font-size: 0.85rem; line-height: 1; flex-shrink: 0; width: 16px; text-align: center; }
+  .bk-tn { flex: 1; font-weight: 400; color: var(--neutral-darkest); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk-rank, .team-rank { font-weight: 400; color: var(--neutral-dark); font-size: 0.68rem; }
+  .bk-sc { font-size: 0.78rem; font-weight: 700; color: var(--neutral-medium); min-width: 12px; text-align: right; flex-shrink: 0; }
+  .bk-team.tbd .bk-fl { opacity: 0.25; }
+  .bk-team.tbd .bk-tn { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
+  .bk-team.w { background: var(--swiftly-blue); border-color: var(--swiftly-blue); }
+  .bk-team.w .bk-fl { color: #ffffff; }
+  .bk-team.w .bk-tn { color: #ffffff; font-weight: 500; }
+  .bk-team.w .team-rank { color: rgba(255,255,255,0.75); }
+  .bk-team.w .bk-sc { color: rgba(255,255,255,0.75); }
+  .bk-team.l { border-color: transparent; background: transparent; }
+  .bk-team.l .bk-fl { opacity: 0.35; }
+  .bk-team.l .bk-tn { color: var(--neutral-medium); }
+  .bk-team.l .team-rank { color: var(--neutral-medium); }
+  .bk-team.l .bk-sc { color: var(--neutral-medium); }
+
+  .snapshot-note {
+    font-size: 0.72rem;
+    color: var(--neutral-dark);
+    margin-top: 18px;
+    text-align: center;
+  }
+
+  @media (max-width: 720px) {
+    .bk-bracket { min-width: 640px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-title">⚽ World Cup 2026 Pool</div>
+    <div class="header-sub">Knockout bracket · Quarterfinals to Final</div>
+  </div>
+</header>
+
+<div class="container">
+  <p class="section-label">Bracket</p>
+  <div class="bk-outer">
+    <div class="bk-wrap"><div class="bk-bracket" id="bkBracket">
+      <div class="bk-col qf">
+        <div class="bk-col-hdr">Quarterfinals</div>
+        <div class="bk-matches" id="bk-anchor-matches"></div>
+      </div>
+      <div class="bk-col sf">
+        <div class="bk-col-hdr">Semifinals</div>
+        <div class="bk-float" id="bk-float-sf"></div>
+      </div>
+      <div class="bk-col fin">
+        <div class="bk-col-hdr">🏆 Final</div>
+        <div class="bk-float" id="bk-float-fin"></div>
+      </div>
+    </div></div>
+  </div>
+  <p class="snapshot-note">Snapshot as of match results confirmed through the Round of 16 — semifinal and final matchups shown as TBD until the quarterfinals are decided.</p>
+</div>
+
+<!-- Real bracket primitives — same file the live leaderboard uses -->
+<script src="bracket.js"></script>
+<script>
+  // ── QF/SF/Final data (real confirmed QF matchups; SF/Final are TBD per the
+  //    same W{num} placeholder convention getKoTeams() uses on the live site) ──
+  const QF_MATCHES = [
+    [97, 'France', 'Morocco'],
+    [98, 'Spain', 'Belgium'],
+    [99, 'Norway', 'England'],
+    [100, 'Argentina', 'Switzerland'],
+  ];
+  const SF_MATCHES = [
+    [101, 'W97', 'W98'],
+    [102, 'W99', 'W100'],
+  ];
+  const FINAL_MATCH = [104, 'W101', 'W102'];
+
+  document.getElementById('bk-anchor-matches').innerHTML = QF_MATCHES
+    .map(([num, home, away]) => `<div class="bk-quarter"><div class="bk-pair">${matchCard(num, home, away)}</div></div>`)
+    .join('');
+  document.getElementById('bk-float-sf').innerHTML = SF_MATCHES
+    .map(([num, home, away]) => matchCard(num, home, away))
+    .join('');
+  document.getElementById('bk-float-fin').innerHTML = matchCard(...FINAL_MATCH);
+
+  // ── Position SF/Final cards relative to the QF anchor column, then draw
+  //    connectors. Adapted from bracket.js's positionAndConnectBracket() /
+  //    drawBracketConnectors(), scoped down to just the QF→SF→Final levels
+  //    (the real functions require R32/R16 elements that don't exist here). ──
+  function positionQfBracket() {
+    const bracket = document.getElementById('bkBracket');
+    const anchor = document.getElementById('bk-anchor-matches');
+    if (!bracket || !anchor) return;
+    const anchorH = anchor.getBoundingClientRect().height;
+    document.querySelectorAll('.bk-float').forEach(d => { d.style.height = anchorH + 'px'; });
+
+    const br = bracket.getBoundingClientRect();
+
+    function teamMidY(el, refTop) {
+      const rows = el.querySelectorAll('.bk-team');
+      if (rows.length >= 2) {
+        const a = rows[0].getBoundingClientRect();
+        const b = rows[1].getBoundingClientRect();
+        return (a.bottom + b.top) / 2 - refTop;
+      }
+      const r = el.getBoundingClientRect();
+      return (r.top + r.bottom) / 2 - refTop;
+    }
+
+    function yc(m) {
+      const el = bracket.querySelector(`[data-match="${m}"]`);
+      if (!el) return null;
+      return teamMidY(el, br.top);
+    }
+
+    function setY(m, targetY) {
+      const el = bracket.querySelector(`[data-match="${m}"]`);
+      if (!el) return;
+      const container = el.parentElement;
+      const ct = container.getBoundingClientRect().top - br.top;
+      const midOffset = teamMidY(el, el.getBoundingClientRect().top);
+      el.style.top = `${targetY - ct - midOffset}px`;
+    }
+
+    const LEVELS = [
+      [[97,98,101],[99,100,102]],
+      [[101,102,104]],
+    ];
+    LEVELS.forEach(level => {
+      level.forEach(([m1, m2, mn]) => {
+        const y1 = yc(m1), y2 = yc(m2);
+        if (y1 !== null && y2 !== null) setY(mn, (y1 + y2) / 2);
+      });
+    });
+
+    drawQfConnectors(bracket, br);
+  }
+
+  function drawQfConnectors(bracket, br) {
+    const old = bracket.querySelector('.bk-svg');
+    if (old) old.remove();
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'bk-svg');
+    svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;';
+    bracket.appendChild(svg);
+
+    const CONNS = [[97,98,101],[99,100,102],[101,102,104]];
+    const color = '#B5D4F4';
+
+    CONNS.forEach(([m1, m2, mn]) => {
+      const e1 = bracket.querySelector(`[data-match="${m1}"]`);
+      const e2 = bracket.querySelector(`[data-match="${m2}"]`);
+      const en = mn ? bracket.querySelector(`[data-match="${mn}"]`) : null;
+      if (!e1 || !e2) return;
+
+      const r1 = e1.getBoundingClientRect();
+
+      function tmY(el) {
+        const rows = el.querySelectorAll('.bk-team');
+        if (rows.length >= 2) {
+          const a = rows[0].getBoundingClientRect();
+          const b = rows[1].getBoundingClientRect();
+          return (a.bottom + b.top) / 2 - br.top;
+        }
+        return (el.getBoundingClientRect().top + el.getBoundingClientRect().bottom) / 2 - br.top;
+      }
+
+      const x1 = r1.right - br.left;
+      const y1 = tmY(e1);
+      const y2 = tmY(e2);
+      const ym = (y1 + y2) / 2;
+
+      let xc = x1 + 14;
+      if (en) {
+        const rn = en.getBoundingClientRect();
+        xc = (x1 + (rn.left - br.left)) / 2;
+      }
+
+      const xn = en ? en.getBoundingClientRect().left - br.left : xc;
+      const d = `M${x1},${y1} H${xc} V${y2} M${x1},${y2} H${xc}` +
+                 (en ? ` M${xc},${ym} H${xn}` : '');
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('stroke', color);
+      path.setAttribute('stroke-width', '1.5');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(path);
+    });
+  }
+
+  document.fonts.ready.then(() => {
+    requestAnimationFrame(() => requestAnimationFrame(positionQfBracket));
+  });
+  window.addEventListener('resize', () => requestAnimationFrame(positionQfBracket));
+</script>
+
+</body>
+</html>
