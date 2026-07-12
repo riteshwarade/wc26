@@ -523,7 +523,7 @@ section('Max pts — cascaded picks excluded from max');
 // § 12  TIEBREAKER SORT ORDER
 // ─────────────────────────────────────────────────────────────
 
-section('Tiebreaker — totalPts → correctChampion → totalCorrect → name');
+section('Tiebreaker — totalPts → correctChampion → totalCorrect → groupPts → name');
 
 {
   const bd = makeBracket();
@@ -568,6 +568,46 @@ section('Tiebreaker — totalPts → correctChampion → totalCorrect → name')
     `got ${names[2]}`);
   assert('Dave ranked 4th (fewest pts)', names[3] === 'Dave',
     `got ${names[3]}`);
+}
+
+section('Tiebreaker — most group points (new 4th tiebreak, before name)');
+
+{
+  const bd = makeBracket();
+  const koResults = {
+    73:'Spain', 74:'Brazil', 75:'Argentina', 76:'Netherlands',
+    77:'Morocco', 78:'Mexico', 79:'USA', 80:'Belgium',
+    81:'Serbia', 82:'Switzerland', 83:'Turkey', 84:'Ecuador',
+    85:'Australia', 86:'Nigeria', 87:'Canada', 88:'Iran',
+    89:'Brazil', 90:'Spain', 91:'Netherlands', 92:'USA',
+    93:'Turkey', 94:'Serbia', 95:'Nigeria', 96:'Australia',
+    97:'Spain', 98:'Serbia', 99:'Netherlands', 100:'Nigeria',
+    101:'Spain', 102:'Nigeria', 103:'Serbia', 104:'Spain',
+  };
+
+  // Eve and Frank tie on totalPts (22), correctChampion (both false), and
+  // totalCorrect (both 1 correct pick) — only groupPts differs. Under the
+  // old 3-level tiebreak this would fall straight to name (Eve < Frank
+  // alphabetically); the new 4th tiebreak should rank Frank first instead
+  // since his group score is higher.
+  const groupStandings = [
+    { name:'Eve',   points:14, pickResults:{} },  // 14 groupPts + 8 koPts (M89, R16) = 22
+    { name:'Frank', points:18, pickResults:{} },  // 18 groupPts + 4 koPts (M73, R32) = 22
+  ];
+  const koPicksData = {
+    Eve:   { '89':'Brazil' },
+    Frank: { '73':'Spain' },
+  };
+
+  const combined = computeCombinedStandings(groupStandings, koPicksData, koResults, bd);
+  const names = combined.map(p => p.name);
+
+  assert('Eve and Frank tied on totalPts', combined[0].totalPts === combined[1].totalPts,
+    `got ${combined[0].totalPts} vs ${combined[1].totalPts}`);
+  assert('Frank ranked 1st (higher groupPts breaks the tie)', names[0] === 'Frank',
+    `got ${names[0]}`);
+  assert('Eve ranked 2nd', names[1] === 'Eve',
+    `got ${names[1]}`);
 }
 
 section('Tiebreaker — alphabetical as final tiebreak');

@@ -282,7 +282,8 @@ for (let i = 0; i < combined.length - 1; i++) {
     a.totalPts > b.totalPts ||
     (a.totalPts === b.totalPts && (a.correctChampion ? 1:0) > (b.correctChampion ? 1:0)) ||
     (a.totalPts === b.totalPts && (a.correctChampion===b.correctChampion) && a.totalCorrect > b.totalCorrect) ||
-    (a.totalPts === b.totalPts && (a.correctChampion===b.correctChampion) && a.totalCorrect === b.totalCorrect && a.name <= b.name);
+    (a.totalPts === b.totalPts && (a.correctChampion===b.correctChampion) && a.totalCorrect === b.totalCorrect && a.groupPts > b.groupPts) ||
+    (a.totalPts === b.totalPts && (a.correctChampion===b.correctChampion) && a.totalCorrect === b.totalCorrect && a.groupPts === b.groupPts && a.name <= b.name);
   assert(`Sort order valid: ${a.name}(${a.totalPts}) before ${b.name}(${b.totalPts})`, sortOk);
 }
 

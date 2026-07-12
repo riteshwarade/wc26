@@ -371,6 +371,18 @@ Once the first match in a group kicks off, `sortedStandings()` takes over and ro
 
 **Group table legend** (rendered below the grid in `renderGroupTables`): solid-color 11px squares, no border. Colors: Swiftly Blue (qualified top 2), `#22863a` green (3rd qualified), `#ff9e16` amber (3rd pending), `#e24b4a` red (eliminated). Padding: `8px 12px 10px` to keep squares off the card edge.
 
+### Pool standings tiebreaker chain (participants, not teams)
+
+Not to be confused with the FIFA group-stage tiebreaker chain below, which ranks *teams* within a World Cup group. This chain ranks *pool participants* on the leaderboard. Implemented as the final `.sort()` inside `computeCombinedStandings` (`scoring.js`), in order:
+
+1. **Total points** (group + KO combined) desc
+2. **Correct champion pick** (picked the actual M104 winner) desc
+3. **Total correct picks** (group + KO combined) desc
+4. **Group points** desc — added Jul 12, 2026
+5. **Name**, alphabetically (`localeCompare`) — final fallback
+
+Criterion 4 (group points) was added so that, among participants tied through criteria 1–3, whoever did better in the group stage alone ranks above someone who got there via a luckier/thinner KO run — previously the chain fell straight from `totalCorrect` to alphabetical name. Test coverage: `test_e2e.js`'s "Invariant checks — sort order" section validates the full 5-level chain across the whole simulated pool; `test_leaderboard.js` §12 has a dedicated "Tiebreaker — most group points" case (Eve vs Frank, tied on the first three criteria, differing only on groupPts).
+
 ### Group stage tiebreaker chain (FIFA official, source: Wikipedia)
 
 Applied when two or more teams are level on points. Criteria in order:

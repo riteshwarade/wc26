@@ -251,7 +251,7 @@ function computeStandings(picksData, results) {
 
 // ── Compute combined KO+group standings ───────────────────────────────────────
 // Returns array sorted by: totalPts desc → correctChampion desc →
-//   totalCorrect desc → name asc.
+//   totalCorrect desc → groupPts desc → name asc.
 function computeCombinedStandings(groupStandings, koPicksData, koResults, bracketData) {
   const KO_MATCH_NUMS = [
     73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,
@@ -367,6 +367,7 @@ function computeCombinedStandings(groupStandings, koPicksData, koResults, bracke
     (b.totalPts - a.totalPts) ||
     ((b.correctChampion ? 1 : 0) - (a.correctChampion ? 1 : 0)) ||
     (b.totalCorrect - a.totalCorrect) ||
+    (b.groupPts - a.groupPts) ||
     a.name.localeCompare(b.name)
   );
 
