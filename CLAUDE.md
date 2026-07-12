@@ -194,10 +194,12 @@ No `border-top` divider — row separation comes from `margin-top` only.
 |---|---|---|---|
 | (default) | white | `#cce8f4` | `var(--neutral-darkest)`, weight 400 |
 | `.w` (winner) | `var(--swiftly-blue)` solid | same | white, weight 700; rank + score at 75% opacity |
-| `.l` (loser) | transparent | transparent | `var(--neutral-medium)`; flag 35% opacity |
+| `.l` (loser) | transparent | `#c4c4c4` (fixed Jul 12, 2026 — was transparent) | `var(--neutral-medium)`; flag 35% opacity |
 | `:hover` (unset) | `var(--blue-lightest)` | `var(--swiftly-blue)` | — |
 | `.w:hover` | `var(--swiftly-blue)` + `brightness(0.92)` | same | — |
 | `.l:hover` | `var(--blue-lightest)` | `var(--swiftly-blue)` | restored to normal |
+
+Mobile equivalent `.bk-mob-team.bk-mob-los` (used by `leaderboard.js` for the mobile KO results bracket) got the same border-color fix — was `transparent`, now `#c4c4c4`. `WC2026_Pool_Knockout_Picks.html` has its own copy of `.bk-team.l` (applied to whichever team a user didn't pick, via `ko_picks.js`'s `homeCls`/`awayCls`) — updated identically. Originated from a design tweak tried first on the one-off `WC2026_Bracket_Sharing.html` snapshot, then ported to the shared styles once confirmed.
 
 **Gotchas:**
 - `.bk-team[data-match].w:hover` must re-assert `background: var(--swiftly-blue)` — the less-specific `:hover` rule otherwise wins and reverts the row to light blue
