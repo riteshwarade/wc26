@@ -523,7 +523,7 @@ section('Max pts — cascaded picks excluded from max');
 // § 12  TIEBREAKER SORT ORDER
 // ─────────────────────────────────────────────────────────────
 
-section('Tiebreaker — totalPts → correctChampion → totalCorrect → groupPts → name');
+section('Tiebreaker — totalPts → correctChampion → totalCorrect (post-Final)');
 
 {
   const bd = makeBracket();
@@ -570,7 +570,7 @@ section('Tiebreaker — totalPts → correctChampion → totalCorrect → groupP
     `got ${names[3]}`);
 }
 
-section('Tiebreaker — most group points (new 4th tiebreak, before name)');
+section('Tiebreaker — groupPts is display-only, ties stay tied (post-Final)');
 
 {
   const bd = makeBracket();
@@ -586,10 +586,9 @@ section('Tiebreaker — most group points (new 4th tiebreak, before name)');
   };
 
   // Eve and Frank tie on totalPts (22), correctChampion (both false), and
-  // totalCorrect (both 1 correct pick) — only groupPts differs. Under the
-  // old 3-level tiebreak this would fall straight to name (Eve < Frank
-  // alphabetically); the new 4th tiebreak should rank Frank first instead
-  // since his group score is higher.
+  // totalCorrect (both 1 correct pick) — only groupPts differs. groupPts is
+  // no longer a tiebreak criterion at all, so they should stay tied; name
+  // (Eve < Frank) only decides which row prints first, not who "wins".
   const groupStandings = [
     { name:'Eve',   points:14, pickResults:{} },  // 14 groupPts + 8 koPts (M89, R16) = 22
     { name:'Frank', points:18, pickResults:{} },  // 18 groupPts + 4 koPts (M73, R32) = 22
@@ -604,10 +603,46 @@ section('Tiebreaker — most group points (new 4th tiebreak, before name)');
 
   assert('Eve and Frank tied on totalPts', combined[0].totalPts === combined[1].totalPts,
     `got ${combined[0].totalPts} vs ${combined[1].totalPts}`);
-  assert('Frank ranked 1st (higher groupPts breaks the tie)', names[0] === 'Frank',
-    `got ${names[0]}`);
-  assert('Eve ranked 2nd', names[1] === 'Eve',
-    `got ${names[1]}`);
+  assert('Eve and Frank tied on correctChampion', combined[0].correctChampion === combined[1].correctChampion);
+  assert('Eve and Frank tied on totalCorrect', combined[0].totalCorrect === combined[1].totalCorrect,
+    `got ${combined[0].totalCorrect} vs ${combined[1].totalCorrect}`);
+  assert('Eve and Frank differ on groupPts (proving it is ignored)', combined[0].groupPts !== combined[1].groupPts,
+    `got ${combined[0].groupPts} vs ${combined[1].groupPts}`);
+  assert('Eve printed before Frank (name asc orders the tie, not groupPts)',
+    names[0] === 'Eve' && names[1] === 'Frank', `got ${names.join(', ')}`);
+}
+
+section('Tiebreaker — mid-tournament ties stay tied, name orders display only');
+
+{
+  const bd = makeBracket();
+  // Final not yet decided — only two R32 results in. Zara, Alice, and Mike
+  // all land on the same totalPts (14) but differ on totalCorrect/groupPts.
+  // Mid-tournament, only totalPts should decide standing; name should be
+  // the only reason their rows print in a particular order.
+  const koResults = { 73:'Spain', 74:'Brazil' };
+  const groupStandings = [
+    { name:'Zara',  points:10, pickResults:{} }, // 10 groupPts + 4 koPts (1 correct) = 14
+    { name:'Alice', points:6,  pickResults:{} }, // 6 groupPts + 8 koPts (2 correct) = 14
+    { name:'Mike',  points:14, pickResults:{} }, // 14 groupPts + 0 koPts (0 correct) = 14
+  ];
+  const koPicksData = {
+    Zara:  { '73':'Spain' },
+    Alice: { '73':'Spain', '74':'Brazil' },
+    Mike:  {},
+  };
+
+  const combined = computeCombinedStandings(groupStandings, koPicksData, koResults, bd);
+  const names = combined.map(p => p.name);
+
+  assert('All three tied on totalPts (14)',
+    combined.every(p => p.totalPts === 14), `got ${combined.map(p=>p.totalPts).join(', ')}`);
+  assert('They differ on groupPts and totalCorrect (proving those are ignored mid-tournament)',
+    new Set(combined.map(p => p.groupPts)).size > 1 && new Set(combined.map(p => p.totalCorrect)).size > 1,
+    `groupPts: ${combined.map(p=>p.groupPts).join(',')} totalCorrect: ${combined.map(p=>p.totalCorrect).join(',')}`);
+  assert('Alphabetical: Alice, Mike, Zara',
+    names[0] === 'Alice' && names[1] === 'Mike' && names[2] === 'Zara',
+    `got ${names.join(', ')}`);
 }
 
 section('Tiebreaker — alphabetical as final tiebreak');

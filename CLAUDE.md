@@ -373,15 +373,23 @@ Once the first match in a group kicks off, `sortedStandings()` takes over and ro
 
 ### Pool standings tiebreaker chain (participants, not teams)
 
-Not to be confused with the FIFA group-stage tiebreaker chain below, which ranks *teams* within a World Cup group. This chain ranks *pool participants* on the leaderboard. Implemented as the final `.sort()` inside `computeCombinedStandings` (`scoring.js`), in order:
+Not to be confused with the FIFA group-stage tiebreaker chain below, which ranks *teams* within a World Cup group. This chain ranks *pool participants* on the leaderboard. Implemented as the final `.sort()` inside `computeCombinedStandings` (`scoring.js`) — **two-phase, changed Jul 12, 2026**, branching on whether the Final (M104) has a result yet (`tournamentComplete = !!koResults[104]`):
 
+**Mid-tournament** (Final not yet decided):
+1. **Total points** (group + KO combined) desc
+2. **Name**, alphabetically (`localeCompare`) — orders which row prints first among a tie; does *not* imply anyone actually ranks above anyone else
+
+**Post-Final** (`koResults[104]` set):
 1. **Total points** (group + KO combined) desc
 2. **Correct champion pick** (picked the actual M104 winner) desc
 3. **Total correct picks** (group + KO combined) desc
-4. **Group points** desc — added Jul 12, 2026
-5. **Name**, alphabetically (`localeCompare`) — final fallback
+4. **Name**, alphabetically — again, ordering only, not a real tiebreak
 
-Criterion 4 (group points) was added so that, among participants tied through criteria 1–3, whoever did better in the group stage alone ranks above someone who got there via a luckier/thinner KO run — previously the chain fell straight from `totalCorrect` to alphabetical name. Test coverage: `test_e2e.js`'s "Invariant checks — sort order" section validates the full 5-level chain across the whole simulated pool; `test_leaderboard.js` §12 has a dedicated "Tiebreaker — most group points" case (Eve vs Frank, tied on the first three criteria, differing only on groupPts).
+**Ties are intentional and permanent in both phases.** Nothing forces a full ordering anymore — anyone still equal after the phase's criteria stays tied. `groupPts` (the participant's group-stage score) was removed from the sort entirely — it was briefly a 4th tiebreak criterion (added, then removed, both on Jul 12, 2026) and is now purely a display-only column (`p.groupPts`, shown in the Grp column on KO standings).
+
+**Rank number display** (`#` column, `_rankMap` in `leaderboard.js`'s `renderKoStandings`) mirrors the same two-phase tie condition so the badge reflects genuine ties: pre-Final, two rows share a rank iff `totalPts` matches; post-Final, iff `totalPts` + `correctChampion` + `totalCorrect` all match. A tied group of size > 3 can legitimately all show as `top3` if they're tied for a podium spot — this is expected, not a bug.
+
+Test coverage: `test_e2e.js`'s "Invariant checks — sort order" section validates the post-Final chain (its simulation always completes the Final). `test_leaderboard.js` §12 has dedicated cases for both phases — a post-Final tie (Eve vs Frank, tied through correctChampion/totalCorrect, differing only on groupPts, confirmed still tied) and a mid-tournament tie (Alice/Mike/Zara, tied only on totalPts, differing on groupPts and totalCorrect, confirmed still tied) — plus the pre-existing alphabetical-ordering case.
 
 ### Group stage tiebreaker chain (FIFA official, source: Wikipedia)
 

@@ -250,8 +250,10 @@ function computeStandings(picksData, results) {
 }
 
 // ── Compute combined KO+group standings ───────────────────────────────────────
-// Returns array sorted by: totalPts desc → correctChampion desc →
-//   totalCorrect desc → groupPts desc → name asc.
+// Two-phase sort (see comment at the sort call below for details):
+//   Mid-tournament: totalPts desc, name asc (name orders ties, doesn't break them).
+//   Post-Final (koResults[104] set): totalPts desc → correctChampion desc →
+//   totalCorrect desc, name asc. groupPts is never a sort criterion — display only.
 function computeCombinedStandings(groupStandings, koPicksData, koResults, bracketData) {
   const KO_MATCH_NUMS = [
     73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,
@@ -363,13 +365,28 @@ function computeCombinedStandings(groupStandings, koPicksData, koResults, bracke
     }
   });
 
-  combined.sort((a, b) =>
-    (b.totalPts - a.totalPts) ||
-    ((b.correctChampion ? 1 : 0) - (a.correctChampion ? 1 : 0)) ||
-    (b.totalCorrect - a.totalCorrect) ||
-    (b.groupPts - a.groupPts) ||
-    a.name.localeCompare(b.name)
-  );
+  // Tiebreaker chain is two-phase:
+  //   Mid-tournament (Final not yet decided): totalPts desc, then name asc.
+  //     Ties on totalPts are real ties — name only orders which row prints
+  //     first, it does not imply one person actually ranks above another.
+  //   Post-Final (koResults[104] present): totalPts desc -> correctChampion
+  //     desc -> totalCorrect desc, then name asc. Anyone still tied after
+  //     those three stays tied; groupPts is never used to force a fake
+  //     ordering (it remains a display-only column via p.groupPts).
+  const tournamentComplete = !!koResults[104];
+  if (tournamentComplete) {
+    combined.sort((a, b) =>
+      (b.totalPts - a.totalPts) ||
+      ((b.correctChampion ? 1 : 0) - (a.correctChampion ? 1 : 0)) ||
+      (b.totalCorrect - a.totalCorrect) ||
+      a.name.localeCompare(b.name)
+    );
+  } else {
+    combined.sort((a, b) =>
+      (b.totalPts - a.totalPts) ||
+      a.name.localeCompare(b.name)
+    );
+  }
 
   return combined;
 }

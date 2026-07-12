@@ -116,11 +116,18 @@ function renderKoStandings(combinedStandings, koResults, bracketData, koLiveData
 
   const KO_ROUND_BREAKS = new Set([88, 96, 100, 102, 103]); // dividers after R32/R16/QF/SF/3rd-place
 
-  // Precompute Total-based rank from original order (frozen regardless of active sort)
+  // Precompute rank from original order (frozen regardless of active sort).
+  // Pre-Final, ties are based on totalPts alone. Post-Final (koResults[104]
+  // set), ties narrow to totalPts+correctChampion+totalCorrect — matches the
+  // two-phase sort in computeCombinedStandings (scoring.js).
+  const _tournamentComplete = !!koResults[104];
   const _rankMap = new Map();
-  { let _r = 1, _rPts = null;
+  { let _r = 1, _rPts = null, _rChamp = null, _rCorrect = null;
     combinedStandings.forEach((p, i) => {
-      if (p.totalPts !== _rPts) { _r = i + 1; _rPts = p.totalPts; }
+      const _changed = _tournamentComplete
+        ? (p.totalPts !== _rPts || p.correctChampion !== _rChamp || p.totalCorrect !== _rCorrect)
+        : (p.totalPts !== _rPts);
+      if (_changed) { _r = i + 1; _rPts = p.totalPts; _rChamp = p.correctChampion; _rCorrect = p.totalCorrect; }
       _rankMap.set(p.name, _r);
     }); }
 

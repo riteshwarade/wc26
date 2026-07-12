@@ -278,12 +278,14 @@ section('Invariant checks — sort order');
 
 for (let i = 0; i < combined.length - 1; i++) {
   const a = combined[i], b = combined[i+1];
+  // This simulation always completes the Final, so combined is sorted via
+  // the post-Final branch: totalPts -> correctChampion -> totalCorrect, then
+  // name asc (name only orders true ties, groupPts is never a criterion).
   const sortOk =
     a.totalPts > b.totalPts ||
     (a.totalPts === b.totalPts && (a.correctChampion ? 1:0) > (b.correctChampion ? 1:0)) ||
     (a.totalPts === b.totalPts && (a.correctChampion===b.correctChampion) && a.totalCorrect > b.totalCorrect) ||
-    (a.totalPts === b.totalPts && (a.correctChampion===b.correctChampion) && a.totalCorrect === b.totalCorrect && a.groupPts > b.groupPts) ||
-    (a.totalPts === b.totalPts && (a.correctChampion===b.correctChampion) && a.totalCorrect === b.totalCorrect && a.groupPts === b.groupPts && a.name <= b.name);
+    (a.totalPts === b.totalPts && (a.correctChampion===b.correctChampion) && a.totalCorrect === b.totalCorrect && a.name <= b.name);
   assert(`Sort order valid: ${a.name}(${a.totalPts}) before ${b.name}(${b.totalPts})`, sortOk);
 }
 
