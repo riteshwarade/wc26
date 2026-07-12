@@ -1673,11 +1673,18 @@ function _showSqTooltip(sq) {
                     : status === 'live-wrong'     ? 'wrong'
                     : status === 'live-draw'      ? 'pending'
                     : status;
+  // Points won: only for statuses that actually scored. KO matches (73-104)
+  // use the round-specific KO_POINTS table (scoring.js shared global); group
+  // matches (1-72) are always worth a flat 2.
+  const wonPoints = status === 'correct' || status === 'correct-upset';
+  const matchNum  = Number(match);
+  const pointsVal = matchNum >= 73 ? (KO_POINTS[matchNum] || 0) : 2;
   tooltip.innerHTML = `
     <div class="tt-match"></div>
     <div class="tt-pick">${_esc(name)}'s pick: <strong></strong></div>
     <div class="tt-result"></div>
     <div class="tt-status ${ttStatusCls}"></div>
+    <div class="tt-points"></div>
   `;
   tooltip.querySelector('.tt-match').textContent  = `Match ${match} · ${teams}`;
   const pickEl = tooltip.querySelector('.tt-pick');
@@ -1689,6 +1696,13 @@ function _showSqTooltip(sq) {
   }
   tooltip.querySelector('.tt-result').textContent = `Result: ${result}`;
   tooltip.querySelector('.tt-status').textContent = statusText;
+  const pointsEl = tooltip.querySelector('.tt-points');
+  if (wonPoints) {
+    pointsEl.style.display = '';
+    pointsEl.textContent = `+${pointsVal} pts`;
+  } else {
+    pointsEl.style.display = 'none';
+  }
   tooltip.style.maxWidth = '320px';
   tooltip.style.display = 'block';
 }
