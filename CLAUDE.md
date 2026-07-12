@@ -448,13 +448,14 @@ Shows `N/total` for completed matches. Locations: in its own `td-correct` column
 
 ### "How scoring works" tooltip (KO standings)
 
-A `<div class="scoring-info-anchor">` is injected in the KO standings section-label (right side) by `renderKoStandings`. Contains a `<span class="scoring-info-link">How scoring works ⓘ</span>` and a `<div class="scoring-tooltip-box">` child with the KO points table and a short note.
+A `<div class="scoring-info-anchor">` is injected in the KO standings section-label (right side) by `renderKoStandings`. Contains a `<span class="scoring-info-link">Scoring ⓘ</span>` and a `<div class="scoring-tooltip-box">` child with the KO points table plus a "Tiebreakers" list.
 
 - **Desktop:** purely CSS-driven — `.scoring-info-anchor:hover .scoring-tooltip-box { display: block }`. Tooltip is `position: absolute; right: 0; top: calc(100% + 8px)` — floats below the anchor, anchored right.
 - **Mobile:** CSS hover disabled. Tap on `.scoring-info-link` toggles `.tooltip-open` class on `.scoring-info-anchor` via the `touchstart` handler (added before the existing `.cp-pill`/`.sq` checks). Tooltip is `position: static` and expands inline below the header row. Tap elsewhere closes it.
 - The section-label `<p>` was changed to `<div class="section-label section-label-row">` to allow block children and flex layout. `_revealSections()` still picks it up via `.section-label` selector.
 - **Does not share `#sq-tooltip`** — self-contained CSS/class toggle. No interference with existing square or pill tooltips.
 - **Gotcha:** `.scoring-info-anchor` has `white-space: nowrap` (to keep the link text on one line). `.scoring-tooltip-box` must explicitly set `white-space: normal` to prevent inheriting `nowrap`, which would cause the note text to overflow without wrapping.
+- **Tiebreakers list (added Jul 12, 2026):** below the points table, a `<div class="stt-tb-title">Tiebreakers</div>` + `<ul class="stt-tb-list">` lists the post-Final tiebreak order (`Correct champion pick`, `Total correct picks`, `Still tied? Stay tied.`) — mirrors the two-phase sort in `computeCombinedStandings` (see "Pool standings tiebreaker chain" above). Deliberately styled to match the existing `.stt-row` text (0.70rem, weight 400, `var(--neutral-dark)`) rather than the bolder unused `.stt-title` class, so it reads as part of the same list rather than a separate heading. `.stt-tb-title` adds the divider (`border-top`) that separates it from the points table above.
 
 ---
 
