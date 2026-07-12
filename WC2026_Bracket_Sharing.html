@@ -146,6 +146,47 @@
   .bk-team.l .team-rank { color: var(--neutral-medium); }
   .bk-team.l .bk-sc { color: var(--neutral-medium); }
 
+  .bk-float .bk-podium { position: absolute; left: 0; right: 0; }
+  .bk-podium {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 0.5px solid var(--neutral-light);
+    background: #ffffff;
+  }
+  .bk-podium-hdr {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-align: center;
+    padding: 5px 8px;
+    background: var(--neutral-lightest);
+    border-bottom: 1px solid var(--neutral-light);
+    color: var(--neutral-dark);
+  }
+  .bk-podium-row {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 8px;
+    font-size: 0.78rem;
+    border-bottom: 0.5px solid var(--neutral-light);
+  }
+  .bk-podium-row:last-child { border-bottom: none; }
+  .bk-podium-medal { font-size: 1rem; flex-shrink: 0; line-height: 1; }
+  .bk-podium-team {
+    flex: 1;
+    font-weight: 600;
+    color: var(--neutral-darkest);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bk-podium-team.tbd { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
+  .bk-podium-row.gold   { background: #fffbeb; }
+  .bk-podium-row.silver { background: var(--neutral-lightest); }
+  .bk-podium-row.bronze { background: #fff6f0; }
+
   .snapshot-note {
     font-size: 0.72rem;
     color: var(--neutral-dark);
@@ -180,7 +221,7 @@
         <div class="bk-float" id="bk-float-sf"></div>
       </div>
       <div class="bk-col fin">
-        <div class="bk-col-hdr">🏆 Final</div>
+        <div class="bk-col-hdr">🏆 Final (and 3rd place)</div>
         <div class="bk-float" id="bk-float-fin"></div>
       </div>
     </div></div>
@@ -210,6 +251,13 @@
     [102, 'England', 'Argentina'],
   ];
   const FINAL_MATCH = [104, 'W101', 'W102'];
+  // 3rd place: the two SF losers — same L{num} placeholder convention
+  // getKoTeams() uses on the live site (koResults[101]/[102] not decided yet).
+  const THIRD_MATCH = [103, 'L101', 'L102'];
+  // Podium: champion (M104), runner-up (derived from SF), 3rd place (M103) —
+  // all still TBD until the semifinals are played. buildPodiumHtml() renders
+  // "TBD" rows automatically for null/placeholder teams.
+  const PODIUM_HTML = buildPodiumHtml(null, null, null);
 
   document.getElementById('bk-anchor-matches').innerHTML = QF_MATCHES
     .map(([num, home, away, hs, as_, hCls, aCls]) =>
@@ -218,7 +266,8 @@
   document.getElementById('bk-float-sf').innerHTML = SF_MATCHES
     .map(([num, home, away]) => matchCard(num, home, away))
     .join('');
-  document.getElementById('bk-float-fin').innerHTML = matchCard(...FINAL_MATCH);
+  document.getElementById('bk-float-fin').innerHTML =
+    matchCard(...FINAL_MATCH) + matchCard(...THIRD_MATCH) + PODIUM_HTML;
 
   // ── Position SF/Final cards relative to the QF anchor column, then draw
   //    connectors. Adapted from bracket.js's positionAndConnectBracket() /
@@ -269,6 +318,22 @@
         if (y1 !== null && y2 !== null) setY(mn, (y1 + y2) / 2);
       });
     });
+
+    // 3rd place (M103): align with M100's team-dividing line (per instruction —
+    // the real bracket aligns M103 with M99; here it's pinned to M100 instead).
+    const y100 = yc(100);
+    if (y100 !== null) setY(103, y100);
+
+    // Podium: top edge aligned with M97's top (per instruction — the real
+    // bracket aligns the podium with M89, the first card of the first float
+    // tier after the anchor; here it's pinned to M97 instead).
+    const podiumEl = bracket.querySelector('#bk-podium-results');
+    const m97el    = bracket.querySelector('[data-match="97"]');
+    if (podiumEl && m97el) {
+      const ct    = podiumEl.parentElement.getBoundingClientRect().top - br.top;
+      const m97top = m97el.getBoundingClientRect().top - br.top;
+      podiumEl.style.top = `${m97top - ct}px`;
+    }
 
     drawQfConnectors(bracket, br);
   }
