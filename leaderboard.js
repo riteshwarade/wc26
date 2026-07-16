@@ -1668,7 +1668,7 @@ function _showSqTooltip(sq) {
   const statusText = status === 'correct'        ? '✓ Correct'
                    : status === 'correct-upset'  ? '✓ Correct ✦ Contrarian'
                    : status === 'wrong'          ? '✗ Wrong'
-                   : status === 'cascaded'       ? '⚡ Void — team eliminated earlier'
+                   : status === 'cascaded'       ? '⚡ Void — this pick can no longer happen'
                    : status === 'pending'        ? '⏳ Pending'
                    : status === 'live-correct'   ? '🔴 Live · correct so far'
                    : status === 'live-wrong'     ? '🔴 Live · wrong so far'
