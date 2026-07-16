@@ -226,20 +226,21 @@
       </div>
     </div></div>
   </div>
-  <p class="snapshot-note">Snapshot as of match results confirmed through the quarterfinals — final matchup shown as TBD until the semifinals are decided.</p>
+  <p class="snapshot-note">Snapshot as of match results confirmed through the semifinals — Final is Spain v Argentina, 3rd place is France v England, neither played yet.</p>
 </div>
 
 <!-- Real bracket primitives — same file the live leaderboard uses -->
 <script src="bracket.js"></script>
 <script>
   // ── QF/SF/Final data ──
-  // QF: all four confirmed final results (results/knockout_results.csv as of
-  // this snapshot) — shown with winner/loser styling + scores, same as the
-  // live results bracket (Variant 3).
-  // SF: real matchups now that QF winners are known — not yet played, so
-  // shown as plain undecided cards (no scores/classes).
-  // Final: still TBD per the same W{num} placeholder convention getKoTeams()
-  // uses on the live site — SFs haven't been played yet.
+  // QF: all four confirmed final results — shown with winner/loser styling +
+  // scores, same as the live results bracket (Variant 3).
+  // SF: both confirmed final results (results/knockout_results.csv as of this
+  // snapshot) — Spain beat France 2-0, Argentina beat England 2-1 — shown
+  // with winner/loser styling + scores.
+  // Final + 3rd place: real matchups now that SF results are known (Spain v
+  // Argentina; France v England) — neither has been played yet, so shown as
+  // plain undecided cards (no scores/classes).
   const QF_MATCHES = [
     [97, 'France', 'Morocco', 2, 0, 'w', 'l'],
     [98, 'Spain', 'Belgium', 2, 1, 'w', 'l'],
@@ -247,16 +248,15 @@
     [100, 'Argentina', 'Switzerland', 3, 1, 'w', 'l'],
   ];
   const SF_MATCHES = [
-    [101, 'France', 'Spain'],
-    [102, 'England', 'Argentina'],
+    [101, 'France', 'Spain', 0, 2, 'l', 'w'],
+    [102, 'England', 'Argentina', 1, 2, 'l', 'w'],
   ];
-  const FINAL_MATCH = [104, 'W101', 'W102'];
-  // 3rd place: the two SF losers — same L{num} placeholder convention
-  // getKoTeams() uses on the live site (koResults[101]/[102] not decided yet).
-  const THIRD_MATCH = [103, 'L101', 'L102'];
+  const FINAL_MATCH = [104, 'Spain', 'Argentina'];
+  // 3rd place: the two SF losers, now confirmed (France, England).
+  const THIRD_MATCH = [103, 'France', 'England'];
   // Podium: champion (M104), runner-up (derived from SF), 3rd place (M103) —
-  // all still TBD until the semifinals are played. buildPodiumHtml() renders
-  // "TBD" rows automatically for null/placeholder teams.
+  // all still TBD until the Final and 3rd-place game are played.
+  // buildPodiumHtml() renders "TBD" rows automatically for null teams.
   const PODIUM_HTML = buildPodiumHtml(null, null, null);
 
   document.getElementById('bk-anchor-matches').innerHTML = QF_MATCHES
@@ -264,7 +264,7 @@
       `<div class="bk-quarter"><div class="bk-pair">${matchCard(num, home, away, '', hs, as_, hCls, aCls)}</div></div>`)
     .join('');
   document.getElementById('bk-float-sf').innerHTML = SF_MATCHES
-    .map(([num, home, away]) => matchCard(num, home, away))
+    .map(([num, home, away, hs, as_, hCls, aCls]) => matchCard(num, home, away, '', hs, as_, hCls, aCls))
     .join('');
   document.getElementById('bk-float-fin').innerHTML =
     matchCard(...FINAL_MATCH) + matchCard(...THIRD_MATCH) + PODIUM_HTML;
