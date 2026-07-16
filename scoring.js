@@ -302,9 +302,21 @@ function computeCombinedStandings(groupStandings, koPicksData, koResults, bracke
       const pick      = koPicks[String(m)];
       const winner    = koResults[m];
       const threshold = cascadeThreshold(m);
+      // M103 (3rd place) is fed by the two SF LOSERS specifically. The two SF
+      // WINNERS are still alive (never "eliminated") but are ineligible for
+      // M103 since they play in the Final instead — the elimination-round
+      // check below only catches teams knocked out too early, not a
+      // still-alive team that advanced past this match's eligible pool. Once
+      // both SF results are in, a pick that isn't one of the two actual M103
+      // participants can never be correct — treat it as cascaded, not pending.
+      let isM103Ineligible = false;
+      if (m === 103 && pick && koResults[101] && koResults[102]) {
+        const [l1, l2] = getKoTeams(103, bracketData, koResults);
+        isM103Ineligible = pick !== l1 && pick !== l2;
+      }
       const isCascaded = pick && threshold > 0 &&
-                         eliminatedInRound[pick] !== undefined &&
-                         eliminatedInRound[pick] < threshold;
+                         ((eliminatedInRound[pick] !== undefined && eliminatedInRound[pick] < threshold) ||
+                          isM103Ineligible);
       if (!pick) {
         koPickResults[m] = { status: 'empty', pick: null, winner: winner || null };
       } else if (winner) {

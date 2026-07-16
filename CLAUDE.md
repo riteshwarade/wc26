@@ -601,6 +601,8 @@ KO `koPickResults[num].status`: same five + `cascaded` (team already eliminated,
 
 **`cascaded` visual:** `.sq-cascaded` renders as transparent fill with `1.5px solid var(--swiftly-red)` border — distinguishes voided-future picks from confirmed-wrong (solid red). Game hasn't been played yet so the outline signals "this will be wrong once played."
 
+**M103 eligibility is reversed from every other match (fixed Jul 16, 2026).** For R32–Final, a pending pick cascades only if the picked team was *eliminated* earlier than needed (`eliminatedInRound` check in `scoring.js`'s `evalKoPicks`). M103 (3rd place) is fed by the two SF *losers* specifically — the two SF *winners* are still alive (never "eliminated") but are just as ineligible for M103 since they play in the Final instead. The elimination check alone can't catch this, so `evalKoPicks` also checks the pick against `getKoTeams(103, bracketData, koResults)` (the two real M103 participants, resolved once both SF results are in) and cascades any pick that isn't one of them. Before this fix, a pick of either SF winner for M103 stayed `pending` and kept adding 12 pts to `maxPts` even though it could never become correct — inflated `maxPts` for anyone (roughly half the pool at the time) who picked an eventual SF winner for 3rd place.
+
 ### Contrarian detection (`correct-upset`)
 
 A pick is promoted from `correct` to `correct-upset` when ≤ 10% of participants got that match correct (i.e., the match's correctness pill is in the Contrarian tier). `_isUpsetResult` has been removed — contrarian is pool-consensus-based, not FIFA-ranking-based. Applies to both group and KO squares.

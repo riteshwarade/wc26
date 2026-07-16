@@ -434,6 +434,50 @@ section('Cascade — M103 (3rd place): SF losers ARE valid picks');
   assert('koPts = 4 (R32) + 12 (3rd correct) = 16', carol.koPts === 16, `got ${carol.koPts}`);
 }
 
+section('Cascade — M103 (3rd place): SF WINNER is ineligible, not just eliminated teams');
+
+{
+  // Same bracket/results as above, but M103 and M104 are NOT yet played —
+  // this is the live "SFs decided, 3rd-place game still pending" window.
+  // Spain won SF (M101) and is alive, so the elimination-round check alone
+  // would never flag a Spain pick for M103 as cascaded — but Spain can never
+  // actually play in M103 (they're in the Final instead). Serbia (the real
+  // SF loser) is still a valid, unresolved M103 pick.
+  const bd = makeBracket();
+
+  const koResults = {
+    73:'Spain',   74:'Brazil',  75:'Argentina', 76:'Netherlands',
+    77:'Morocco', 78:'Mexico',  79:'USA',       80:'Belgium',
+    81:'Serbia',  82:'Switzerland', 83:'Turkey', 84:'Ecuador',
+    85:'Australia', 86:'Nigeria', 87:'Canada',  88:'Iran',
+    90:'Spain', 94:'Serbia',
+    97:'Spain', 98:'Serbia',
+    101:'Spain', // Spain beats Serbia — Serbia eliminated round 4, Spain advances to Final
+    102:'France',
+    // 103 and 104 intentionally unset — not yet played
+  };
+
+  const groupStandings = [
+    { name:'Dave', points:0, pickResults:{} },
+    { name:'Erin', points:0, pickResults:{} },
+  ];
+  const koPicksData = {
+    Dave: { '103':'Spain' },   // SF WINNER — can never play in M103 — must cascade
+    Erin: { '103':'Serbia' },  // actual SF LOSER — still a live, unresolved pick
+  };
+
+  const combined = computeCombinedStandings(groupStandings, koPicksData, koResults, bd);
+  const dave = combined.find(p => p.name === 'Dave');
+  const erin = combined.find(p => p.name === 'Erin');
+
+  assert('M103: Spain (SF winner) pick is cascaded, not pending',
+    dave.koPickResults[103].status === 'cascaded', `got ${dave.koPickResults[103].status}`);
+  assert('Cascaded M103 pick does not inflate maxPts', dave.maxPts === 0, `got ${dave.maxPts}`);
+  assert('M103: Serbia (SF loser) pick still correctly pending',
+    erin.koPickResults[103].status === 'pending', `got ${erin.koPickResults[103].status}`);
+  assert('Pending M103 pick still counts toward maxPts (12 pts)', erin.maxPts === 12, `got ${erin.maxPts}`);
+}
+
 // ─────────────────────────────────────────────────────────────
 // § 11  MAX PTS CALCULATION
 // ─────────────────────────────────────────────────────────────
