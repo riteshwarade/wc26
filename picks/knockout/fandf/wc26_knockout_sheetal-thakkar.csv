@@ -1,0 +1,33 @@
+match,round,matchup,pick
+73,R32,South Africa v Canada,Canada
+74,R32,Germany v Paraguay,Germany
+75,R32,Netherlands v Morocco,Morocco
+76,R32,Brazil v Japan,Brazil
+77,R32,France v Sweden,France
+78,R32,Ivory Coast v Norway,Ivory Coast
+79,R32,Mexico v Ecuador,Mexico
+80,R32,England v DR Congo,England
+81,R32,United States v Bosnia and Herzegovina,United States
+82,R32,Belgium v Senegal,Senegal
+83,R32,Portugal v Croatia,Portugal
+84,R32,Spain v Austria,Spain
+85,R32,Switzerland v Algeria,Switzerland
+86,R32,Argentina v Cape Verde,Argentina
+87,R32,Colombia v Ghana,Colombia
+88,R32,Australia v Egypt,Egypt
+89,R16,Germany v France,France
+90,R16,Canada v Morocco,Morocco
+91,R16,Brazil v Ivory Coast,Brazil
+92,R16,Mexico v England,England
+93,R16,Portugal v Spain,Spain
+94,R16,United States v Senegal,United States
+95,R16,Argentina v Egypt,Argentina
+96,R16,Switzerland v Colombia,Colombia
+97,QF,France v Morocco,France
+98,QF,Spain v United States,United States
+99,QF,Brazil v England,Brazil
+100,QF,Argentina v Colombia,Argentina
+101,SF,France v United States,France
+102,SF,Brazil v Argentina,Argentina
+103,3rd,United States v Brazil,United States
+104,Final,France v Argentina,France

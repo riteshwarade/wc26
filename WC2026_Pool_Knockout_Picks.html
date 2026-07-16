@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Cup 2026 Pool · Knockout Stage</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Inter:wght@400;700&display=block" rel="stylesheet">
+<style>
+  :root {
+    --swiftly-blue:    #009edf;
+    --swiftly-orange:  #ff9e16;
+    --neutral-lightest:#f7f7f7;
+    --neutral-light:   #ebebeb;
+    --neutral-medium:  #c4c4c4;
+    --neutral-dark:    #525f66;
+    --neutral-darkest: #131e27;
+    --blue-lightest:   #ebf9ff;
+    --blue-light:      #ccecf9;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body { font-family: 'Inter', sans-serif; background: var(--neutral-lightest); color: var(--neutral-darkest); min-height: 100vh; }
+
+  header { background: var(--swiftly-blue); padding: 28px 0 24px; }
+  .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: flex; flex-direction: column; gap: 6px; }
+  .header-title { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 1.5rem; color: #ffffff; }
+  .header-subtitle { font-size: 0.875rem; color: var(--blue-light); }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px 64px; }
+
+  /* ── Name card ───────────────────────────────────────────── */
+  .name-card {
+    background: #ffffff;
+    border-radius: var(--radius);
+    border: 2px solid var(--swiftly-blue);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 10px rgba(0,158,223,0.12);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .name-card input {
+    flex: 1;
+    padding: 10px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: 1.5px solid var(--neutral-light);
+    border-radius: 7px;
+    outline: none;
+    color: var(--neutral-darkest);
+    transition: border-color 0.2s;
+    background: var(--neutral-lightest);
+  }
+
+  .name-card input:focus { background: #ffffff; }
+
+  .name-card input::placeholder { color: var(--neutral-medium); }
+
+  .shortcuts-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .shortcuts-label { font-size: 0.68rem; font-weight: 700; color: var(--neutral-medium); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; margin-right: 4px; }
+  .shortcut-btn {
+    font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 700;
+    color: var(--neutral-dark); background: #ffffff; border: 1.5px solid var(--neutral-light);
+    border-radius: 5px; padding: 4px 12px; cursor: pointer; transition: all 0.14s; white-space: nowrap;
+  }
+  .shortcut-btn:hover { border-color: var(--swiftly-blue); color: var(--swiftly-blue); background: var(--blue-lightest); }
+
+  /* ── Sticky progress bar ─────────────────────────────────── */
+  .sticky-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffffff;
+    padding: 10px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+  .sticky-bar-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .progress-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+  }
+  .progress-bar-wrap {
+    flex: 1;
+    min-width: 80px;
+    height: 6px;
+    background: var(--neutral-light);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--swiftly-blue);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+  .progress-count {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--swiftly-blue);
+    white-space: nowrap;
+  }
+
+  /* ── Bracket (copied from leaderboard Variant 1) ── */
+  .bk-wrap { overflow-x: auto; padding: 14px 4px 18px; }
+  .bk-bracket { display: flex; width: 100%; align-items: flex-start; position: relative; }
+  .bk-col { flex: 1; min-width: 120px; padding: 0 10px; }
+  .bk-col-hdr { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; text-align: center; padding-bottom: 6px; border-bottom: 2px solid; margin-bottom: 10px; }
+  .bk-col.r32 .bk-col-hdr { border-color: #B5D4F4; color: #378ADD; }
+  .bk-col.r16 .bk-col-hdr { border-color: #85B7EB; color: #185FA5; }
+  .bk-col.qf  .bk-col-hdr { border-color: #378ADD; color: #185FA5; }
+  .bk-col.sf  .bk-col-hdr { border-color: #185FA5; color: #0C447C; }
+  .bk-col.fin .bk-col-hdr { border-color: #0C447C; color: #0C447C; }
+  .bk-matches { display: flex; flex-direction: column; gap: 16px; }
+  .bk-half    { display: flex; flex-direction: column; gap: 16px; }
+  .bk-quarter { display: flex; flex-direction: column; gap: 16px; }
+  .bk-pair    { display: flex; flex-direction: column; gap: 16px; }
+  .bk-float   { position: relative; }
+  .bk-float .bk-card { position: absolute; left: 0; right: 0; }
+  .bk-card { /* transparent container — visual chrome lives on .bk-team rows only */ }
+  .bk-mnum { font-size: 0.70rem; color: var(--neutral-dark); text-align: left; padding: 2px 8px; letter-spacing: 0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk-team { display: flex; align-items: center; gap: 6px; padding: 5px 9px; font-size: 0.92rem; font-weight: 400; margin: 0 4px; border-radius: 5px; border: 1.5px solid #cce8f4; background: #ffffff; }
+  .bk-mnum + .bk-team { margin-top: 4px; }
+  .bk-team + .bk-team { margin-top: 4px; }
+  .bk-team:last-child { margin-bottom: 4px; }
+  .bk-fl { font-size: 0.85rem; line-height: 1; flex-shrink: 0; width: 16px; text-align: center; }
+  .bk-tn { flex: 1; font-weight: 400; color: var(--neutral-darkest); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk-team.tbd .bk-fl { opacity: 0.25; }
+  .bk-team.tbd .bk-tn { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
+  .bk-3rd-lbl { position: absolute; left: 0; right: 0; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.6px; color: var(--neutral-medium); text-align: center; font-weight: 500; }
+  .bk-3rd-card { opacity: 0.65; }
+  .bk-rank, .team-rank { font-weight: 400; color: var(--neutral-dark); font-size: 0.68rem; }
+  .bk-sc { font-size: 0.78rem; font-weight: 700; color: var(--neutral-medium); min-width: 12px; text-align: right; flex-shrink: 0; }
+  .bk-team.w { background: var(--swiftly-blue); border-color: var(--swiftly-blue); }
+  .bk-team.w .bk-fl { color: #ffffff; }
+  .bk-team.w .bk-tn { color: #ffffff; font-weight: 500; }
+  .bk-team.w .team-rank { color: rgba(255,255,255,0.75); }
+  .bk-team.w .bk-sc { color: rgba(255,255,255,0.75); }
+  .bk-team.l { border-color: #c4c4c4; background: transparent; }
+  .bk-team.l .bk-fl { opacity: 0.35; }
+  .bk-team.l .bk-tn { color: var(--neutral-medium); }
+  .bk-team.l .team-rank { color: var(--neutral-medium); }
+  .bk-team.l .bk-sc { color: var(--neutral-medium); }
+
+  /* ── Clickable team rows (Variant 2) ── */
+  .bk-team[data-match] { cursor: pointer; }
+  .bk-team[data-match]:hover { background: var(--blue-lightest); border-color: var(--swiftly-blue); }
+  .bk-team[data-match].w:hover { background: var(--swiftly-blue); border-color: var(--swiftly-blue); filter: brightness(0.92); }
+  .bk-team[data-match].l:hover { background: var(--blue-lightest); border-color: var(--swiftly-blue); opacity: 1; }
+  .bk-team[data-match].l:hover .bk-fl { opacity: 1; }
+  .bk-team[data-match].l:hover .bk-tn { color: var(--neutral-darkest); }
+
+  /* ── Submit section ─────────────────────────────────────── */
+  .submit-section {
+    margin-top: 36px;
+    text-align: center;
+  }
+
+  .submit-btn {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    border: none;
+    padding: 15px 48px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.18s;
+    box-shadow: 0 4px 14px rgba(0,158,223,0.3);
+    letter-spacing: 0.2px;
+  }
+
+  .submit-btn:hover {
+    background: #0089c3;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0,158,223,0.38);
+  }
+
+  .submit-note {
+    margin-top: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    color: var(--neutral-dark);
+  }
+
+  .confirm-row {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .confirm-row.visible { display: flex; }
+
+  .confirm-note {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.68rem;
+    color: var(--neutral-dark);
+  }
+
+  .confirm-btn {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+
+  .confirm-btn:hover { background: #0089c3; }
+
+  .validation-msg {
+    background: #fff8e6;
+    border: 1px solid var(--swiftly-orange);
+    border-radius: 7px;
+    padding: 11px 16px;
+    margin-top: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    color: #7a4a00;
+    display: none;
+    text-align: left;
+  }
+
+  /* ── Podium (Variant 2 & 3) ── */
+  .bk-float .bk-podium { position: absolute; left: 0; right: 0; }
+  .bk-podium { border-radius: 8px; overflow: hidden; border: 0.5px solid var(--neutral-light); background: #ffffff; }
+  .bk-podium-hdr { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; text-align: center; padding: 5px 8px; background: var(--neutral-lightest); border-bottom: 1px solid var(--neutral-light); color: var(--neutral-dark); }
+  .bk-podium-row { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 0.78rem; border-bottom: 0.5px solid var(--neutral-light); }
+  .bk-podium-row:last-child { border-bottom: none; }
+  .bk-podium-medal { font-size: 1rem; flex-shrink: 0; line-height: 1; }
+  .bk-podium-team { flex: 1; font-weight: 600; color: var(--neutral-darkest); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk-podium-team.tbd { color: var(--neutral-medium); font-weight: 400; font-style: italic; }
+  .bk-podium-row.gold   { background: #fffbeb; }
+  .bk-podium-row.silver { background: var(--neutral-lightest); }
+  .bk-podium-row.bronze { background: #fff6f0; }
+
+  /* ── Mobile responsive (≤ 640 px — phones) ── */
+  /* ── Mobile bracket tabs (Variant 2) ── */
+  .bk-mobile-tabs { display: none; background: #ffffff; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--neutral-light); }
+  .bk-tab-bar { display: flex; border-bottom: 1.5px solid var(--neutral-light); background: var(--neutral-lightest); }
+  .bk-tab { flex: 1; padding: 9px 2px; font-size: 0.72rem; font-weight: 700; border: none; background: none; cursor: pointer; color: var(--neutral-dark); border-bottom: 2px solid transparent; margin-bottom: -1.5px; letter-spacing: 0.2px; }
+  .bk-tab.active { color: #185FA5; border-bottom-color: #185FA5; }
+  .bk-tab-panel { display: none; }
+  .bk-tab-panel.active { display: flex; flex-direction: column; gap: 7px; padding: 8px 10px; background: var(--neutral-lightest); }
+  .bk-mob-match { padding: 8px 10px; border: 0.5px solid #dde3ea; border-radius: 10px; background: #f4f5f6; }
+  .bk-mob-pair-pill { display: flex; justify-content: center; padding: 2px 0; }
+  .bk-mob-pair-pill span { font-size: 10px; font-weight: 500; color: #185FA5; background: var(--blue-lightest); border: 1px solid var(--blue-light); border-radius: 20px; padding: 3px 12px; }
+  .bk-mob-pair-group { border: 1px solid var(--blue-light); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 5px; background: #ffffff; }
+  .bk-mob-meta { font-size: 0.70rem; color: var(--neutral-dark); margin-bottom: 5px; }
+  .bk-mob-teams { display: flex; flex-direction: column; gap: 4px; }
+  .bk-mob-pick-team {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.90rem;
+    color: var(--neutral-darkest);
+    font-weight: 400;
+    padding: 7px 9px;
+    border-radius: 6px;
+    border: 1.5px solid var(--blue-light);
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.14s;
+  }
+  .bk-mob-pick-team.tbd { color: var(--neutral-medium); font-style: italic; font-weight: 400; cursor: default; border-color: var(--neutral-light); }
+  .bk-mob-pick-team:not(.tbd):not(.w):not(.l):hover { border-color: var(--swiftly-blue); color: var(--swiftly-blue); background: var(--blue-lightest); }
+  .bk-mob-pick-team.w { border-color: var(--swiftly-blue); background: var(--swiftly-blue); color: #ffffff; font-weight: 500; }
+  .bk-mob-pick-team.w .team-rank { color: rgba(255,255,255,0.75); }
+  .bk-mob-pick-team.l { border-color: transparent; background: transparent; color: var(--neutral-medium); font-weight: 400; }
+  .bk-mob-fl { flex-shrink: 0; line-height: 1; }
+  .bk-mob-tn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* .bk-mob-team-name removed — flag+name now in .bk-mob-fl + .bk-mob-tn flex children */
+
+  /* Wikipedia slot confirmation — R32 bracket (Variant 2) */
+  @keyframes sq-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .bk-team.slot-tbd      { animation: sq-pulse 1.8s ease-in-out infinite; }
+  .bk-team.slot-mismatch { border-color: #e24b4a; color: #e24b4a; }
+  .bk-team.slot-mismatch .team-rank { color: #e24b4a; }
+  /* Mobile — pointer-events: none suppresses hover (existing hover rule doesn't exclude these classes) */
+  .bk-mob-pick-team.slot-tbd      { animation: sq-pulse 1.8s ease-in-out infinite; pointer-events: none; }
+  .bk-mob-pick-team.slot-mismatch { border-color: #e24b4a; color: #e24b4a; pointer-events: none; }
+
+  @media (max-width: 640px) {
+    header { padding: 16px 0 14px; }
+    .header-title { font-size: clamp(0.82rem, 3.6vw, 1.2rem); white-space: nowrap; }
+    .shortcuts-bar { flex-wrap: wrap; }
+    .shortcut-btn  { padding: 6px 10px; min-height: 36px; }
+    /* Hide desktop bracket, show tab view */
+    .bk-outer { display: none; }
+    .bk-mobile-tabs { display: block; }
+  }
+
+  @media (max-width: 896px) and (orientation: landscape) {
+    /* Hide desktop bracket, show tab view (same as portrait) */
+    .bk-outer { display: none; }
+    .bk-mobile-tabs { display: block; }
+  }
+
+  /* ── Round-advance toast ── */
+  .tab-advance-toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--neutral-darkest);
+    color: #ffffff;
+    padding: 11px 20px;
+    border-radius: 24px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.28);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+  }
+  .tab-advance-toast.visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-title">World Cup 2026 Pool · Knockout Stage</div>
+    <div class="header-subtitle">Pick a result for all 32 knockout matches</div>
+  </div>
+</header>
+
+<!-- ── Sticky progress bar ────────────────────────────── -->
+<div class="sticky-bar">
+  <div class="sticky-bar-inner">
+    <span class="progress-label">Progress</span>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <span class="progress-count" id="progressCount">0 / 32 matches picked</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="name-card">
+    <input type="text" id="entrantName" placeholder="Enter your full name…" autocomplete="name">
+  </div>
+
+  <div class="shortcuts-bar">
+    <span class="shortcuts-label">Shortcuts</span>
+    <button class="shortcut-btn">🎲&nbsp;&nbsp;Pick randomly</button>
+    <button class="shortcut-btn">💪&nbsp;&nbsp;Pick higher-ranked team to win</button>
+    <button class="shortcut-btn">✕&nbsp;&nbsp;Reset all picks</button>
+  </div>
+
+  <div id="bracketContainer"><div style="padding:40px;text-align:center;color:var(--neutral-dark);font-size:0.875rem;">Loading bracket…</div></div>
+
+  <div class="submit-section">
+    <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">Happy with your picks?</button>
+    <div class="validation-msg" id="validationMsg"></div>
+    <div class="confirm-row" id="confirmRow">
+      <span class="confirm-note">Your picks will be downloaded as a CSV file.</span>
+      <button class="confirm-btn" onclick="confirmSubmit()">Download CSV</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="bracket.js"></script>
+<script src="ko_picks.js"></script>
+</body>
+</html>

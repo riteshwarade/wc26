@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Cup 2026 Pool – entry form</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Inter:wght@400;700&display=block" rel="stylesheet">
+<style>
+  :root {
+    /* Swiftly brand colors */
+    --swiftly-blue:       #009edf;
+    --swiftly-orange:     #ff9e16;
+    --neutral-lightest:   #f7f7f7;
+    --neutral-light:      #ebebeb;
+    --neutral-medium:     #c4c4c4;
+    --neutral-dark:       #525f66;
+    --neutral-darkest:    #131e27;
+    --blue-lightest:      #ebf9ff;
+    --blue-light:         #ccecf9;
+    --blue-medium-light:  #99d9f2;
+    --blue-medium:        #66c7ec;
+    --blue-medium-dark:   #33b4e5;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--neutral-lightest);
+    color: var(--neutral-darkest);
+    min-height: 100vh;
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  header {
+    background: var(--swiftly-blue);
+    padding: 28px 0 24px;
+  }
+
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .header-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #ffffff;
+  }
+
+  .header-subtitle {
+    font-size: 0.875rem;
+    color: var(--blue-light);
+  }
+
+  /* ── Sticky progress bar ─────────────────────────────────── */
+  .sticky-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffffff;
+    border-bottom: none;
+    padding: 10px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+
+  .sticky-bar-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* ── Shortcuts bar ───────────────────────────────────────── */
+  .shortcuts-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .shortcuts-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--neutral-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    margin-right: 4px;
+  }
+
+  .shortcut-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    background: #ffffff;
+    border: 1.5px solid var(--neutral-light);
+    border-radius: 5px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: all 0.14s;
+    white-space: nowrap;
+  }
+
+  .shortcut-btn:hover {
+    border-color: var(--swiftly-blue);
+    color: var(--swiftly-blue);
+    background: var(--blue-lightest);
+  }
+
+
+  .progress-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
+  }
+
+  .progress-bar-wrap {
+    flex: 1;
+    min-width: 80px;
+    height: 6px;
+    background: var(--neutral-light);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--swiftly-blue);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+
+  .progress-count {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--swiftly-blue);
+    white-space: nowrap;
+  }
+
+  /* ── Container ───────────────────────────────────────────── */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 16px 64px;
+    visibility: hidden;
+  }
+
+  /* ── Name card ───────────────────────────────────────────── */
+  .name-card {
+    background: #ffffff;
+    border-radius: var(--radius);
+    border: 2px solid var(--swiftly-blue);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 10px rgba(0,158,223,0.12);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .name-card input {
+    flex: 1;
+    padding: 10px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: 1.5px solid var(--neutral-light);
+    border-radius: 7px;
+    outline: none;
+    color: var(--neutral-darkest);
+    transition: border-color 0.2s;
+    background: var(--neutral-lightest);
+  }
+
+  .name-card input:focus {
+    background: #ffffff;
+  }
+
+  .name-card input::placeholder { color: var(--neutral-medium); }
+
+  /* ── Match table ─────────────────────────────────────────── */
+  .matches-table {
+    background: #ffffff;
+    border: 1px solid var(--neutral-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.04);
+    margin-bottom: 8px;
+  }
+
+  /* Column layout: # | grp | date | time | picks */
+  .col-layout {
+    display: grid;
+    grid-template-columns: 30px 28px 88px 72px auto;
+    align-items: center;
+    column-gap: 12px;
+  }
+
+  /* Column header row */
+  .col-header {
+    background: var(--neutral-lightest);
+    border-bottom: 2px solid var(--neutral-light);
+    padding: 6px 12px;
+  }
+
+  .col-header > span {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0;
+  }
+
+  .col-header > span:first-child { text-align: center; }
+
+  /* Match row */
+  .match-row {
+    border-bottom: 1px solid var(--neutral-light);
+    padding: 5px 12px;
+    transition: background 0.12s;
+  }
+
+  .match-row:last-child { border-bottom: none; }
+  .match-row:nth-child(even) { background: var(--neutral-lightest); }
+  .match-row:nth-child(odd)  { background: #ffffff; }
+  .match-row:hover { background: var(--blue-lightest); }
+  .match-row.picked { background: var(--blue-lightest); }
+
+  .match-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--neutral-medium);
+    text-align: center;
+    padding: 0;
+  }
+
+  .match-teams {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--neutral-darkest);
+    padding: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .match-teams .vs {
+    font-weight: 400;
+    color: var(--neutral-medium);
+  }
+
+  .match-grp, .match-date, .match-time {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    color: var(--neutral-dark);
+    padding: 0;
+    white-space: nowrap;
+  }
+
+  .match-grp { color: var(--swiftly-blue); font-weight: 700; }
+  .cell-tz { display: none; } /* shown on mobile where there's no column header */
+
+  /* ── Pick buttons ────────────────────────────────────────── */
+  .pick-group {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2fr;
+    gap: 4px;
+    padding: 0 8px 0 0;
+    width: 100%;
+  }
+
+  .pick-group input[type="radio"] { display: none; }
+
+  .pick-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25em;
+    padding: 6px 8px;
+    border-radius: 5px;
+    border: 1.5px solid var(--blue-light);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.14s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    color: var(--neutral-darkest);
+    background: #ffffff;
+    user-select: none;
+    line-height: 1;
+  }
+
+  /* rank muted relative to team name, matching group table style */
+  .pick-btn .team-rank { color: var(--neutral-dark); }
+
+  .pick-btn:hover {
+    border-color: var(--swiftly-blue);
+    color: var(--swiftly-blue);
+    background: var(--blue-lightest);
+  }
+
+  .pick-btn:hover .team-rank { color: var(--swiftly-blue); }
+
+  /* All picks — blue when selected */
+  input[type="radio"].win1-radio:checked + .pick-btn,
+  input[type="radio"].draw-radio:checked + .pick-btn,
+  input[type="radio"].win2-radio:checked + .pick-btn {
+    border-color: var(--swiftly-blue);
+    background: var(--swiftly-blue);
+    color: #ffffff;
+  }
+
+  /* rank stays readable on blue background */
+  input[type="radio"].win1-radio:checked + .pick-btn .team-rank,
+  input[type="radio"].win2-radio:checked + .pick-btn .team-rank {
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  /* ── Submit section ──────────────────────────────────────── */
+  .submit-section {
+    margin-top: 36px;
+    text-align: center;
+  }
+
+  .submit-btn {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    border: none;
+    padding: 15px 48px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.18s;
+    box-shadow: 0 4px 14px rgba(0,158,223,0.3);
+    letter-spacing: 0.2px;
+  }
+
+  .submit-btn:hover {
+    background: #0089c3;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0,158,223,0.38);
+  }
+
+  .submit-note {
+    margin-top: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    color: var(--neutral-dark);
+  }
+
+  .confirm-row {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .confirm-row.visible { display: flex; }
+
+  .confirm-btn {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+
+  .confirm-btn:hover { background: #0089c3; }
+
+  .validation-msg {
+    background: #fff8e6;
+    border: 1px solid var(--swiftly-orange);
+    border-radius: 7px;
+    padding: 11px 16px;
+    margin-top: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    color: #7a4a00;
+    display: none;
+    text-align: left;
+  }
+
+  /* ── Responsive (≤ 640 px — phones) ─────────────────────── */
+  @media (max-width: 640px) {
+    .cell-tz { display: inline; }
+    /* Header */
+    header { padding: 16px 0 14px; }
+    .header-title { font-size: clamp(0.82rem, 3.6vw, 1.2rem); white-space: nowrap; }
+
+    /* Reorder: pick form appears before group tables on mobile */
+    .pick-layout { flex-direction: column; }
+    .pick-main   { order: -1; }
+    .pick-sidebar { width: 100%; position: static; }
+
+    /* Column header row is redundant in 2-row layout — hide it */
+    .col-header { display: none; }
+
+    /* Shortcuts: hide label (obvious from context), wrap buttons */
+    .shortcuts-label { display: none; }
+    .shortcuts-bar   { flex-wrap: wrap; }
+    .shortcut-btn    { padding: 6px 10px; min-height: 36px; }
+
+    /* Match row: 2-row grid
+       Row 1 — meta: # · date · group · time (ET), all left-aligned
+       Row 2 — pick buttons spanning full width
+       5 columns: 4 auto items + 1fr filler so row 1 stays left-anchored */
+    .match-row.col-layout {
+      display: grid;
+      grid-template-columns: auto auto auto auto 1fr;
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      row-gap: 5px;
+      padding: 7px 12px 9px;
+    }
+    .match-num  { grid-column: 1; grid-row: 1; align-self: center; }
+    .match-grp  { grid-column: 2; grid-row: 1; display: block;
+                  font-size: 0.72rem; align-self: center; }
+    .match-date { grid-column: 3; grid-row: 1; display: block;
+                  font-size: 0.72rem; color: var(--neutral-dark); font-weight: 400; align-self: center; }
+    .match-time { grid-column: 4; grid-row: 1; display: block;
+                  font-size: 0.72rem; color: var(--neutral-dark); font-weight: 400; align-self: center; }
+    .pick-group { grid-column: 1 / -1; grid-row: 2; padding: 0; }
+
+    /* Pick buttons: taller touch target */
+    .pick-btn   { padding: 7px 6px; min-height: 38px; }
+
+    /* Hide group tables on mobile — pick form is the focus */
+    #pickGroupTables { display: none; }
+
+  }
+
+  /* ── Pick page two-column layout ── */
+  .pick-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .pick-sidebar {
+    width: 380px;
+    flex-shrink: 0;
+  }
+
+  .pick-main { flex: 1; min-width: 0; }
+
+  /* ── Group tables (same as leaderboard) ── */
+  .group-tables-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .group-table-card {
+    background: #ffffff;
+    border: 1px solid var(--neutral-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.04);
+  }
+
+  .group-table-header {
+    background: var(--swiftly-blue);
+    color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 7px 12px;
+  }
+
+  .group-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+  }
+
+  .group-table thead tr {
+    background: var(--neutral-lightest);
+    border-bottom: 1px solid var(--neutral-light);
+  }
+
+  .group-table th {
+    padding: 5px 8px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--neutral-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: center;
+  }
+
+  .group-table th.th-team { text-align: left; }
+  .group-table td.td-team { min-width: 130px; }
+  .group-table td:not(.td-team), .group-table th:not(.th-team) { white-space: nowrap; width: 1%; padding-left: 4px; padding-right: 4px; }
+
+  .group-table tbody tr {
+    border-bottom: 1px solid var(--neutral-light);
+  }
+
+  .group-table tbody tr:last-child { border-bottom: none; }
+  .group-table tbody tr:nth-child(even) { background: var(--neutral-lightest); }
+
+  .group-table td {
+    padding: 5px 8px;
+    text-align: center;
+    color: var(--neutral-darkest);
+  }
+
+  .group-table td.td-team {
+    text-align: left;
+    font-weight: 700;
+  }
+  .team-rank { font-weight: 400; color: var(--neutral-dark); font-size: 0.68rem; }
+
+  .group-table td.td-pts {
+    font-weight: 700;
+    color: var(--swiftly-blue);
+  }
+
+  .group-table tr.qualified      td { background: var(--blue-lightest); }
+  .group-table tr.third-qual     td { background: #e6f9ef; }
+  .group-table tr.third-pending  td { background: #fff8e6; }
+  .group-table tr.eliminated     td { background: #fdf0f0; color: var(--neutral-medium); }
+  .group-table tr.eliminated td.td-team { color: var(--neutral-dark); }
+
+</style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────── -->
+<header>
+  <div class="header-inner">
+    <div class="header-title">World Cup 2026 Pool · Group Stage</div>
+    <div class="header-subtitle" id="headerSubtitle">Pick a result (win for either team or draw) for all 72 group stage matches</div>
+  </div>
+</header>
+
+<!-- ── Sticky progress bar ────────────────────────────── -->
+<div class="sticky-bar">
+  <div class="sticky-bar-inner">
+    <span class="progress-label">Progress</span>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <span class="progress-count" id="progressCount">0 / 72 matches picked</span>
+  </div>
+</div>
+
+<!-- ── Main content ───────────────────────────────────── -->
+<div class="container">
+
+  <div class="name-card">
+    <input type="text" id="entrantName" placeholder="Enter your full name…" autocomplete="name">
+  </div>
+
+  <div class="pick-layout">
+
+    <div class="pick-sidebar">
+      <div id="pickGroupTables"></div>
+    </div>
+
+    <div class="pick-main">
+
+      <div class="shortcuts-bar">
+        <span class="shortcuts-label">Shortcuts</span>
+        <button class="shortcut-btn" onclick="runShortcut('random')">🎲&nbsp;&nbsp;Pick randomly</button>
+        <button class="shortcut-btn" onclick="runShortcut('ranked')">💪&nbsp;&nbsp;Pick higher-ranked team to win</button>
+        <button class="shortcut-btn" onclick="runShortcut('draw')">🤝&nbsp;&nbsp;Pick all draws</button>
+        <button class="shortcut-btn" onclick="runShortcut('reset')">✕&nbsp;&nbsp;Reset all picks</button>
+      </div>
+
+      <form id="poolForm">
+        <!-- Match rows injected by JS -->
+      </form>
+
+      <div class="submit-section">
+        <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">Happy with your picks?</button>
+        <div class="validation-msg" id="validationMsg"></div>
+        <div class="confirm-row" id="confirmRow">
+          <button class="confirm-btn" onclick="confirmSubmit()">Submit</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="scoring.js"></script>
+<script src="bracket.js"></script>
+<script src="group_picks.js"></script>
+</body>
+</html>
